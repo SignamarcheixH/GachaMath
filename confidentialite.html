@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidentialité — Gacha des Nombres</title>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html" style="text-decoration:none;color:inherit">
+    <span class="brandIcon">🔢</span>
+    <span class="brandText"><b>GACHA</b><i>DES NOMBRES</i></span>
+  </a>
+</header>
+
+<main class="page">
+  <h1>Confidentialité</h1>
+  <p class="tiny">Dernière mise à jour : 30 août 2026.</p>
+
+  <p>Ce jeu est gratuit et se joue sans inscription. La page ci-dessous décrit
+     exactement ce qui est conservé, où, et pendant combien de temps.</p>
+
+  <h2>Si vous jouez sans pseudo</h2>
+  <p>Rien ne quitte votre navigateur. Votre partie est enregistrée dans le
+     stockage local de votre appareil (<code>localStorage</code>), sous la clé
+     <code>gachanombres.save.v1</code>. Elle contient les nombres que vous avez
+     collectionnés, vos jetons, vos statistiques de jeu — <b>aucune donnée
+     personnelle</b>. Personne d'autre que vous n'y a accès, et aucun serveur
+     n'en reçoit copie.</p>
+  <p>Vider les données du site l'efface définitivement. Safari la supprime
+     également au bout de sept jours sans visite : c'est une règle du navigateur,
+     pas un choix de notre part.</p>
+
+  <h2>Si vous choisissez un pseudo</h2>
+  <p>Votre partie est alors sauvegardée sur notre serveur pour que vous ne la
+     perdiez pas. Sont conservés :</p>
+  <ul>
+    <li><b>Le pseudo</b> que vous avez choisi. Il apparaît au classement.
+        Vous n'êtes pas tenu d'utiliser votre vrai nom, et nous vous
+        recommandons de ne pas le faire.</li>
+    <li><b>Un code de reprise</b> tiré au hasard, qui vous sert à retrouver
+        votre partie sur un autre appareil.</li>
+    <li><b>Votre sauvegarde de jeu</b> et la date de sa dernière mise à jour.</li>
+    <li><b>Des mesures de progression</b> recalculées à partir de la sauvegarde
+        (nombres collectionnés, théorèmes démontrés…), qui alimentent le
+        classement.</li>
+  </ul>
+  <p>Il n'y a <b>ni adresse e-mail, ni mot de passe, ni compte</b> au sens
+     habituel. Nous ne vous demandons aucune information personnelle et n'en
+     collectons aucune volontairement.</p>
+
+  <h2>Cookies</h2>
+  <table class="cook">
+    <tr><th>Nom</th><th>Rôle</th><th>Durée</th></tr>
+    <tr><td><code>gn_joueur</code></td>
+        <td>Relie ce navigateur à votre partie. Contient un identifiant
+            aléatoire signé, rien d'autre. Inaccessible au JavaScript.</td>
+        <td>2 ans</td></tr>
+    <tr><td><code>csrftoken</code></td>
+        <td>Protège les formulaires contre les requêtes falsifiées. Nécessaire
+            au fonctionnement.</td>
+        <td>1 an</td></tr>
+  </table>
+  <p>Ces deux cookies sont strictement nécessaires au service. Aucun n'est
+     utilisé pour vous suivre d'un site à l'autre.</p>
+
+  <h2>Publicité</h2>
+  <p id="blocPub">Ce site peut afficher des annonces fournies par Google AdSense.
+     Google et ses partenaires utilisent alors des cookies pour diffuser des
+     annonces et en mesurer l'audience. Vous pouvez régler vos préférences
+     publicitaires, ou refuser la personnalisation, depuis la fenêtre de
+     consentement affichée à votre première visite, et à tout moment via le lien
+     de gestion du consentement en bas de page. Les pratiques de Google sont
+     décrites sur
+     <a href="https://policies.google.com/technologies/partner-sites" rel="noopener nofollow" target="_blank">
+     leur page dédiée</a>.</p>
+
+  <h2>Journaux du serveur</h2>
+  <p>Comme tout serveur web, le nôtre enregistre les requêtes reçues, ce qui
+     inclut votre adresse IP, la date et la page demandée. Ces journaux servent
+     au diagnostic technique et à la sécurité. Ils sont conservés au maximum
+     trente jours.</p>
+
+  <h2>Combien de temps</h2>
+  <p>Une partie sauvegardée est conservée tant que vous jouez, puis
+     <b>deux ans</b> après votre dernière visite, après quoi elle est supprimée.</p>
+
+  <h2>Vos droits</h2>
+  <p>Vous pouvez à tout moment :</p>
+  <ul>
+    <li><b>Récupérer vos données</b> — le bouton « Télécharger un fichier »,
+        dans l'écran ☁ du jeu, vous rend l'intégralité de votre partie au
+        format JSON.</li>
+    <li><b>Détacher cet appareil</b> — le bouton « Délier cet appareil » efface
+        le cookie sans toucher à la partie en ligne.</li>
+    <li><b>Tout effacer</b> — écrivez-nous à l'adresse ci-dessous avec votre
+        pseudo ou votre code de reprise, et la partie sera supprimée.</li>
+  </ul>
+  <p>Conformément au RGPD, vous disposez également d'un droit d'accès, de
+     rectification, d'opposition et de limitation, ainsi que du droit d'introduire
+     une réclamation auprès de la CNIL.</p>
+
+  <h2>Nous écrire</h2>
+  <p class="aRemplir"><b>⚠ À compléter avant la mise en ligne :</b> indiquez ici
+     une adresse de contact. Elle est exigée par AdSense comme par le RGPD, et
+     une page de confidentialité sans moyen de contact fait échouer la demande.</p>
+
+  <p style="margin-top:34px"><a href="index.html">← Retour au jeu</a></p>
+</main>
+
+<script src="js/config.js?v=31"></script>
+<script>
+  // Sans identifiant éditeur, aucune annonce n'est diffusée : annoncer de la
+  // publicité serait alors faux. On retire la section.
+  if (!PUB.client) {
+    const b = document.getElementById('blocPub');
+    b.previousElementSibling.remove();
+    b.remove();
+  }
+</script>
+</body>
+</html>

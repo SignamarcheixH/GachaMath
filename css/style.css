@@ -956,3 +956,59 @@ select option { background: var(--bg2); }
   .revTrait { font-size: clamp(23px, 7vw, 32px); }
   .qCard { padding: 20px 10px; font-size: 22px; }
 }
+
+/* ══════════ PUBLICITÉ ══════════
+   La hauteur est réservée d'avance : une annonce qui arrive et pousse le
+   contenu vers le bas fait rater un clic. Et si le script ne vient jamais —
+   bloqueur, hors ligne, identifiant absent — l'emplacement se referme au lieu
+   de laisser un trou. */
+.pub {
+  display: block; margin: 0 auto; padding: 6px 0 2px;
+  max-width: 1280px; text-align: center;
+}
+.pub.vide { display: none; }
+.pubLabel {
+  display: block; font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--dim2); opacity: .55; margin-bottom: 4px;
+}
+.pub.bas .pubZone     { min-height: 90px; }
+.pub.lecture .pubZone { min-height: 250px; }
+@media (max-width: 620px) {
+  .pub.bas .pubZone     { min-height: 50px; }
+  .pub.lecture .pubZone { min-height: 250px; }
+}
+.pubApercu {
+  display: grid; place-items: center; height: 100%; min-height: inherit;
+  border: 1px dashed var(--line2); border-radius: 10px;
+  color: var(--dim2); font-size: 12.5px; letter-spacing: .04em;
+}
+#pubLecture { margin-top: 26px; }
+#pubBas { padding: 0 clamp(12px, 4vw, 34px); }
+
+/* ══════════ PIED DE PAGE ══════════ */
+.pied {
+  display: flex; gap: 10px; align-items: center; justify-content: center;
+  flex-wrap: wrap; padding: 22px 16px 30px;
+  border-top: 1px solid var(--line); margin-top: 26px;
+  font-size: 13px; color: var(--dim2);
+}
+.pied a { color: var(--dim); text-decoration: none; }
+.pied a:hover { color: var(--txt); text-decoration: underline; }
+
+/* ══════════ PAGES DE TEXTE ══════════ */
+main.page { max-width: 760px; margin: 0 auto; padding: 30px clamp(14px, 5vw, 30px) 70px; }
+main.page h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.02em; }
+main.page h2 { font-size: 17px; margin: 30px 0 8px; color: var(--txt); }
+main.page p, main.page li { color: var(--dim); line-height: 1.65; }
+main.page ul { padding-left: 20px; }
+main.page li { margin-bottom: 7px; }
+main.page code { font-family: var(--mono); font-size: .9em; color: var(--dustc); }
+main.page a { color: var(--accent); }
+table.cook { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+table.cook th, table.cook td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.cook th { color: var(--dim2); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+table.cook td { color: var(--dim); }
+.aRemplir {
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px dashed rgba(255,176,46,.55); background: rgba(255,176,46,.09); color: #ffd992;
+}

@@ -6,7 +6,7 @@
 <title>Gacha des Nombres</title>
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=30">
+<link rel="stylesheet" href="css/style.css?v=31">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 </head>
 <body>
@@ -175,7 +175,18 @@
     </div>
   </section>
 
+  <div id="pubLecture"></div>
 </main>
+
+<div id="pubBas"></div>
+
+<footer class="pied">
+  <a href="confidentialite.html">Confidentialité</a>
+  <span>·</span>
+  <a href="https://github.com/SignamarcheixH/GachaMath" rel="noopener" target="_blank">Code source</a>
+  <span>·</span>
+  <span class="tiny">La rareté n'est pas décidée. Elle est calculée.</span>
+</footer>
 
 <!-- révélation des tirages -->
 <div id="reveal" class="reveal">
@@ -189,15 +200,17 @@
 
 <div id="toasts"></div>
 
-<script src="js/numerology.js?v=30"></script>
-<script src="js/data.js?v=30"></script>
-<script src="js/state.js?v=30"></script>
-<script src="js/nuage.js?v=30"></script>
-<script src="js/classement.js?v=30"></script>
-<script src="js/forge.js?v=30"></script>
-<script src="js/forge-ui.js?v=30"></script>
-<script src="js/revision.js?v=30"></script>
-<script src="js/appariement.js?v=30"></script>
-<script src="js/ui.js?v=30"></script>
+<script src="js/config.js?v=31"></script>
+<script src="js/pub.js?v=31"></script>
+<script src="js/numerology.js?v=31"></script>
+<script src="js/data.js?v=31"></script>
+<script src="js/state.js?v=31"></script>
+<script src="js/nuage.js?v=31"></script>
+<script src="js/classement.js?v=31"></script>
+<script src="js/forge.js?v=31"></script>
+<script src="js/forge-ui.js?v=31"></script>
+<script src="js/revision.js?v=31"></script>
+<script src="js/appariement.js?v=31"></script>
+<script src="js/ui.js?v=31"></script>
 </body>
 </html>

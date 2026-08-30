@@ -51,6 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     // La synchro se lance en tâche de fond : elle ne doit jamais retarder le jeu.
     if (typeof initNuage === 'function') initNuage(restored);
+    if (typeof initPub === 'function') initPub();
 
     if (state.commandePerimee) {
       delete state.commandePerimee;
@@ -80,6 +81,7 @@ function initUI() {
     $$('main .tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + btn.dataset.tab));
     renderAll();
     centrerOnglet(btn);
+    if (typeof majPubLecture === 'function') majPubLecture();
     if (btn.dataset.tab === 'classement' && typeof ouvrirClassement === 'function') ouvrirClassement();
   });
 

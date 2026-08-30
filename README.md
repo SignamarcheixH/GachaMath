@@ -212,6 +212,8 @@ Lequel de ces nombres est 🕴️ Smith ?     9 609   1 352   6 091   2 484
 | `js/forge-ui.js` | L'établi à l'écran. |
 | `js/revision.js` | Les Vagues : génération des questions, correction, rendu. |
 | `js/appariement.js` | L'Appariement : tirage des paires, masquage des définitions, échanges. |
+| `js/config.js` | Identifiant éditeur et emplacements publicitaires. Vide par défaut. |
+| `js/pub.js` | Emplacements : réservation de place, repli si bloqué, vues autorisées. |
 | `js/nuage.js` | Sauvegarde en ligne : sondage, réconciliation, compte, conflits. |
 | `js/classement.js` | L'onglet Classement. |
 | `js/ui.js` | Rendu et câblage du reste. |
@@ -345,6 +347,48 @@ l'appareil (`pointer: coarse`) et décrivent le geste qu'il sait faire.
 
 Vérifié après coup : aucun débordement sur les huit onglets, aucun bouton sous
 32 px, et rien n'a bougé à 1 280 px.
+
+## Publicité
+
+Les emplacements existent, la plomberie est prête. **Rien n'est diffusé tant que
+`client` est vide dans `js/config.js`** : aucun script tiers n'est appelé et le
+jeu est exactement celui d'avant. Vérifié : zéro requête vers googlesyndication.
+
+Trois principes tiennent l'implémentation.
+
+**La place est réservée avant le chargement** — 90 px pour le bandeau, 250 pour
+le rectangle. Une annonce qui arrive et pousse le contenu vers le bas fait rater
+un clic ; c'est le défaut le plus courant et le plus détestable.
+
+**Rien près des commandes de jeu.** Le rectangle n'apparaît que sur les vues où
+l'on lit : Oracle, Défis, Classement, Théorèmes. Jamais sur le Tirage ni la
+Forge. Ce n'est pas de la délicatesse : un clic accidentel compte comme un
+« clic invalide » chez Google, et c'est le premier motif de fermeture de compte.
+
+**Si le script ne vient pas** — bloqueur, hors ligne, identifiant absent —
+l'emplacement se referme. Mesuré : 276 px rendus au contenu, pas de rectangle
+mort.
+
+### Ce qu'il reste à faire, et que le code ne peut pas faire
+
+1. **Mettre le site en ligne sur un domaine.** Google ne valide pas un
+   `localhost`, et un sous-domaine d'hébergeur gratuit passe mal.
+2. **Compléter l'adresse de contact** dans `confidentialite.html` — elle est
+   exigée par AdSense comme par le RGPD, et son absence fait échouer la demande.
+3. **Demander l'ouverture du compte**, puis reporter l'identifiant éditeur et
+   les identifiants de blocs dans `js/config.js`.
+4. **Activer le CMP** dans la console AdSense (« Confidentialité et messages »).
+   Il est **obligatoire** pour diffuser en Europe depuis janvier 2024 ; le script
+   d'AdSense l'embarque, d'où son chargement avant toute annonce.
+
+Une réserve que je maintiens : un jeu monopage en JavaScript est un cas de rejet
+classique — le robot d'indexation ne voit presque aucun texte, tout étant généré
+côté client. Le Codex des 65 traits est du vrai contenu, mais il n'existe pas
+dans le HTML servi. Si la demande est refusée, c'est par là qu'il faudra
+commencer.
+
+`PUB.apercu = true` affiche les emplacements sans charger AdSense, pour juger de
+la mise en page.
 
 ## Modifier le code
 
