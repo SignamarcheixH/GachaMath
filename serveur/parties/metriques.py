@@ -1,0 +1,103 @@
+"""
+Lecture d'une sauvegarde : métriques du classement et contrôles de cohérence.
+
+Le serveur ne rejoue pas la partie — ce serait porter les 65 traits en Python,
+avec la divergence garantie qui va avec. Il lit la sauvegarde et s'appuie sur
+une table nombre → rareté générée depuis le moteur du jeu lui-même
+(voir serveur/outils/generer_raretes.js).
+"""
+from pathlib import Path
+
+VIVIER = 9999                    # le tirage va de 1 à 9999
+FORGE_MIN = 10000
+
+_TABLE = None
+
+
+def table_raretes() -> str:
+    """Un chiffre (indice de rareté 0 à 5) par nombre, de 1 à 9999."""
+    global _TABLE
+    if _TABLE is None:
+        chemin = Path(__file__).resolve().parent / "data" / "raretes.txt"
+        _TABLE = chemin.read_text(encoding="utf-8").strip()
+        if len(_TABLE) != VIVIER:
+            raise RuntimeError(
+                f"Table de raretés incohérente ({len(_TABLE)} entrées au lieu de {VIVIER}). "
+                "Régénérez-la : node serveur/outils/generer_raretes.js"
+            )
+    return _TABLE
+
+
+def rarete(n: int) -> int:
+    """Indice de rareté d'un nombre, ou -1 s'il est hors du vivier (donc forgé)."""
+    t = table_raretes()
+    return int(t[n - 1]) if 1 <= n <= VIVIER else -1
+
+
+def _entiers(cle) -> list[int]:
+    """Les clés JSON sont des chaînes ; on ignore silencieusement l'invalide."""
+    out = []
+    for k in cle:
+        try:
+            out.append(int(k))
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def mesurer(donnees: dict) -> dict:
+    """Métriques du classement, lues dans la sauvegarde."""
+    if not isinstance(donnees, dict):
+        return {}
+    possedes = _entiers((donnees.get("owned") or {}).keys())
+    stats = donnees.get("stats") or {}
+
+    tirables = [n for n in possedes if 1 <= n <= VIVIER]
+    forges = [n for n in possedes if n == 0 or n >= FORGE_MIN]
+
+    compte = {}
+    for n in tirables:
+        compte[rarete(n)] = compte.get(rarete(n), 0) + 1
+
+    return {
+        "nombres": len(possedes),
+        "completion": round(len(tirables) / VIVIER * 100, 2),
+        "mythiques": compte.get(5, 0),
+        "legendaires": compte.get(4, 0),
+        "forges": len(forges),
+        "theoremes": len(donnees.get("claimed") or []),
+        "defis": len(donnees.get("defis") or []),
+        "tirages": int(stats.get("pulls") or 0),
+        "examen": int(stats.get("meilleureSerie") or 0),
+    }
+
+
+def incoherences(donnees: dict, m: dict) -> str:
+    """
+    Contrôles de plausibilité. Ils n'arrêtent pas un tricheur déterminé — le jeu
+    calcule tout côté client — mais ils repèrent la triche d'un clic et signalent
+    la partie dans l'admin plutôt que de la laisser fausser le classement.
+    """
+    stats = donnees.get("stats") or {}
+    motifs = []
+
+    # Un nombre du vivier vient d'un tirage, d'une carte bonus de commande, ou
+    # d'un doublon recyclé. En rester très large : deux fois le nombre de
+    # tirages plus dix par commande couvre largement le jeu honnête.
+    plafond = int(stats.get("pulls") or 0) * 2 + int(stats.get("forges") or 0) * 10 + 50
+    tirables = m.get("completion", 0) / 100 * VIVIER
+    if tirables > plafond:
+        motifs.append(f"{int(tirables)} nombres tirables pour {stats.get('pulls', 0)} tirages")
+
+    # Chaque nombre au-delà du mur demande une commande de forge résolue.
+    if m.get("forges", 0) > int(stats.get("forges") or 0) + 5:
+        motifs.append(f"{m['forges']} nombres forgés pour {stats.get('forges', 0)} commandes")
+
+    # Les douze mythiques et onze légendaires du vivier sont un plafond absolu.
+    if m.get("mythiques", 0) > 12 or m.get("legendaires", 0) > 11:
+        motifs.append("plus de mythiques ou de légendaires qu'il n'en existe")
+
+    if m.get("theoremes", 0) > 14 or m.get("defis", 0) > 22:
+        motifs.append("plus de théorèmes ou de défis qu'il n'en existe")
+
+    return " ; ".join(motifs)[:200]

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gacha des Nombres</title>
+<!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
+     après une modification. Incrémenter à chaque changement de source. -->
+<link rel="stylesheet" href="css/style.css?v=27">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
+</head>
+<body>
+
+<div id="boot"><div class="bootInner"><div class="bootNum">0000</div><p>Évaluation de dix mille nombres…</p></div></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brandIcon">🔢</span>
+    <span class="brandText"><b>GACHA</b><i>DES NOMBRES</i></span>
+  </div>
+  <div class="wallet">
+    <button class="nuage" id="nuageBtn" title="Sauvegarde en ligne"><span class="nIc">◌</span><span class="nTxt">…</span></button>
+    <div class="cur coins" title="Jetons — servent aux tirages">
+      <span class="ic">🪙</span>
+      <span class="val" id="wCoins">0</span>
+      <span class="sub" id="wRate">+0/min</span>
+    </div>
+    <div class="cur dust" title="Poussière numérique — sert à la Forge">
+      <span class="ic">✨</span>
+      <span class="val" id="wDust">0</span>
+      <span class="sub">poussière</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="gacha"      class="on"><span>🎰</span>Tirage<i class="badge" id="bTirage"></i></button>
+  <button data-tab="collection"><span>🗃️</span>Collection<i class="badge" id="bCollection"></i></button>
+  <button data-tab="forge"><span>⚒️</span>Forge</button>
+  <button data-tab="theoremes"><span>📐</span>Théorèmes<i class="badge alert" id="bTheo"></i></button>
+  <button data-tab="defis"><span>🏅</span>Défis<i class="badge alert" id="bDefis"></i></button>
+  <button data-tab="revision"><span>🎓</span>Révision</button>
+  <button data-tab="classement"><span>🏆</span>Classement</button>
+  <button data-tab="oracle"><span>🔮</span>Oracle</button>
+</nav>
+
+<main>
+
+  <!-- ══════════ TIRAGE ══════════ -->
+  <section id="tab-gacha" class="tab on">
+    <div class="pullStage">
+      <div class="machine">
+        <div class="machineGlow"></div>
+        <div class="machineNum" id="idleNum">?</div>
+        <p class="machineCaption">La rareté n'est pas décidée. Elle est <b>calculée</b>.</p>
+      </div>
+
+      <div class="packSizes" id="packSizes"></div>
+      <div class="pullBtns">
+        <button class="btn big gold" id="btnPull">
+          <b id="pullLabel">Tirer ×10</b><small id="pullCost">🪙 720</small>
+        </button>
+      </div>
+
+      <div class="pityRow">
+        <div class="pity">
+          <label>Garantie Épique</label>
+          <div class="bar"><i id="pityEpicBar"></i></div>
+          <span id="pityEpicTxt">0 / 30</span>
+        </div>
+        <div class="pity">
+          <label>Garantie Légendaire</label>
+          <div class="bar leg"><i id="pityLegBar"></i></div>
+          <span id="pityLegTxt">0 / 90</span>
+        </div>
+      </div>
+
+      <details class="odds">
+        <summary>Taux d'apparition & fonctionnement</summary>
+        <div class="oddsBody">
+          <p>Le tirage pioche un <b>entier entre 1 et 9 999</b>. Sa rareté n'est pas attribuée : elle est déduite de ses propriétés mathématiques réelles (premier, parfait, palindrome, narcissique…). Un nombre parfait est Mythique parce qu'il en existe quatre.</p>
+          <table id="oddsTable"></table>
+          <p class="tiny">Le zéro et tout ce qui dépasse 9 999 sont hors du vivier : il faut les <b>forger</b>. Et attention à l’<b>inflation numérique</b> — chaque nombre déjà possédé renchérit le tirage suivant de 2 jetons.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ══════════ COLLECTION ══════════ -->
+  <section id="tab-collection" class="tab">
+    <div class="toolbar">
+      <input type="search" id="colSearch" placeholder="Chercher un nombre…" inputmode="numeric">
+      <select id="colSort">
+        <option value="num">Ordre numérique</option>
+        <option value="rarity">Rareté</option>
+        <option value="copies">Nombre de copies</option>
+        <option value="recent">Acquisition récente</option>
+      </select>
+      <div class="chips" id="colFilters"></div>
+      <div class="chips" id="colTerritoires"></div>
+      <button class="btn ghost" id="btnAll" title="Affiche aussi les nombres que vous ne possédez pas encore">🌐 Vue exhaustive</button>
+      <button class="btn ghost" id="btnRecycle" title="Fond toutes les copies excédentaires en poussière — attention, cela réduit aussi le revenu passif">♻️ Recycler les doublons</button>
+    </div>
+    <div class="colStats" id="colStats"></div>
+    <div class="grid" id="colGrid"></div>
+    <div class="colMore" id="colMore"></div>
+  </section>
+
+  <!-- ══════════ FORGE ══════════ -->
+  <section id="tab-forge" class="tab">
+    <div class="forgeIntro">
+      <h2>⚒️ La Forge — Le Compte est Bon</h2>
+      <p>Le tirage règne sur <b>1 à 9 999</b> : c'est le domaine de la chance. La Forge règne sur le reste — <b>0</b>, et <b>10 000 à 99 999</b> : c'est le domaine de l'adresse. Ici vous ne choisissez pas ce que vous fabriquez. La Forge pioche six nombres dans votre collection, annonce une cible, et vous laisse chercher.</p>
+    </div>
+    <div id="forgeZone"></div>
+  </section>
+
+  <!-- ══════════ THÉORÈMES ══════════ -->
+  <section id="tab-theoremes" class="tab">
+    <div class="forgeIntro">
+      <h2>📐 Théorèmes</h2>
+      <p>Réunissez un ensemble complet pour le <b>démontrer</b> et empocher un bonus permanent. Certains ensembles sont hors de portée du tirage — la Forge est obligatoire.</p>
+    </div>
+    <div class="bonusSummary" id="bonusSummary"></div>
+    <div class="theoList" id="theoList"></div>
+  </section>
+
+  <!-- ══════════ DÉFIS ══════════ -->
+  <section id="tab-defis" class="tab">
+    <div class="forgeIntro">
+      <h2>🏅 Défis</h2>
+      <p>Des jalons, des primes, et une mesure honnête du temps que vous avez investi là-dedans.</p>
+    </div>
+    <div class="defiList" id="defiList"></div>
+    <div class="statsPanel" id="statsPanel"></div>
+    <div class="dangerZone">
+      <button class="btn ghost danger" id="btnWipe">Effacer la sauvegarde</button>
+    </div>
+  </section>
+
+  <!-- ══════════ RÉVISION ══════════ -->
+  <section id="tab-revision" class="tab">
+    <div class="forgeIntro">
+      <h2>🎓 Révision</h2>
+      <p>Vous savez reconnaître un nombre parfait quand la fiche vous le dit. Mais sans la fiche ? Quatre nombres de votre collection, un trait demandé, un seul qui le porte. Les cartes sont anonymes : aucune couleur, aucun surnom, rien qui trahisse la réponse.</p>
+    </div>
+    <div id="revZone"></div>
+  </section>
+
+  <!-- ══════════ CLASSEMENT ══════════ -->
+  <section id="tab-classement" class="tab">
+    <div class="forgeIntro">
+      <h2>🏆 Classement</h2>
+      <p>Les colonnes ne sont pas envoyées par les joueurs : le serveur les recalcule depuis les sauvegardes qu'il reçoit, et écarte les parties incohérentes.</p>
+    </div>
+    <div id="clZone"></div>
+  </section>
+
+  <!-- ══════════ ORACLE ══════════ -->
+  <section id="tab-oracle" class="tab">
+    <div class="forgeIntro">
+      <h2>🔮 L'Oracle</h2>
+      <p>Interrogez n'importe quel entier de <b>0</b> à <b>99 999</b>. L'Oracle est gratuit et ne vous donne rien : il vous dit seulement ce que le nombre vaut, et pourquoi.</p>
+    </div>
+    <div class="oracleBar">
+      <input type="number" id="oracleIn" min="0" max="99999" placeholder="Un nombre…" inputmode="numeric">
+      <button class="btn" id="btnOracle">Consulter</button>
+      <button class="btn ghost" id="btnOracleRnd">🎲 Au hasard</button>
+    </div>
+    <div id="oracleOut"></div>
+    <div class="codex">
+      <h3>Codex des traits</h3>
+      <p class="tiny">Toutes les propriétés que le moteur sait reconnaître, de la plus précieuse à la plus banale.</p>
+      <div class="codexList" id="codexList"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- révélation des tirages -->
+<div id="reveal" class="reveal">
+  <div class="revealHead"><span id="revealTitle"></span><button class="btn ghost sm" id="revealSkip">Tout révéler</button></div>
+  <div class="revealGrid" id="revealGrid"></div>
+  <div class="revealFoot"><button class="btn" id="revealClose">Continuer</button><span id="revealSummary"></span></div>
+</div>
+
+<!-- fiche détaillée -->
+<div id="modal" class="modal"><div class="modalBox" id="modalBox"></div></div>
+
+<div id="toasts"></div>
+
+<script src="js/numerology.js?v=27"></script>
+<script src="js/data.js?v=27"></script>
+<script src="js/state.js?v=27"></script>
+<script src="js/nuage.js?v=27"></script>
+<script src="js/classement.js?v=27"></script>
+<script src="js/forge.js?v=27"></script>
+<script src="js/forge-ui.js?v=27"></script>
+<script src="js/revision.js?v=27"></script>
+<script src="js/appariement.js?v=27"></script>
+<script src="js/ui.js?v=27"></script>
+</body>
+</html>

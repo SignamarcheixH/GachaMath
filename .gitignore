@@ -1,0 +1,10 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+serveur/db.sqlite3
+serveur/statique/
+.env
+
+# Système
+.DS_Store
+Thumbs.db

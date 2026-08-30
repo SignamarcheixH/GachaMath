@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gacha",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "manage.py",
+        "runserver",
+        "8778",
+        "--noreload"
+      ],
+      "cwd": "serveur",
+      "port": 8778
+    },
+    {
+      "name": "gacha-statique",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8777"
+      ],
+      "port": 8777
+    }
+  ]
+}
