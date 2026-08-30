@@ -318,6 +318,34 @@ Quand les deux côtés ont avancé séparément, le jeu **ne tranche pas** : il
 affiche les deux versions avec leur date et leur nombre de cartes, et propose de
 télécharger la locale avant de choisir.
 
+## Sur téléphone
+
+Testé à 375 px. Quatre choses ne tenaient pas, et une cinquième était fausse.
+
+**La barre du haut rognait le compteur de poussière.** Sous 560 px, le pseudo du
+nuage s'efface au profit de la seule icône, et les compteurs se resserrent : le
+solde compte plus que le nom.
+
+**La grille de la Forge repliait « a op b = res » sur quatre rangées** — l'équation
+devenait illisible. Comprimer les cases ne suffisait pas : elle passe en grille
+explicite, opérandes sur la première ligne, `= résultat` sur la seconde. C'est la
+façon normale d'écrire une équation dans une colonne étroite.
+
+**Rien ne laissait deviner qu'il y a huit onglets.** La barre défile désormais
+avec un dégradé aux bords, et l'onglet choisi se recentre tout seul — sinon on
+touche « Oracle » et l'en-tête continue d'afficher « Tirage ».
+
+**Les cibles tactiles** passent à 44 px sur les chips, les tailles de paquet et
+les petits boutons.
+
+**Et le jeu mentait.** Il disait « Glissez un jeton » et « Clic droit pour
+retirer » : deux gestes qui n'existent pas au doigt — le glisser-déposer HTML5
+n'est pas implémenté sur mobile. Les consignes se lisent maintenant selon
+l'appareil (`pointer: coarse`) et décrivent le geste qu'il sait faire.
+
+Vérifié après coup : aucun débordement sur les huit onglets, aucun bouton sous
+32 px, et rien n'a bougé à 1 280 px.
+
 ## Modifier le code
 
 Les balises `<script>` et `<link>` portent un `?v=N`. Sans lui, les navigateurs

@@ -79,6 +79,7 @@ function initUI() {
     $$('#tabs button').forEach(b => b.classList.toggle('on', b === btn));
     $$('main .tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + btn.dataset.tab));
     renderAll();
+    centrerOnglet(btn);
     if (btn.dataset.tab === 'classement' && typeof ouvrirClassement === 'function') ouvrirClassement();
   });
 
@@ -147,6 +148,10 @@ Votre partie restera sauvegardée en ligne sous « ${nuage.pseudo} » `
     if ($('#reveal').classList.contains('on')) closeReveal();
   });
 
+  reglerFondsOnglets();
+  $('#tabs').addEventListener('scroll', reglerFondsOnglets, { passive: true });
+  window.addEventListener('resize', reglerFondsOnglets);
+
   buildPackSizes();
   buildRarityChips();
   buildOddsTable();
@@ -159,6 +164,30 @@ Votre partie restera sauvegardée en ligne sous « ${nuage.pseudo} » `
 }
 
 const intOrNull = v => { const n = parseInt(v, 10); return Number.isInteger(n) ? n : null; };
+
+/* Le glisser-déposer HTML5 n'existe pas sur mobile, et le clic droit non plus.
+   Les consignes doivent décrire le geste que l'appareil sait faire, pas celui
+   qu'on avait en tête en l'écrivant. */
+const tactile = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+/* Sur téléphone, huit onglets ne tiennent pas : la barre défile. Un dégradé aux
+   bords est le seul indice qu'il en reste derrière — sans lui, la moitié du jeu
+   est invisible. */
+function reglerFondsOnglets() {
+  const t = $('#tabs');
+  if (!t) return;
+  const marge = 4;
+  t.classList.toggle('fondD', t.scrollLeft + t.clientWidth < t.scrollWidth - marge);
+  t.classList.toggle('fondG', t.scrollLeft > marge);
+}
+
+/* L'onglet choisi doit rester visible : sinon on clique sur « Oracle » et la
+   barre continue d'afficher « Tirage ». */
+function centrerOnglet(btn) {
+  if (!btn || !btn.scrollIntoView) return;
+  btn.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  setTimeout(reglerFondsOnglets, 400);
+}
 
 /* ============================================================
    RENDU GLOBAL

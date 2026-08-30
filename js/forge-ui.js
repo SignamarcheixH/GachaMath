@@ -134,8 +134,9 @@ function guideHTML(c) {
         ${verrou ? '' : `data-slot="${l.i}:${ch}"`}
         ${!verrou && occupe && !perime ? 'draggable="true"' : ''}
         title="${verrou ? 'Case donnée' : perime
-          ? 'Jeton périmé — retirez-le (clic, ou clic droit)'
-          : (occupe ? 'Clic ou clic droit pour retirer' : 'Déposez un jeton')}"
+          ? 'Jeton périmé — retirez-le'
+          : (occupe ? (tactile ? 'Touchez pour retirer' : 'Clic ou clic droit pour retirer')
+                    : 'Déposez un jeton')}"
       >${txt}</span>`;
     };
     const verrouOp = verrouille(g, l.i, 'op');
@@ -173,9 +174,13 @@ function guideHTML(c) {
   return `<div class="guide">
     <div class="guideHead">
       <h3>🧩 L'établi</h3>
-      <span class="tiny">Glissez un jeton dans une case — ou cliquez le jeton, puis la case.
-        Chaque ligne complétée <b>fabrique un nouveau jeton</b> : le vôtre, juste ou faux.
-        <b>Clic droit</b> sur un jeton posé pour le retirer.</span>
+      <span class="tiny">${tactile
+        ? `Touchez un jeton, puis la case où le poser. Chaque ligne complétée
+           <b>fabrique un nouveau jeton</b> : le vôtre, juste ou faux.
+           Touchez un jeton posé pour le retirer.`
+        : `Glissez un jeton dans une case — ou cliquez le jeton, puis la case.
+           Chaque ligne complétée <b>fabrique un nouveau jeton</b> : le vôtre, juste ou faux.
+           <b>Clic droit</b> sur un jeton posé pour le retirer.`}</span>
     </div>
 
     <div class="guideLignes">${et.lignes.map(ligneHTML).join('')}</div>

@@ -86,7 +86,9 @@ function appHTML(r) {
     </div>
 
     <p class="tiny appConsigne">
-      Glissez une étiquette sur une autre pour les <b>échanger</b> — ou cliquez-en une, puis l'autre.
+      ${tactile
+        ? `Touchez une étiquette, puis une autre, pour les <b>échanger</b>.`
+        : `Glissez une étiquette sur une autre pour les <b>échanger</b> — ou cliquez-en une, puis l'autre.`}
       Chaque définition attend le trait qui lui fait face. À la vérification, les lignes justes se verrouillent.
     </p>
 
