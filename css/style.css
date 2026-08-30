@@ -1009,7 +1009,16 @@ select option { background: var(--bg2); }
   box-shadow: 0 6px 20px rgba(0,0,0,.5);
 }
 .pubTemoin b { color: var(--gold); }
-#pubLecture { margin-top: 26px; }
+/* L'écart n'est pas décoratif : c'est lui qui empêche un doigt qui vise une
+   commande du jeu d'atterrir sur une annonce. On ne descend pas en dessous. */
+.pubVue { margin: 48px 0; }
+.pubVue:empty { display: none; margin: 0; }
+@media (max-width: 620px) { .pubVue { margin: 36px 0; } }
+
+/* Un filet au-dessus : la frontière entre le jeu et l'annonce doit être
+   visible, pas seulement large. */
+.pubVue .pub { border-top: 1px solid var(--line); padding-top: 14px; }
+
 #pubBas { padding: 0 clamp(12px, 4vw, 34px); }
 
 /* ══════════ PIED DE PAGE ══════════ */

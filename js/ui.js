@@ -122,7 +122,7 @@ function ouvrirOnglet(nom, pousser = true) {
 
   renderAll();
   centrerOnglet(btn);
-  if (typeof majPubLecture === 'function') majPubLecture();
+  if (typeof majPubVue === 'function') majPubVue();
   if (nom === 'classement' && typeof ouvrirClassement === 'function') ouvrirClassement();
 }
 

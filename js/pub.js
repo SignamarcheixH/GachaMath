@@ -61,6 +61,9 @@ function dessinerApercu(bloc) {
   const zone = bloc.querySelector('.pubZone');
   const bas = bloc.classList.contains('bas');
   const h = Math.round(parseFloat(getComputedStyle(zone).minHeight)) || 0;
+  if (zone.dataset.h === String(h)) return;           // rien n'a changé
+  zone.dataset.h = h;
+  if (_oeil) _oeil.observe(zone);
   const dim = bas
     ? (h <= 60 ? '320 × 50' : '728 × 90 → 970 × 90')
     : '300 × 250 → 336 × 280';
@@ -79,19 +82,23 @@ function dessinerApercu(bloc) {
        </div>`;
 }
 
-let _redessin = null;
-if (typeof window !== 'undefined') {
-  window.addEventListener('resize', () => {
-    if (!APERCU()) return;
-    clearTimeout(_redessin);
-    _redessin = setTimeout(() => document.querySelectorAll('.pub').forEach(dessinerApercu), 120);
-  });
-}
+/* On observe la boîte plutôt que la fenêtre. Un écouteur `resize` rate le cas
+   principal : le tout premier dessin, qui a lieu avant que la mise en page ne
+   soit stabilisée — l'encadré annonçait alors 50 px sur un bloc de 90.
+   `dataset.h` retient la dernière hauteur dessinée, ce qui rend le redessin
+   idempotent et empêche l'observateur de se rappeler lui-même en boucle. */
+const _oeil = typeof ResizeObserver !== 'undefined'
+  ? new ResizeObserver(entrees => entrees.forEach(e => {
+      const bloc = e.target.closest('.pub');
+      if (bloc) dessinerApercu(bloc);
+    }))
+  : null;
 
 function poser(bloc) {
   if (!bloc || _posesFaites.has(bloc)) return;
   const nom = bloc.dataset.pub;
-  const unite = (PUB.emplacements || {})[nom];
+  const emp = PUB.emplacements || {};
+  const unite = emp[nom] || (nom === 'bas' ? '' : emp.lecture);
 
   if (APERCU()) {                         // visualisation sans script tiers
     _posesFaites.add(bloc);
@@ -145,20 +152,39 @@ function initPub() {
   const pied = document.querySelector('#pubBas');
   if (pied) { pied.innerHTML = emplacementHTML('bas', 'bas'); poser(pied.firstElementChild); }
 
-  majPubLecture();
+  majPubVue();
 }
 
-/* Le rectangle de lecture ne s'affiche que sur les vues où l'on lit. Sur le
-   Tirage et la Forge, il n'apparaît jamais. */
-function majPubLecture() {
+/* Chaque onglet a son emplacement, posé à un endroit choisi pour lui — jamais
+   au-dessus d'un établi de Forge ni contre le bouton « Tirer ».
+
+   Il est construit à la première ouverture de l'onglet, et plus jamais touché
+   ensuite. Deux raisons, et la seconde compte davantage que la première :
+
+   1. Une annonce poussée dans un conteneur masqué se dessine en 0×0 et revient
+      « unfilled » — il faut donc attendre que l'onglet soit visible.
+   2. Détruire puis reconstruire l'emplacement à chaque passage vaudrait une
+      nouvelle requête publicitaire par aller-retour. Des impressions que
+      personne ne voit, un taux de clic écrasé, et un profil de trafic qui
+      ressemble à s'y méprendre à du trafic invalide — le motif de fermeture de
+      compte le plus courant après le clic accidentel. On paie donc une
+      requête par onglet et par chargement de page, pas une par visite.
+   ============================================================ */
+function majPubVue() {
   if (!PUB_ACTIVE()) return;
   const onglet = document.querySelector('#tabs button.on');
-  const vue = onglet ? onglet.dataset.tab : '';
-  const zone = document.querySelector('#pubLecture');
-  if (!zone) return;
+  if (!onglet) return;                                // page de contenu : rien à faire
+  const vue = onglet.dataset.tab;
 
-  if (!(PUB.vuesLecture || []).includes(vue)) { zone.innerHTML = ''; return; }
-  if (zone.firstElementChild) return;                 // déjà en place
-  zone.innerHTML = emplacementHTML('lecture', 'lecture');
+  const autorisees = PUB.vues || [];
+  if (!autorisees.includes(vue)) return;
+
+  const zone = document.querySelector(`.pubVue[data-vue="${vue}"]`);
+  if (!zone || zone.firstElementChild) return;        // absent, ou déjà en place
+  /* Une vue qui s'ouvre sur une liste demande un bandeau : un rectangle de
+     250 px repousserait tout le contenu sous la ligne de flottaison, et on
+     n'ouvre pas sa collection pour regarder une annonce. */
+  zone.innerHTML = emplacementHTML(vue, zone.dataset.format || 'lecture');
   poser(zone.firstElementChild);
 }
+

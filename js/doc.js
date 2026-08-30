@@ -59,7 +59,7 @@
     if (pousser) history.pushState({ doc: url }, '', url + location.search);
     window.scrollTo(0, 0);
     cabler();
-    if (typeof majPubLecture === 'function') majPubLecture();
+    if (typeof majPubVue === 'function') majPubVue();
   }
 
   function cabler() {

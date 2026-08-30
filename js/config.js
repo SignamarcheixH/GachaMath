@@ -23,17 +23,25 @@ const PUB = {
   // Identifiant éditeur, de la forme "ca-pub-1234567890123456".
   client: '',
 
-  // Identifiants des blocs créés dans la console AdSense.
-  // Laissez vide pour qu'un emplacement reste inactif.
+  /* Identifiants des blocs créés dans la console AdSense.
+
+     Deux suffisent pour démarrer : « bas » et « lecture ». Toute vue sans
+     identifiant propre retombe sur « lecture ». Ajouter la clé d'une vue —
+     collection: 'xxxx' — lui donne son propre bloc, et donc sa propre ligne
+     dans les rapports, sans rien changer au code. */
   emplacements: {
     bas: '',        // bandeau en bas de page, sur toutes les vues
-    lecture: '',    // rectangle sur les vues de lecture (Oracle, Défis, Classement)
+    lecture: '',    // rectangle dans le corps de chaque vue, par défaut
   },
 
-  /* Les vues où une annonce est tolérable : on lit, on ne joue pas.
-     Jamais le Tirage ni la Forge — on n'interrompt pas une partie, et une
-     annonce près du bouton « Tirer » ferait des clics accidentels. */
-  vuesLecture: ['oracle', 'defis', 'classement', 'theoremes'],
+  /* Les vues qui reçoivent un rectangle dans leur contenu.
+
+     L'emplacement est ancré dans le HTML de chaque onglet (`.pubVue`), à un
+     endroit choisi pour cet onglet : jamais au-dessus de l'établi de la Forge,
+     jamais contre le bouton « Tirer », jamais au milieu d'un quiz chronométré.
+     Retirer une vue de cette liste suffit à la laisser sans annonce. */
+  vues: ['gacha', 'collection', 'forge', 'theoremes',
+         'defis', 'revision', 'classement', 'oracle'],
 
   // Mettre à true pour visualiser les emplacements sans charger AdSense.
   apercu: false,

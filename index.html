@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=37">
+<link rel="stylesheet" href="css/style.css?v=41">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 </head>
 <body>
@@ -79,6 +79,9 @@
         </div>
       </div>
 
+    <!-- Loin du bouton Tirer : la barre de garantie fait tampon. -->
+    <div class="pubVue" data-vue="gacha"></div>
+
       <details class="odds">
         <summary>Taux d'apparition & fonctionnement</summary>
         <div class="oddsBody">
@@ -106,6 +109,11 @@
       <button class="btn ghost" id="btnRecycle" title="Fond toutes les copies excédentaires en poussière — attention, cela réduit aussi le revenu passif">♻️ Recycler les doublons</button>
     </div>
     <div class="colStats" id="colStats"></div>
+
+    <!-- Sous les chiffres, avant la grille. -->
+    <div class="pubVue" data-vue="collection" data-format="bas"></div>
+    <!-- Bandeau plutot que rectangle : la grille doit rester visible. -->
+
     <div class="grid" id="colGrid"></div>
     <div class="colMore" id="colMore"></div>
   </section>
@@ -117,6 +125,10 @@
       <p>Le tirage règne sur <b>1 à 9 999</b> : c'est le domaine de la chance. La Forge règne sur le reste — <b>0</b>, et <b>10 000 à 99 999</b> : c'est le domaine de l'adresse. Ici vous ne choisissez pas ce que vous fabriquez. La Forge pioche six nombres dans votre collection, annonce une cible, et vous laisse chercher.</p>
     </div>
     <div id="forgeZone"></div>
+
+    <!-- Après l'etabli : au-dessus, tout est glisser-deposer. -->
+    <div class="pubVue" data-vue="forge"></div>
+
   </section>
 
   <!-- ══════════ THÉORÈMES ══════════ -->
@@ -126,6 +138,11 @@
       <p>Réunissez un ensemble complet pour le <b>démontrer</b> et empocher un bonus permanent. Certains ensembles sont hors de portée du tirage — la Forge est obligatoire.</p>
     </div>
     <div class="bonusSummary" id="bonusSummary"></div>
+
+    <!-- Entre le resume et la liste. -->
+    <div class="pubVue" data-vue="theoremes" data-format="bas"></div>
+    <!-- Bandeau plutot que rectangle : la liste doit rester visible. -->
+
     <div class="theoList" id="theoList"></div>
   </section>
 
@@ -136,6 +153,10 @@
       <p>Des jalons, des primes, et une mesure honnête du temps que vous avez investi là-dedans.</p>
     </div>
     <div class="defiList" id="defiList"></div>
+
+    <!-- Entre les defis et les statistiques, loin d'Encaisser. -->
+    <div class="pubVue" data-vue="defis"></div>
+
     <div class="statsPanel" id="statsPanel"></div>
     <div class="dangerZone">
       <button class="btn ghost danger" id="btnWipe">Effacer la sauvegarde</button>
@@ -149,6 +170,10 @@
       <p>Vous savez reconnaître un nombre parfait quand la fiche vous le dit. Mais sans la fiche ? Quatre nombres de votre collection, un trait demandé, un seul qui le porte. Les cartes sont anonymes : aucune couleur, aucun surnom, rien qui trahisse la réponse.</p>
     </div>
     <div id="revZone"></div>
+
+    <!-- Apres l'exercice : le quiz est chronometre. -->
+    <div class="pubVue" data-vue="revision"></div>
+
   </section>
 
   <!-- ══════════ CLASSEMENT ══════════ -->
@@ -158,6 +183,10 @@
       <p>Les colonnes ne sont pas envoyées par les joueurs : le serveur les recalcule depuis les sauvegardes qu'il reçoit, et écarte les parties incohérentes.</p>
     </div>
     <div id="clZone"></div>
+
+    <!-- Apres le tableau. -->
+    <div class="pubVue" data-vue="classement"></div>
+
   </section>
 
   <!-- ══════════ ORACLE ══════════ -->
@@ -172,6 +201,10 @@
       <button class="btn ghost" id="btnOracleRnd">🎲 Au hasard</button>
     </div>
     <div id="oracleOut"></div>
+
+    <!-- Entre la fiche et le codex. -->
+    <div class="pubVue" data-vue="oracle"></div>
+
     <div class="codex">
       <h3>Codex des traits</h3>
       <p class="tiny">Toutes les propriétés que le moteur sait reconnaître, de la plus précieuse à la plus banale.</p>
@@ -179,7 +212,6 @@
     </div>
   </section>
 
-  <div id="pubLecture"></div>
 </main>
 
 <div id="pubBas"></div>
@@ -206,17 +238,17 @@
 
 <div id="toasts"></div>
 
-<script src="js/config.js?v=37"></script>
-<script src="js/pub.js?v=37"></script>
-<script src="js/numerology.js?v=37"></script>
-<script src="js/data.js?v=37"></script>
-<script src="js/state.js?v=37"></script>
-<script src="js/nuage.js?v=37"></script>
-<script src="js/classement.js?v=37"></script>
-<script src="js/forge.js?v=37"></script>
-<script src="js/forge-ui.js?v=37"></script>
-<script src="js/revision.js?v=37"></script>
-<script src="js/appariement.js?v=37"></script>
-<script src="js/ui.js?v=37"></script>
+<script src="js/config.js?v=41"></script>
+<script src="js/pub.js?v=41"></script>
+<script src="js/numerology.js?v=41"></script>
+<script src="js/data.js?v=41"></script>
+<script src="js/state.js?v=41"></script>
+<script src="js/nuage.js?v=41"></script>
+<script src="js/classement.js?v=41"></script>
+<script src="js/forge.js?v=41"></script>
+<script src="js/forge-ui.js?v=41"></script>
+<script src="js/revision.js?v=41"></script>
+<script src="js/appariement.js?v=41"></script>
+<script src="js/ui.js?v=41"></script>
 </body>
 </html>
