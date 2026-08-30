@@ -54,7 +54,9 @@
     const dLocal = document.querySelector('meta[name=description]');
     if (d && dLocal) dLocal.setAttribute('content', d.getAttribute('content'));
 
-    if (pousser) history.pushState({ doc: url }, '', url);
+    // On conserve la requête (?pubs) : sinon l'aperçu s'éteint à la
+    // première navigation, ce qui est déroutant.
+    if (pousser) history.pushState({ doc: url }, '', url + location.search);
     window.scrollTo(0, 0);
     cabler();
     if (typeof majPubLecture === 'function') majPubLecture();

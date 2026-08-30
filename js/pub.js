@@ -14,7 +14,14 @@
       absent — l'emplacement se referme proprement. Pas de trou.
    ============================================================ */
 
-const PUB_ACTIVE = () => !!(typeof PUB !== 'undefined' && (PUB.client || PUB.apercu));
+/* Aperçu : `?pubs` dans l'adresse dessine les emplacements sans appeler
+   quoi que ce soit chez Google. Passer par l'URL plutôt que par un
+   interrupteur dans le fichier évite le grand classique — visualiser,
+   oublier, et mettre en ligne avec des rectangles de couleur. */
+const APERCU = () =>
+  (typeof PUB !== 'undefined' && PUB.apercu) || /[?&]pubs(=|&|$)/.test(location.search);
+
+const PUB_ACTIVE = () => !!(typeof PUB !== 'undefined' && (PUB.client || APERCU()));
 
 let _scriptDemande = false;
 const _posesFaites = new WeakSet();
@@ -23,7 +30,7 @@ const _posesFaites = new WeakSet();
    qui recueille le consentement européen, et il doit donc se charger avant
    toute annonce — pas après. */
 function chargerRegie() {
-  if (_scriptDemande || !PUB.client) return;
+  if (_scriptDemande || !PUB.client || APERCU()) return;
   _scriptDemande = true;
   const s = document.createElement('script');
   s.async = true;
@@ -47,15 +54,48 @@ function emplacementHTML(nom, format) {
   </aside>`;
 }
 
+/* La hauteur réservée vient d'une media query : on la lit sur l'élément plutôt
+   que de la recopier en JavaScript, sinon l'aperçu finit par annoncer une
+   taille et en dessiner une autre. */
+function dessinerApercu(bloc) {
+  const zone = bloc.querySelector('.pubZone');
+  const bas = bloc.classList.contains('bas');
+  const h = Math.round(parseFloat(getComputedStyle(zone).minHeight)) || 0;
+  const dim = bas
+    ? (h <= 60 ? '320 × 50' : '728 × 90 → 970 × 90')
+    : '300 × 250 → 336 × 280';
+  /* Sous 90 px, trois lignes ne tiennent pas : l'aperçu deviendrait plus haut
+     que l'annonce qu'il représente, et montrerait donc l'inverse de ce qu'on
+     veut vérifier. On se replie sur une ligne. */
+  const court = h < 90;
+  zone.innerHTML = court
+    ? `<div class="pubApercu court ${bas ? 'bas' : 'lecture'}">
+         <b>« ${bloc.dataset.pub} » · ${dim} · ${h} px</b>
+       </div>`
+    : `<div class="pubApercu ${bas ? 'bas' : 'lecture'}">
+         <b>emplacement « ${bloc.dataset.pub} »</b>
+         <span>${bas ? 'bandeau horizontal' : 'rectangle'} · ${dim}</span>
+         <small>hauteur réservée : ${h} px — le contenu ne bougera pas</small>
+       </div>`;
+}
+
+let _redessin = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    if (!APERCU()) return;
+    clearTimeout(_redessin);
+    _redessin = setTimeout(() => document.querySelectorAll('.pub').forEach(dessinerApercu), 120);
+  });
+}
+
 function poser(bloc) {
   if (!bloc || _posesFaites.has(bloc)) return;
   const nom = bloc.dataset.pub;
   const unite = (PUB.emplacements || {})[nom];
 
-  if (PUB.apercu) {                       // visualisation sans script tiers
+  if (APERCU()) {                         // visualisation sans script tiers
     _posesFaites.add(bloc);
-    bloc.querySelector('.pubZone').innerHTML =
-      `<div class="pubApercu">emplacement « ${nom} »<br><small>${bloc.classList.contains('bas') ? '320×50 → 970×90' : '300×250 → 336×280'}</small></div>`;
+    dessinerApercu(bloc);
     return;
   }
 
@@ -82,10 +122,24 @@ function poser(bloc) {
   }, 3000);
 }
 
+/* Rappel visible en bas à gauche, et sortie en un clic. */
+function temoinApercu() {
+  if (document.querySelector('.pubTemoin')) return;
+  const t = document.createElement('div');
+  t.className = 'pubTemoin';
+  t.innerHTML = '<b>Aperçu des pubs</b> — aucune annonce chargée · <a href="#" style="color:inherit">quitter</a>';
+  t.querySelector('a').addEventListener('click', e => {
+    e.preventDefault();
+    location.href = location.pathname + location.hash;
+  });
+  document.body.appendChild(t);
+}
+
 /* ---------- insertion dans le jeu ---------- */
 function initPub() {
   if (!PUB_ACTIVE()) return;
   chargerRegie();
+  if (APERCU()) temoinApercu();
 
   // Le bandeau du bas vit sous le contenu, hors de toute zone de jeu.
   const pied = document.querySelector('#pubBas');
