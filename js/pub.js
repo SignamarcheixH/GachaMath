@@ -162,6 +162,45 @@ function temoinApercu() {
 }
 
 /* ---------- insertion dans le jeu ---------- */
+/* ============================================================
+   RETRAIT DU CONSENTEMENT
+
+   La CMP de Google s'affiche toute seule à la première visite : elle est
+   livrée par le script de la régie, rien à intégrer. En revanche elle
+   n'ajoute aucun moyen de revenir sur son choix — c'est à nous de le poser.
+
+   Ce n'est pas décoratif. Le RGPD exige que retirer son consentement soit
+   aussi simple que de le donner, et notre page de confidentialité annonce
+   explicitement un lien en bas de page.
+
+   Le lien n'apparaît que si la CMP s'est réellement chargée, ce qui n'arrive
+   que pour les visiteurs concernés par la réglementation européenne. Ailleurs,
+   il n'y a pas de consentement à retirer, et un lien qui n'ouvrirait rien
+   serait pire que pas de lien du tout.
+   ============================================================ */
+function lienConsentement() {
+  const pied = document.querySelector('.pied');
+  if (!pied || pied.querySelector('.gestionConsentement')) return;
+
+  window.googlefc = window.googlefc || {};
+  window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
+  window.googlefc.callbackQueue.push({ CONSENT_DATA_READY: () => {
+    const sep = document.createElement('span');
+    sep.textContent = '·';
+    const a = document.createElement('a');
+    a.href = '#';
+    a.className = 'gestionConsentement';
+    a.textContent = 'Gérer mon consentement';
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      if (window.googlefc && typeof googlefc.showRevocationMessage === 'function') {
+        googlefc.showRevocationMessage();
+      }
+    });
+    pied.append(sep, a);
+  }});
+}
+
 function initPub() {
   if (!PUB_ACTIVE()) {
     /* Le cas le plus courant : on regarde la page sans « ?pubs » alors qu'aucun
@@ -173,6 +212,7 @@ function initPub() {
     return;
   }
   chargerRegie();
+  lienConsentement();
   if (APERCU()) temoinApercu();
 
   /* Un index.html gardé en cache n'a pas les ancres par onglet : on verrait le
