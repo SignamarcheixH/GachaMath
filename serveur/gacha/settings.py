@@ -42,6 +42,27 @@ CSRF_COOKIE_HTTPONLY = False                # le client doit pouvoir le lire
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if not DEBUG else None
 
+# ---------------------------------------------------------------- en-têtes
+# Hors développement, tout passe en HTTPS. L'hébergeur termine le TLS et nous
+# transmet le protocole d'origine via l'en-tête déclaré ci-dessus ; sans lui,
+# la redirection tournerait en boucle.
+SECURE_SSL_REDIRECT = not DEBUG
+
+# HSTS : la durée est volontairement courte au départ. Ce réglage est
+# difficile à annuler — un navigateur qui l'a mémorisé refusera le HTTP
+# pendant toute la durée annoncée, même si le certificat tombe. On monte à
+# 31536000 (un an) une fois le domaine stable, pas avant.
+SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS", "0" if DEBUG else "3600"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False      # à n'activer qu'en connaissance de cause
+SECURE_HSTS_PRELOAD = False
+
+# Le jeu n'a aucune raison d'être affiché dans le cadre d'un autre site. Les
+# annonces AdSense ne sont pas concernées : ce sont elles qui sont dans des
+# cadres à l'intérieur de notre page, l'inverse de ce que cet en-tête bloque.
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 # ---------------------------------------------------------------- application
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -61,6 +82,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "gacha.urls"
@@ -121,6 +143,9 @@ def entetes_fichiers(headers, path, url):
     """
     if path.endswith((".html", ".htm")) or url.endswith("/"):
         headers["Cache-Control"] = "no-cache"
+        # WhiteNoise répond avant les middlewares : sans cette ligne, les pages
+        # du jeu seraient les seules à ne pas porter l'en-tête anti-cadrage.
+        headers["X-Frame-Options"] = "DENY"
     elif path.endswith((".js", ".css")):
         headers["Cache-Control"] = "public, max-age=31536000"
     elif path.endswith((".txt", ".xml")):        # robots.txt, sitemap.xml
