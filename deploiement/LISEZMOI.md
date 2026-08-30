@@ -4,14 +4,19 @@ Le jeu est un site statique ; Django ne sert que `/api/` et `/admin/`, et
 WhiteNoise sert le reste. Il n'y a donc **qu'un seul processus à déployer**,
 et aucune configuration CORS puisque tout partage la même origine.
 
-Ces fichiers valent pour n'importe quel VPS Debian ou Ubuntu — OVH, Hetzner,
-Scaleway, Lightsail. Rien ici n'est propre à un hébergeur.
+Cible : un **VPS OVH** sous Debian, avec **nginx** et Certbot. Rien n'est
+propre à OVH ceci dit, la même marche à suivre vaut ailleurs.
+
+⚠ Un *Hébergement Web* OVH (l'offre mutualisée, Perso ou Pro) ne convient
+pas : elle n'exécute que du PHP. Il faut un **VPS** ou une instance Public
+Cloud, où vous êtes root.
 
 ---
 
 ## 1. Avant de toucher au serveur
 
-**Le DNS d'abord.** Deux enregistrements A vers l'adresse IP du VPS :
+**Le DNS d'abord.** Dans la zone DNS OVH, deux enregistrements A vers l'IP
+du VPS :
 
 | Type | Nom   | Valeur          |
 |------|-------|-----------------|
@@ -19,8 +24,8 @@ Scaleway, Lightsail. Rien ici n'est propre à un hébergeur.
 | A    | `www` | l'IP du serveur |
 
 Attendez que `dig +short gachamath.fr` réponde la bonne adresse **avant** de
-démarrer Caddy. Let's Encrypt limite le nombre d'échecs de validation par
-semaine ; démarrer trop tôt peut vous bloquer plusieurs jours.
+lancer Certbot. Let's Encrypt limite le nombre d'échecs de validation par
+semaine ; s'y prendre trop tôt peut vous bloquer plusieurs jours.
 
 **La redirection de courrier.** Créez `contact@gachamath.fr` chez le
 registraire et faites-la suivre vers votre boîte habituelle. Cette adresse
@@ -33,7 +38,7 @@ fonctionner le jour de la demande AdSense, qui la vérifie.
 
 ```bash
 adduser --system --group --home /srv/gachamath gacha
-apt update && apt install -y python3-venv git caddy
+apt update && apt install -y python3-venv git nginx certbot python3-certbot-nginx sqlite3
 ```
 
 ## 3. Installer l'application
@@ -86,10 +91,30 @@ systemctl status gachamath
 
 ## 7. Ouvrir au public
 
+D'abord en HTTP seul, pour vérifier que la chaîne fonctionne :
+
 ```bash
-cp /srv/gachamath/deploiement/Caddyfile /etc/caddy/Caddyfile
-mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
-systemctl reload caddy
+cp /srv/gachamath/deploiement/nginx-gachamath.conf /etc/nginx/sites-available/gachamath
+ln -s /etc/nginx/sites-available/gachamath /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default        # la page d'accueil nginx
+nginx -t && systemctl reload nginx
+curl -sI http://gachamath.fr | head -1
+```
+
+Attendez-vous à un **301, pas à un 200** : `DJANGO_DEBUG=0` active la
+redirection vers HTTPS côté Django, alors que le certificat n'existe pas
+encore. C'est normal et sans conséquence pour la suite — Certbot sert sa
+vérification depuis nginx lui-même, sans jamais passer par Django. Ce qui
+compte à cette étape, c'est de voir une réponse : elle prouve que le DNS
+pointe ici et que nginx parle bien à gunicorn.
+
+Certbot ajoute ensuite le bloc TLS et la redirection permanente dans le
+fichier, et installe le renouvellement automatique :
+
+```bash
+certbot --nginx -d gachamath.fr -d www.gachamath.fr
+systemctl list-timers certbot          # le renouvellement est-il planifié ?
+certbot renew --dry-run                # répétition générale, sans rien émettre
 ```
 
 Vérifiez ensuite depuis votre poste :
@@ -98,6 +123,7 @@ Vérifiez ensuite depuis votre poste :
 curl -sI https://gachamath.fr | head -1
 curl -s https://gachamath.fr/api/moi -o /dev/null -w '%{http_code}\n'
 curl -sI http://gachamath.fr | grep -i location   # doit rediriger en https
+curl -sI https://gachamath.fr | grep -i strict-transport   # HSTS présent
 ```
 
 ---
@@ -160,6 +186,9 @@ Si les modèles ont bougé, sauvegardez d'abord, puis `manage.py migrate`.
 
 - [ ] **Passer HSTS à un an** — `DJANGO_HSTS=31536000` dans `.env`, une fois
       que vous avez vu le certificat se renouveler au moins une fois.
+- [ ] **Le pare-feu OVH** — n'ouvrir que 22, 80 et 443. Gunicorn écoute sur
+      127.0.0.1, il n'est donc jamais joignable de l'extérieur, mais autant
+      que la machine le dise aussi.
 - [ ] **AdSense** — renseigner `client` et les identifiants de blocs dans
       `js/config.js`, puis vérifier la mise en page avec `?pubs`.
 - [ ] **Le CMP** — obligatoire pour diffuser en Europe. Il s'active dans la

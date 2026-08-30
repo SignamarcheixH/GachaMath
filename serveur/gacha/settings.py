@@ -122,6 +122,11 @@ else:
         },
     }}
 
+# Lire requete.body déclenche cette vérification : elle doit donc être plus
+# haute que la limite applicative de parties/views.py, sinon Django coupe le
+# premier et le joueur reçoit une erreur générique au lieu du message clair.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ---------------------------------------------------------------- fichiers

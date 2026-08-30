@@ -20,7 +20,11 @@ from django.views.decorators.http import require_http_methods
 from .metriques import incoherences, mesurer
 from .models import Joueur, Sauvegarde
 
-TAILLE_MAX = 2 * 1024 * 1024          # 2 Mio : une partie complète en pèse ~0,4
+# Mesuré, pas estimé : une sauvegarde coûte ~30 octets par nombre possédé,
+# soit 2,9 Mo pour la collection complète (0 à 99 999). L'ancienne limite de
+# 2 Mio reposait sur une estimation de 0,4 Mo et aurait refusé les parties les
+# plus avancées — précisément celles qu'on ne veut surtout pas perdre.
+TAILLE_MAX = 8 * 1024 * 1024
 PSEUDO_VALIDE = re.compile(r"^[\w \-']{2,24}$", re.UNICODE)
 
 CLASSEMENTS = {
