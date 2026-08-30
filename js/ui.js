@@ -42,6 +42,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     initUI();
     renderAll();
+    // L'adresse fait foi : recharger au milieu d'une commande de Forge doit
+    // ramener sur la Forge, pas sur l'accueil.
+    const depart = vueDuFragment();
+    history.replaceState({ vue: depart }, '', '#/' + depart);
+    if (depart !== 'gacha') ouvrirOnglet(depart, false);
 
     if (offline && offline.gain > 0) {
       toast(`💤 Absence de ${offline.minutes} min — <b>${fmt(offline.gain)}</b> 🪙 accumulés.`, 'good');
@@ -72,17 +77,75 @@ let colTerritoire = null;      // null | 'tirage' | 'forge'
 const PAGE = 240;
 let idleSpin = null;
 
+/* ============================================================
+   ADRESSES DES VUES
+
+   Un fragment — `#/classement` — et non un chemin. Trois raisons :
+   aucune configuration serveur, ça marche aussi en mode statique
+   sans Django, et surtout un fragment n'est PAS une adresse
+   distincte pour un moteur de recherche. Le robot voit « / » quoi
+   qu'il arrive : on gagne le bouton Retour sans créer huit pages
+   vides, ce qui pénaliserait le référencement au lieu de l'aider.
+   ============================================================ */
+const VUES = ['gacha', 'collection', 'forge', 'theoremes', 'defis', 'revision', 'classement', 'oracle'];
+
+const vueCourante = () => {
+  const b = $('#tabs button.on');
+  return b ? b.dataset.tab : 'gacha';
+};
+
+const vueDuFragment = () => {
+  const f = (location.hash || '').replace(/^#\/?/, '');
+  return VUES.includes(f) ? f : 'gacha';
+};
+
+const surcoucheOuverte = () =>
+  ($('#reveal') && $('#reveal').classList.contains('on')) ||
+  ($('#modal') && $('#modal').classList.contains('on'));
+
+function fermerSurcouches() {
+  if ($('#reveal') && $('#reveal').classList.contains('on')) closeReveal();
+  else if ($('#modal') && $('#modal').classList.contains('on')) closeModal();
+}
+
+/* `pousser` distingue un clic du joueur — qui ajoute une entrée d'historique —
+   d'un retour arrière, qui n'en ajoute évidemment pas. */
+function ouvrirOnglet(nom, pousser = true) {
+  if (!VUES.includes(nom)) nom = 'gacha';
+  const btn = $(`#tabs button[data-tab="${nom}"]`);
+  if (!btn) return;
+
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b === btn));
+  $$('main .tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + nom));
+
+  if (pousser) history.pushState({ vue: nom }, '', '#/' + nom);
+
+  renderAll();
+  centrerOnglet(btn);
+  if (typeof majPubLecture === 'function') majPubLecture();
+  if (nom === 'classement' && typeof ouvrirClassement === 'function') ouvrirClassement();
+}
+
 function initUI() {
   // onglets
   $('#tabs').addEventListener('click', e => {
     const btn = e.target.closest('button[data-tab]');
-    if (!btn) return;
-    $$('#tabs button').forEach(b => b.classList.toggle('on', b === btn));
-    $$('main .tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + btn.dataset.tab));
-    renderAll();
-    centrerOnglet(btn);
-    if (typeof majPubLecture === 'function') majPubLecture();
-    if (btn.dataset.tab === 'classement' && typeof ouvrirClassement === 'function') ouvrirClassement();
+    if (btn) ouvrirOnglet(btn.dataset.tab);
+  });
+
+  /* Retour arrière. Si une surcouche est ouverte — révélation d'un tirage,
+     fiche d'un nombre — le geste doit la fermer, pas changer d'onglet derrière
+     elle. On remet alors l'entrée d'historique en place. */
+  window.addEventListener('popstate', () => {
+    if (surcoucheOuverte()) {
+      fermerSurcouches();
+      history.pushState({ vue: vueCourante() }, '', '#/' + vueCourante());
+      return;
+    }
+    const vue = vueDuFragment();
+    ouvrirOnglet(vue, false);
+    // Fragment inconnu : on affiche l'accueil, autant que l'adresse le dise.
+    if (location.hash !== '#/' + vue) history.replaceState({ vue }, '', '#/' + vue);
   });
 
   // tirage
