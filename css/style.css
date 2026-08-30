@@ -1012,3 +1012,42 @@ table.cook td { color: var(--dim); }
   padding: 14px 16px; border-radius: 12px;
   border: 1px dashed rgba(255,176,46,.55); background: rgba(255,176,46,.09); color: #ffd992;
 }
+
+/* ══════════ PAGES DE CONTENU ══════════ */
+.topbar .brand { text-decoration: none; color: inherit; }
+.navDoc {
+  display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
+  padding: 12px clamp(12px, 4vw, 34px); max-width: 1280px; margin: 0 auto;
+  border-bottom: 1px solid var(--line);
+}
+.navDoc a, .navDoc .navOn {
+  padding: 7px 13px; border-radius: 9px; font-size: 13.5px; text-decoration: none;
+}
+.navDoc a { color: var(--dim); }
+.navDoc a:hover { color: var(--txt); background: var(--panel); }
+.navDoc .navOn { color: var(--txt); background: var(--panel2); font-weight: 600; }
+
+.chapo { font-size: 15.5px; color: var(--dim); margin-bottom: 26px; }
+.retour { margin-top: 40px; }
+.docListe { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 30px; }
+.docTrait, .docNombre, .docTheo {
+  padding: 15px 18px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.docTrait h3, .docNombre h3, .docTheo h3 {
+  margin: 0 0 6px; font-size: 15.5px; display: flex; align-items: baseline;
+  gap: 9px; flex-wrap: wrap;
+}
+.docTrait p, .docNombre p, .docTheo p { margin: 0 0 6px; font-size: 14px; }
+.docPts { margin-left: auto; font-family: var(--mono); font-size: 13px; color: var(--gold); }
+.docNum { font-family: var(--mono); font-size: 20px; color: #fff; }
+.docRar { margin-left: auto; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
+.docPreuve {
+  font-family: var(--mono); font-size: 12.5px; color: #dfe6f5;
+  background: rgba(0,0,0,.34); border-left: 2px solid var(--accent);
+  padding: 8px 12px; border-radius: 4px 8px 8px 4px; overflow-wrap: anywhere;
+}
+.docPreuve b { font-family: var(--sans); color: var(--dim2); }
+.docFiche { font-size: 13px; color: var(--dim2); }
+.docFiche b { font-family: var(--mono); color: var(--dim); }
+.docNums { font-family: var(--mono); font-size: 13px; color: var(--dim2); }

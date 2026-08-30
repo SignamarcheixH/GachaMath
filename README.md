@@ -369,12 +369,45 @@ Forge. Ce n'est pas de la délicatesse : un clic accidentel compte comme un
 l'emplacement se referme. Mesuré : 276 px rendus au contenu, pas de rectangle
 mort.
 
+### Les pages de contenu
+
+Le jeu est une application monopage : le robot d'indexation n'y voit qu'un
+squelette vide, tout étant fabriqué en JavaScript après le chargement. C'est le
+cas de rejet classique. Or le contenu existe — 65 définitions de traits, 50
+notices de nombres, 14 théorèmes, tous rédigés. Il fallait qu'il existe aussi
+dans le HTML servi.
+
+`node outils/generer_pages.js` engendre cinq pages depuis le moteur du jeu, donc
+toujours à jour :
+
+| Page | Contenu |
+|---|---|
+| `codex.html` | Les 65 traits, par famille, avec définition et démonstration |
+| `nombres.html` | Les 50 nombres qui portent un nom, avec leur notice |
+| `theoremes.html` | Les 14 collections |
+| `regles.html` | Comment la rareté est calculée |
+| `a-propos.html` | Présentation et contact |
+
+**6 400 mots présents dans le HTML servi**, sans JavaScript.
+
+**Ce qu'on ne fait pas : une page par nombre.** Dix mille pages engendrées
+mécaniquement, c'est du « contenu à grande échelle » au sens de Google, et un
+motif de rejet plutôt qu'un remède. On ne publie que ce qui a été écrit.
+
+**La navigation reste fluide.** `js/doc.js` intercepte les liens entre pages de
+contenu : il récupère la suivante, remplace le contenu et pousse l'historique —
+aucun rechargement, et le préchargement au survol rend le passage immédiat.
+Le référencement ne dépend jamais du JavaScript : sans lui, les liens restent
+des liens. Seul le confort en dépend.
+
 ### Ce qu'il reste à faire, et que le code ne peut pas faire
 
 1. **Mettre le site en ligne sur un domaine.** Google ne valide pas un
    `localhost`, et un sous-domaine d'hébergeur gratuit passe mal.
-2. **Compléter l'adresse de contact** dans `confidentialite.html` — elle est
-   exigée par AdSense comme par le RGPD, et son absence fait échouer la demande.
+2. **Compléter l'adresse de contact** dans `confidentialite.html` et
+   `outils/generer_pages.js` (page « À propos ») — elle est exigée par AdSense
+   comme par le RGPD, et son absence fait échouer la demande.
+   **Et remplacer `exemple.fr`** dans `robots.txt` et `sitemap.xml`.
 3. **Demander l'ouverture du compte**, puis reporter l'identifiant éditeur et
    les identifiants de blocs dans `js/config.js`.
 4. **Activer le CMP** dans la console AdSense (« Confidentialité et messages »).

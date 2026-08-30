@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Règles — Gacha des Nombres</title>
+<meta name="description" content="Comment la rareté d'un nombre est calculée : 65 propriétés mathématiques, des rendements décroissants, et six paliers. Rien n'est décidé, tout est vérifiable.">
+<meta property="og:title" content="Règles — Gacha des Nombres">
+<meta property="og:description" content="Comment la rareté d'un nombre est calculée : 65 propriétés mathématiques, des rendements décroissants, et six paliers. Rien n'est décidé, tout est vérifiable.">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="css/style.css?v=32">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <span class="brandIcon">🔢</span>
+    <span class="brandText"><b>GACHA</b><i>DES NOMBRES</i></span>
+  </a>
+  <a class="btn sm" href="index.html">Jouer</a>
+</header>
+
+<nav class="navDoc"><a href="index.html">Le jeu</a><a href="codex.html">Codex des traits</a><a href="nombres.html">Nombres remarquables</a><a href="theoremes.html">Théorèmes</a><span class="navOn">Règles</span><a href="a-propos.html">À propos</a></nav>
+
+<main class="page">
+<h1>Comment la rareté est calculée</h1>
+<p class="chapo">Dans la plupart des jeux de collection, la rareté d'une carte est une
+décision commerciale. Ici, c'est le résultat d'un calcul — et vous pouvez le vérifier.</p>
+
+<h2>Le principe</h2>
+<p>À chaque entier, le jeu applique 65 tests mathématiques. Est-il premier ?
+Palindrome ? Égal à la somme de ses diviseurs propres ? Chaque propriété trouvée vaut un
+certain nombre de points, et le total détermine le palier.</p>
+<p>Il n'existe que quatre nombres parfaits sous dix mille — 6, 28, 496 et 8128. Ils sont donc
+Mythiques, et il n'y a rien à négocier : c'est une propriété du nombre, pas une décision.</p>
+
+<h2>Les rendements décroissants</h2>
+<p>Additionner bêtement les points ne marche pas. Les tout petits nombres ouvrent toutes les
+suites à la fois : 1 est à lui seul Fibonacci, Catalan, factorielle, Kaprekar et puissance de
+deux. En addition simple, il écrasait tout le classement.</p>
+<p>Le score applique donc des rendements décroissants : le trait dominant compte pleinement,
+le deuxième pour moitié, le troisième pour trois dixièmes, le quatrième pour un sixième, et
+tous les suivants pour presque rien. Un nombre vaut ce que vaut sa propriété la plus rare,
+et non le nombre de cases qu'il coche.</p>
+
+<h2>Les paliers</h2>
+<table class="cook">
+<tr><th>Palier</th><th>Score</th></tr>
+<tr><td style="color:var(--r-commun)"><b>Commun</b></td><td>0 points et plus</td></tr>
+<tr><td style="color:var(--r-peucommun)"><b>Peu commun</b></td><td>3 points et plus</td></tr>
+<tr><td style="color:var(--r-rare)"><b>Rare</b></td><td>8 points et plus</td></tr>
+<tr><td style="color:var(--r-epique)"><b>Épique</b></td><td>12 points et plus</td></tr>
+<tr><td style="color:var(--r-legendaire)"><b>Légendaire</b></td><td>18 points et plus</td></tr>
+<tr><td style="color:var(--r-mythique)"><b>Mythique</b></td><td>27 points et plus</td></tr>
+</table>
+<p>Les seuils sont recalibrés à chaque ajout de traits, sur la distribution réelle des
+scores : passer de 38 à 65 propriétés enrichissait mécaniquement tout le monde et avait vidé
+le palier Commun de deux mille nombres.</p>
+
+<h2>Les deux territoires</h2>
+<p>Le tirage règne sur <b>1 à 9 999</b> : c'est le domaine de la chance. La Forge règne sur
+le reste — <b>0</b>, et <b>10 000 à 99 999</b> : c'est le domaine de l'adresse. On n'y choisit
+pas ce qu'on fabrique : la Forge tire six nombres de votre collection, annonce une cible, et
+vous laisse chercher, à la manière du Compte est Bon.</p>
+<p>Toute commande est solvable par construction. La Forge n'invente pas une cible en croisant
+les doigts : elle explore d'abord l'intégralité de ce que la main peut produire, puis choisit
+la cible là-dedans.</p>
+
+<h2>Et la révision</h2>
+<p>Savoir reconnaître un nombre parfait quand la fiche vous le dit est une chose. Sans la
+fiche, c'en est une autre. Deux exercices s'en chargent : retrouver le trait parmi quatre
+nombres anonymes, ou remettre dix traits face à leur définition.</p>
+<p class="retour"><a href="index.html">← Retour au jeu</a></p>
+</main>
+
+<div id="pubBas"></div>
+
+<footer class="pied">
+  <a href="index.html">Le jeu</a><span>·</span>
+  <a href="codex.html">Codex</a><span>·</span>
+  <a href="a-propos.html">À propos</a><span>·</span>
+  <a href="confidentialite.html">Confidentialité</a><span>·</span>
+  <a href="https://github.com/SignamarcheixH/GachaMath" rel="noopener" target="_blank">Code source</a>
+</footer>
+
+<script src="js/config.js?v=32"></script>
+<script src="js/pub.js?v=32"></script>
+<script src="js/doc.js?v=32"></script>
+<script>if (typeof initPub === 'function') initPub();</script>
+</body>
+</html>

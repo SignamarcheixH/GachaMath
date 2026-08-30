@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>À propos — Gacha des Nombres</title>
+<meta name="description" content="Un jeu de collection gratuit où l'on collectionne des entiers, et où la rareté d'une carte se démontre au lieu de se décréter.">
+<meta property="og:title" content="À propos — Gacha des Nombres">
+<meta property="og:description" content="Un jeu de collection gratuit où l'on collectionne des entiers, et où la rareté d'une carte se démontre au lieu de se décréter.">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="css/style.css?v=32">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <span class="brandIcon">🔢</span>
+    <span class="brandText"><b>GACHA</b><i>DES NOMBRES</i></span>
+  </a>
+  <a class="btn sm" href="index.html">Jouer</a>
+</header>
+
+<nav class="navDoc"><a href="index.html">Le jeu</a><a href="codex.html">Codex des traits</a><a href="nombres.html">Nombres remarquables</a><a href="theoremes.html">Théorèmes</a><a href="regles.html">Règles</a><span class="navOn">À propos</span></nav>
+
+<main class="page">
+<h1>À propos</h1>
+<p class="chapo">Gacha des Nombres est un jeu de collection gratuit, sans achat, sans compte
+et sans publicité intrusive, où l'on collectionne des entiers.</p>
+
+<h2>L'idée</h2>
+<p>Les jeux de collection distribuent des cartes dont la rareté a été décidée par quelqu'un.
+Ici, on collectionne les entiers de 0 à 99 999, et leur rareté vient de leurs propriétés
+mathématiques réelles. C'est volontairement absurde, et c'est aussi honnête : chaque carte
+peut justifier son prix, démonstration à l'appui.</p>
+
+<h2>Ce qu'on y trouve</h2>
+<ul>
+  <li><b>Le tirage</b> — 65 propriétés évaluées sur les 9 999 premiers entiers.</li>
+  <li><b>La Forge</b> — un Compte est Bon dont les cibles vivent au-delà du mur des dix mille.</li>
+  <li><b>La Révision</b> — deux exercices pour apprendre à reconnaître les traits sans l'aide de la fiche.</li>
+  <li><b>Le Codex et l'Oracle</b> — de quoi interroger n'importe quel entier jusqu'à 99 999.</li>
+</ul>
+
+<h2>Technique</h2>
+<p>Le jeu est écrit en JavaScript sans dépendance ni compilation, et fonctionne entièrement
+hors ligne. Un serveur Django facultatif ajoute la sauvegarde en ligne et le classement, sans
+jamais demander d'adresse e-mail ni de mot de passe. Le code est ouvert et lisible :
+<a href="https://github.com/SignamarcheixH/GachaMath" rel="noopener" target="_blank">SignamarcheixH/GachaMath</a>.</p>
+
+<h2>Nous écrire</h2>
+<p class="aRemplir"><b>⚠ À compléter avant la mise en ligne :</b> une adresse de contact.
+Elle est exigée par AdSense, et une page « À propos » sans moyen de contact fait échouer
+la demande. La même adresse doit figurer sur la page de confidentialité.</p>
+<p class="retour"><a href="index.html">← Retour au jeu</a></p>
+</main>
+
+<div id="pubBas"></div>
+
+<footer class="pied">
+  <a href="index.html">Le jeu</a><span>·</span>
+  <a href="codex.html">Codex</a><span>·</span>
+  <a href="a-propos.html">À propos</a><span>·</span>
+  <a href="confidentialite.html">Confidentialité</a><span>·</span>
+  <a href="https://github.com/SignamarcheixH/GachaMath" rel="noopener" target="_blank">Code source</a>
+</footer>
+
+<script src="js/config.js?v=32"></script>
+<script src="js/pub.js?v=32"></script>
+<script src="js/doc.js?v=32"></script>
+<script>if (typeof initPub === 'function') initPub();</script>
+</body>
+</html>
