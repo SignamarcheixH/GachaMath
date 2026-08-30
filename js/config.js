@@ -31,8 +31,16 @@ const PUB = {
      dans les rapports, sans rien changer au code. */
   emplacements: {
     bas: '',        // bandeau en bas de page, sur toutes les vues
-    lecture: '',    // rectangle dans le corps de chaque vue, par défaut
+    lecture: '',    // rectangle dans le corps d'une vue, par défaut
+    rail: '',       // colonnes latérales 160×600 ; à défaut, « lecture » sert
   },
+
+  /* Colonnes latérales. Elles n'apparaissent qu'au-delà de 1650×700, seule
+     taille de fenêtre où elles tiennent dans les marges sans rogner le jeu —
+     soit une minorité de visiteurs. En dessous, l'emplacement dans le contenu
+     prend le relais ; les deux ne coexistent jamais. Mettre à false pour
+     revenir à l'emplacement dans le contenu partout. */
+  rails: true,
 
   /* Les vues qui reçoivent un rectangle dans leur contenu.
 

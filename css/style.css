@@ -1021,6 +1021,36 @@ select option { background: var(--bg2); }
 
 #pubBas { padding: 0 clamp(12px, 4vw, 34px); }
 
+/* ---------- colonnes latérales ----------
+   Le contenu du jeu est centré sur 1280 px. Une colonne de 160 px avec
+   24 px de respiration réclame donc 1280 + 2×184 = 1648 px de fenêtre. En
+   dessous, elles n'existent pas : on ne rogne pas le jeu pour loger une
+   annonce, et un emplacement trop à l'étroit ne se remplit pas.
+
+   La contrainte de hauteur compte autant : un format 600 px sous une barre
+   de 96 px demande une fenêtre d'au moins 700 px de haut. */
+.pubRail { display: none; }
+
+@media (min-width: 1650px) and (min-height: 700px) {
+  .pubRail {
+    display: block; position: fixed; top: 96px; width: 160px;
+    z-index: 30;                      /* sous la barre du haut et les surcouches */
+  }
+  .pubRail.gauche { left:  calc(50% - 824px); }   /* 640 + 24 + 160 */
+  .pubRail.droite { right: calc(50% - 824px); }
+  .pubRail .pubZone { min-height: 600px; }
+  .pubRail .pub { border: 0; padding-top: 0; }
+
+  /* Les colonnes prennent le relais : on ne cumule pas avec l'emplacement
+     posé dans le contenu de chaque onglet. */
+  .pubVue { display: none; }
+}
+
+.pubApercu.rail {
+  background-color: rgba(139,233,255,.13);
+  border: 2px dashed var(--dustc); color: var(--dustc);
+}
+
 /* ══════════ PIED DE PAGE ══════════ */
 .pied {
   display: flex; gap: 10px; align-items: center; justify-content: center;

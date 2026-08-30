@@ -57,27 +57,32 @@ function emplacementHTML(nom, format) {
 /* La hauteur réservée vient d'une media query : on la lit sur l'élément plutôt
    que de la recopier en JavaScript, sinon l'aperçu finit par annoncer une
    taille et en dessiner une autre. */
+const formatDe = bloc =>
+  bloc.classList.contains('bas')  ? 'bas'  :
+  bloc.classList.contains('rail') ? 'rail' : 'lecture';
+
 function dessinerApercu(bloc) {
   const zone = bloc.querySelector('.pubZone');
-  const bas = bloc.classList.contains('bas');
+  const f = formatDe(bloc);
   const h = Math.round(parseFloat(getComputedStyle(zone).minHeight)) || 0;
   if (zone.dataset.h === String(h)) return;           // rien n'a changé
   zone.dataset.h = h;
   if (_oeil) _oeil.observe(zone);
-  const dim = bas
-    ? (h <= 60 ? '320 × 50' : '728 × 90 → 970 × 90')
-    : '300 × 250 → 336 × 280';
+  const bas = f === 'bas';
+  const dim = f === 'rail' ? '160 × 600'
+    : bas ? (h <= 60 ? '320 × 50' : '728 × 90 → 970 × 90')
+          : '300 × 250 → 336 × 280';
   /* Sous 90 px, trois lignes ne tiennent pas : l'aperçu deviendrait plus haut
      que l'annonce qu'il représente, et montrerait donc l'inverse de ce qu'on
      veut vérifier. On se replie sur une ligne. */
   const court = h < 90;
   zone.innerHTML = court
-    ? `<div class="pubApercu court ${bas ? 'bas' : 'lecture'}">
+    ? `<div class="pubApercu court ${f}">
          <b>« ${bloc.dataset.pub} » · ${dim} · ${h} px</b>
        </div>`
-    : `<div class="pubApercu ${bas ? 'bas' : 'lecture'}">
+    : `<div class="pubApercu ${f}">
          <b>emplacement « ${bloc.dataset.pub} »</b>
-         <span>${bas ? 'bandeau horizontal' : 'rectangle'} · ${dim}</span>
+         <span>${f === 'rail' ? 'colonne verticale' : bas ? 'bandeau horizontal' : 'rectangle'} · ${dim}</span>
          <small>hauteur réservée : ${h} px — le contenu ne bougera pas</small>
        </div>`;
 }
@@ -98,7 +103,7 @@ function poser(bloc) {
   if (!bloc || _posesFaites.has(bloc)) return;
   const nom = bloc.dataset.pub;
   const emp = PUB.emplacements || {};
-  const unite = emp[nom] || (nom === 'bas' ? '' : emp.lecture);
+  const unite = emp[nom] || (nom === 'bas' ? '' : (nom.startsWith('rail') ? emp.rail || emp.lecture : emp.lecture));
 
   if (APERCU()) {                         // visualisation sans script tiers
     _posesFaites.add(bloc);
@@ -114,8 +119,16 @@ function poser(bloc) {
   ins.style.display = 'block';
   ins.setAttribute('data-ad-client', PUB.client);
   ins.setAttribute('data-ad-slot', unite);
-  ins.setAttribute('data-ad-format', bloc.classList.contains('bas') ? 'horizontal' : 'rectangle');
-  ins.setAttribute('data-full-width-responsive', 'true');
+  if (formatDe(bloc) === 'rail') {
+    /* Une colonne a une taille arrêtée : la déclarer en fixe remplit mieux
+       qu'un bloc responsive coincé dans 160 px de large. */
+    ins.style.display = 'inline-block';
+    ins.style.width = '160px';
+    ins.style.height = '600px';
+  } else {
+    ins.setAttribute('data-ad-format', bloc.classList.contains('bas') ? 'horizontal' : 'rectangle');
+    ins.setAttribute('data-full-width-responsive', 'true');
+  }
   bloc.querySelector('.pubZone').appendChild(ins);
 
   try {
@@ -167,7 +180,42 @@ function initPub() {
   const pied = document.querySelector('#pubBas');
   if (pied) { pied.innerHTML = emplacementHTML('bas', 'bas'); poser(pied.firstElementChild); }
 
+  poserRails();
   majPubVue();
+
+  /* Franchir le seuil en redimensionnant construit ce qui manque, une fois.
+     On ne démonte jamais l'autre : détruire un emplacement pour le remettre
+     plus tard rachèterait une annonce à chaque aller-retour. Celui qui ne
+     sert plus est simplement masqué par la feuille de style.
+
+     On observe la boîte du document plutôt que d'écouter `change` sur la
+     media query : l'événement ne se déclenche pas dans tous les contextes, et
+     s'en remettre à lui laissait une fenêtre élargie sans aucune annonce dans
+     le contenu — les colonnes étaient permises mais jamais construites,
+     pendant que la feuille de style masquait l'emplacement qu'elles
+     remplacent. Les deux constructeurs sont idempotents, l'observateur ne
+     peut donc pas s'entretenir en boucle. */
+  if (_seuilRails && _seuilRails.addEventListener) {
+    _seuilRails.addEventListener('change', () => { poserRails(); majPubVue(); });
+  }
+}
+
+/* Vrai quand la fenêtre peut loger les colonnes sans rogner le jeu. La règle
+   est écrite deux fois — ici et dans la feuille de style — et les deux doivent
+   rester d'accord : construire une annonce dans un élément masqué la ferait
+   revenir « unfilled ». */
+const _seuilRails = typeof matchMedia === 'function'
+  ? matchMedia('(min-width: 1650px) and (min-height: 700px)')
+  : null;
+const RAILS = () => !!(_seuilRails && _seuilRails.matches);
+
+function poserRails() {
+  if (!RAILS() || (PUB.rails === false)) return;
+  document.querySelectorAll('.pubRail').forEach(rail => {
+    if (rail.firstElementChild) return;               // déjà en place
+    rail.innerHTML = emplacementHTML(rail.dataset.pub, 'rail');
+    poser(rail.firstElementChild);
+  });
 }
 
 /* Chaque onglet a son emplacement, posé à un endroit choisi pour lui — jamais
@@ -190,6 +238,13 @@ function majPubVue() {
   const onglet = document.querySelector('#tabs button.on');
   if (!onglet) return;                                // page de contenu : rien à faire
   const vue = onglet.dataset.tab;
+
+  /* Filet : si la fenêtre a été élargie sans qu'aucun événement ne nous
+     parvienne, un simple changement d'onglet rétablit les colonnes. Les deux
+     constructeurs sont idempotents, l'appel ne coûte rien. */
+  poserRails();
+
+  if (RAILS() && PUB.rails !== false) return;          // les colonnes s'en chargent
 
   const autorisees = PUB.vues || [];
   if (!autorisees.includes(vue)) return;

@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=42">
+<link rel="stylesheet" href="css/style.css?v=46">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 </head>
 <body>
@@ -214,6 +214,12 @@
 
 </main>
 
+<!-- Colonnes latérales : elles vivent dans les marges du contenu centré, et
+     ne s'affichent que si la fenêtre est assez large pour les loger sans
+     rogner le jeu. Voir .pubRail dans la feuille de style. -->
+<aside class="pubRail gauche" data-pub="railGauche"></aside>
+<aside class="pubRail droite" data-pub="railDroite"></aside>
+
 <div id="pubBas"></div>
 
 <footer class="pied">
@@ -238,17 +244,17 @@
 
 <div id="toasts"></div>
 
-<script src="js/config.js?v=42"></script>
-<script src="js/pub.js?v=42"></script>
-<script src="js/numerology.js?v=42"></script>
-<script src="js/data.js?v=42"></script>
-<script src="js/state.js?v=42"></script>
-<script src="js/nuage.js?v=42"></script>
-<script src="js/classement.js?v=42"></script>
-<script src="js/forge.js?v=42"></script>
-<script src="js/forge-ui.js?v=42"></script>
-<script src="js/revision.js?v=42"></script>
-<script src="js/appariement.js?v=42"></script>
-<script src="js/ui.js?v=42"></script>
+<script src="js/config.js?v=46"></script>
+<script src="js/pub.js?v=46"></script>
+<script src="js/numerology.js?v=46"></script>
+<script src="js/data.js?v=46"></script>
+<script src="js/state.js?v=46"></script>
+<script src="js/nuage.js?v=46"></script>
+<script src="js/classement.js?v=46"></script>
+<script src="js/forge.js?v=46"></script>
+<script src="js/forge-ui.js?v=46"></script>
+<script src="js/revision.js?v=46"></script>
+<script src="js/appariement.js?v=46"></script>
+<script src="js/ui.js?v=46"></script>
 </body>
 </html>
