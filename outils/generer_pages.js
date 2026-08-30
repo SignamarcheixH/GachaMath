@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RACINE = path.join(__dirname, '..');
-const V = 46;                                   // version des assets, cf. index.html
+const V = 47;                                   // version des assets, cf. index.html
 
 const source = ['js/numerology.js', 'js/data.js']
   .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8'))
@@ -67,6 +67,13 @@ function page(fichier, titre, description, corps) {
 <meta property="og:type" content="article">
 <link rel="stylesheet" href="css/style.css?v=${V}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
+<!-- AdSense. La balise est posée en dur, et pas seulement injectée par
+     js/pub.js, parce que la validation du site par Google se fait sur le HTML
+     servi : dépendre du JavaScript pour être vérifié, c'est risquer un refus
+     dont la cause serait invisible. pub.js détecte cette balise et n'en
+     ajoute pas une seconde. -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8735036143518614"
+        crossorigin="anonymous"></script>
 </head>
 <body>
 

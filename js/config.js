@@ -20,8 +20,9 @@
    ============================================================ */
 
 const PUB = {
-  // Identifiant éditeur, de la forme "ca-pub-1234567890123456".
-  client: '',
+  // Identifiant éditeur. Public par nature : il figure dans le code source
+  // de tout site diffusant AdSense. Ce n'est pas un secret.
+  client: 'ca-pub-8735036143518614',
 
   /* Identifiants des blocs créés dans la console AdSense.
 

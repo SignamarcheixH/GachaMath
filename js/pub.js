@@ -32,6 +32,12 @@ const _posesFaites = new WeakSet();
 function chargerRegie() {
   if (_scriptDemande || !PUB.client || APERCU()) return;
   _scriptDemande = true;
+
+  /* La balise est déjà dans le HTML des pages : la réinjecter chargerait la
+     régie deux fois, ce qui fausse le comptage des impressions. On ne
+     l'injecte donc que si elle manque — cas d'une page ajoutée plus tard qui
+     aurait oublié la balise. */
+  if (document.querySelector('script[src*="adsbygoogle.js"]')) return;
   const s = document.createElement('script');
   s.async = true;
   s.crossOrigin = 'anonymous';

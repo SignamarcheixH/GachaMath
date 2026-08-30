@@ -1,0 +1,5 @@
+# Déclare qui a le droit de vendre les espaces publicitaires de ce domaine.
+# Sans ce fichier, AdSense affiche un avertissement « revenus menacés », et
+# surtout n'importe qui pourrait usurper le domaine auprès des acheteurs.
+# La dernière valeur est l'identifiant public de Google comme régie.
+google.com, pub-8735036143518614, DIRECT, f08c47fec0942fa0
