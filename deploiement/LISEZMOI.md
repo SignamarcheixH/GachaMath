@@ -7,9 +7,28 @@ et aucune configuration CORS puisque tout partage la même origine.
 Cible : un **VPS OVH** sous Debian, avec **nginx** et Certbot. Rien n'est
 propre à OVH ceci dit, la même marche à suivre vaut ailleurs.
 
-⚠ Un *Hébergement Web* OVH (l'offre mutualisée, Perso ou Pro) ne convient
-pas : elle n'exécute que du PHP. Il faut un **VPS** ou une instance Public
-Cloud, où vous êtes root.
+⚠ Un *Hébergement Web* OVH (l'offre mutualisée : Perso, Pro, Starter) ne
+convient pas. Elle n'exécute que du PHP — ni root, ni systemd, ni processus
+persistant, donc pas de gunicorn. Il faut un **VPS**, où vous êtes root.
+
+**Ce qu'il faut commander**, relevé en août 2026 :
+
+| Poste | Offre | Prix |
+|-------|-------|------|
+| Domaine | `gachamath.fr` | ~7,79 €/an au renouvellement |
+| Serveur | **VPS-1**, image **Debian** | 3,81 € HT/mois |
+
+Le VPS-1 (2 vCores, 4 Go, 40 Go NVMe) est très au-dessus des besoins : trois
+workers gunicorn et une base de quelques mégaoctets. Le trafic est illimité,
+ce qui compte ici — une partie complète pèse 4 Mo à chaque synchronisation.
+
+L'adresse `contact@gachamath.fr` **ne nécessite aucun achat** : une messagerie
+Starter de 15 Go est comprise avec le nom de domaine.
+
+N'hébergez pas le jeu et l'API séparément. Toute l'identité repose sur un
+cookie `HttpOnly` posé par le serveur, seule façon de survivre à la purge de
+Safari ; deux origines distinctes imposeraient du CORS et fragiliseraient
+exactement ce mécanisme.
 
 ---
 
@@ -148,8 +167,12 @@ journalctl -u gachamath-sauvegarde --since today
 **Deux choses restent à faire de votre côté :**
 
 1. **Sortir les archives de la machine.** Quatorze copies sur le disque qui
-   peut brûler ne protègent de rien. Un `rsync` vers un autre hôte, ou
-   l'option de sauvegarde automatique de l'hébergeur, suffit.
+   peut brûler ne protègent de rien. La sauvegarde quotidienne incluse avec
+   le VPS couvre déjà ce risque, mais elle ne garde **qu'un seul jour** : elle
+   protège de la perte du disque, pas d'une corruption remarquée trois jours
+   plus tard. Les deux sont complémentaires. L'option Premium d'OVH (7 jours
+   glissants, ~1,10 € HT/mois) ou un `rsync` vers un autre hôte comblent
+   l'écart.
 2. **Essayer une restauration une fois**, avant d'en avoir besoin :
 
 ```bash
