@@ -351,11 +351,13 @@ function renderBadges() {
 }
 
 function renderPity() {
-  const e = Math.min(state.pity.epic, 30), l = Math.min(state.pity.legend, 90);
-  $('#pityEpicBar').style.width = (e / 30 * 100) + '%';
-  $('#pityLegBar').style.width  = (l / 90 * 100) + '%';
-  $('#pityEpicTxt').textContent = `${state.pity.epic} / 30`;
-  $('#pityLegTxt').textContent  = `${state.pity.legend} / 90`;
+  // Les seuils viennent de state.js : les recopier ici ferait mentir la barre
+  // au premier rééquilibrage.
+  const e = Math.min(state.pity.epic, PITY_EPIQUE), l = Math.min(state.pity.legend, PITY_LEGENDAIRE);
+  $('#pityEpicBar').style.width = (e / PITY_EPIQUE * 100) + '%';
+  $('#pityLegBar').style.width  = (l / PITY_LEGENDAIRE * 100) + '%';
+  $('#pityEpicTxt').textContent = `${state.pity.epic} / ${PITY_EPIQUE}`;
+  $('#pityLegTxt').textContent  = `${state.pity.legend} / ${PITY_LEGENDAIRE}`;
 }
 
 function buildOddsTable() {

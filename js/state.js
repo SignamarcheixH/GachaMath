@@ -117,14 +117,41 @@ function buildPool() {
 }
 
 /* Probabilités du banner. Les paliers vides retombent d'un cran. */
+/* ---------- taux d'apparition ----------
+   Ces taux ne sont pas arbitraires : ils se lisent par rapport à la taille
+   réelle des viviers, qui découle des mathématiques et non d'un choix.
+
+     palier        vivier   part du vivier   taux ici   écart
+     commun          4737       47,4 %        55,6 %     1,2x
+     peu commun      4748       47,5 %        32,7 %     0,7x
+     rare             412        4,1 %         8,4 %     2,0x
+     épique            79        0,8 %         2,7 %     3,4x
+     légendaire        11        0,1 %         0,5 %     4,2x
+     mythique          12        0,1 %         0,1 %     1,0x
+
+   L'écart est la part de gacha assumée : on penche en faveur du rare, sinon
+   il n'y aurait pas de frisson. Mais jamais en dessous de 1,0x — un Mythique
+   plus rare qu'un entier tiré au hasard contredirait la promesse du jeu, qui
+   est que la rareté se calcule au lieu de se décréter.
+
+   Le réglage précédent penchait à 15,6x sur le Légendaire : on en trouvait un
+   tous les 58 tirages alors qu'il n'en existe que onze, et le palier entier se
+   bouclait en 1 500 tirages — quatre fois plus vite que les Épiques, pourtant
+   censés être moins rares. */
 const PULL_ODDS = [
-  ['mythique',   0.0025],
-  ['legendaire', 0.0120],
-  ['epique',     0.0500],
-  ['rare',       0.1400],
-  ['peucommun',  0.2800],
-  ['commun',     0.5155],
+  ['mythique',   0.0012],
+  ['legendaire', 0.0030],
+  ['epique',     0.0200],
+  ['rare',       0.0850],
+  ['peucommun',  0.3300],
+  ['commun',     0.5608],
 ];
+
+/* Garanties. Elles doivent rester au-delà de l'espérance du tirage, sinon
+   c'est la garantie qui distribue le palier et non le hasard : à 2 % pour
+   l'Épique, on en attend un tous les 50 tirages, d'où un filet à 60. */
+const PITY_EPIQUE = 60;
+const PITY_LEGENDAIRE = 300;
 
 function rollTier() {
   let r = Math.random();
@@ -235,8 +262,8 @@ function pull(count) {
   const results = [];
   for (let i = 0; i < count; i++) {
     let tier;
-    if (state.pity.legend >= 90) tier = 'legendaire';
-    else if (state.pity.epic >= 30) tier = 'epique';
+    if (state.pity.legend >= PITY_LEGENDAIRE) tier = 'legendaire';
+    else if (state.pity.epic >= PITY_EPIQUE) tier = 'epique';
     else {
       tier = rollTier();
       if (b.luck > 0 && tier === 'commun') tier = rollTier();   // Le Panthéon relance les Communs
