@@ -70,6 +70,16 @@ python3 -m venv .venv
 .venv/bin/pip install -r serveur/requirements.txt
 ```
 
+Le dépôt appartiendra à `gacha` alors que vous administrez en root. Depuis
+2022, git refuse d'opérer dans ce cas — un dépôt piégé par un utilisateur non
+privilégié pourrait faire exécuter ses scripts par root. Ici le propriétaire
+est un compte système que vous venez de créer : déclarez-le sûr une fois pour
+toutes, sans quoi chaque `git pull` échouera sur « dubious ownership ».
+
+```bash
+git config --global --add safe.directory /srv/gachamath
+```
+
 ## 4. Configurer
 
 ```bash
@@ -191,9 +201,20 @@ systemctl start gachamath
 ## Mettre à jour le jeu
 
 ```bash
-cd /srv/gachamath && git pull
+cd /srv/gachamath
+systemctl start gachamath-sauvegarde
+git pull
 systemctl restart gachamath
 ```
+
+La sauvegarde d'abord : trente secondes qui vous couvrent si la mise à jour
+tourne mal.
+
+Ne rejouez pas le `chown -R` de l'installation à chaque mise à jour. Il est
+inutile — l'application n'a besoin que de *lire* le code — et c'est
+précisément lui qui crée la confusion de propriétaire. Seuls `serveur/` (pour
+la base) et `sauvegardes/` doivent rester à `gacha`, et git n'y touche jamais
+puisqu'ils sont exclus du dépôt.
 
 Le jeu étant statique, un `git pull` suffit dans la plupart des cas. Pensez
 à **incrémenter le numéro de version des assets** (`?v=N` dans `index.html`
