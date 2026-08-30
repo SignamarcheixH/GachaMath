@@ -1,0 +1,15 @@
+[Unit]
+Description=Sauvegarde quotidienne de la base Gacha des Nombres
+
+[Timer]
+OnCalendar=*-*-* 04:17:00
+# Une machine éteinte à l'heure dite rattrape au démarrage suivant : sans
+# cela, un redémarrage nocturne ferait sauter la sauvegarde du jour sans
+# que rien ne le signale.
+Persistent=true
+# Décalage aléatoire : évite que toutes les machines d'un hébergeur ne
+# lisent leur disque à la même seconde.
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

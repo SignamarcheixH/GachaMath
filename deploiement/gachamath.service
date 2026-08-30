@@ -1,0 +1,39 @@
+[Unit]
+Description=Gacha des Nombres — application Django
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=gacha
+Group=gacha
+WorkingDirectory=/srv/gachamath/serveur
+EnvironmentFile=/srv/gachamath/.env
+
+# Trois workers suffisent très largement : le travail est court et la base
+# minuscule. Monter ce nombre avec SQLite augmente surtout la contention en
+# écriture — WAL rend les collisions supportables, il ne les supprime pas.
+ExecStart=/srv/gachamath/.venv/bin/gunicorn gacha.wsgi:application \
+    --bind 127.0.0.1:8000 \
+    --workers 3 \
+    --timeout 60 \
+    --access-logfile - \
+    --error-logfile -
+
+Restart=always
+RestartSec=3
+
+# ---- confinement ----
+# Le service n'a besoin d'écrire que dans le dossier de la base. Tout le
+# reste du système lui est présenté en lecture seule : une faille dans une
+# dépendance ne suffit alors pas à modifier la machine.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/gachamath/serveur
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

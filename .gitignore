@@ -1,7 +1,13 @@
 # Python / Django
 __pycache__/
 *.py[cod]
+# Le mode WAL crée deux fichiers à côté de la base. Le « -wal » contient des
+# transactions réelles, donc des sauvegardes de joueurs : l'exclure compte
+# autant que d'exclure la base elle-même.
 serveur/db.sqlite3
+serveur/db.sqlite3-wal
+serveur/db.sqlite3-shm
+sauvegardes/
 serveur/statique/
 .env
 

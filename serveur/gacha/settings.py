@@ -105,9 +105,21 @@ if os.environ.get("DATABASE_URL"):
     import dj_database_url
     DATABASES = {"default": dj_database_url.parse(os.environ["DATABASE_URL"], conn_max_age=600)}
 else:
+    # SQLite convient très bien ici : une ligne par joueur, une écriture
+    # toutes les quelques minutes. Mais plusieurs processus gunicorn écrivent
+    # en parallèle, et par défaut SQLite rend « database is locked » dès que
+    # deux écritures se croisent.
+    #
+    # WAL laisse les lectures se poursuivre pendant une écriture, et le délai
+    # d'attente remplace l'erreur immédiate par une attente. Sans les deux, un
+    # joueur perdrait sa sauvegarde exactement quand le jeu est fréquenté.
     DATABASES = {"default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.environ.get("SQLITE_CHEMIN") or BASE_DIR / "db.sqlite3",
+        "OPTIONS": {
+            "timeout": 20,
+            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+        },
     }}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -1,0 +1,15 @@
+[Unit]
+Description=Sauvegarde de la base Gacha des Nombres
+
+[Service]
+Type=oneshot
+User=gacha
+Group=gacha
+EnvironmentFile=/srv/gachamath/.env
+ExecStart=/srv/gachamath/.venv/bin/python /srv/gachamath/deploiement/sauvegarde.py
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/gachamath/sauvegardes /srv/gachamath/serveur
