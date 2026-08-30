@@ -144,9 +144,24 @@ function temoinApercu() {
 
 /* ---------- insertion dans le jeu ---------- */
 function initPub() {
-  if (!PUB_ACTIVE()) return;
+  if (!PUB_ACTIVE()) {
+    /* Le cas le plus courant : on regarde la page sans « ?pubs » alors qu'aucun
+       identifiant éditeur n'est renseigné. Rien ne s'affiche, et c'est normal —
+       autant le dire plutôt que de laisser chercher. */
+    if (!PUB.client) console.info(
+      'Publicité : aucun identifiant dans js/config.js. Ajoutez « ?pubs » à ' +
+      "l'adresse pour visualiser les emplacements.");
+    return;
+  }
   chargerRegie();
   if (APERCU()) temoinApercu();
+
+  /* Un index.html gardé en cache n'a pas les ancres par onglet : on verrait le
+     bandeau du bas et rien dans les vues, sans le moindre message. */
+  if (document.querySelector('#tabs') && !document.querySelector('.pubVue')) {
+    console.warn('Publicité : aucune ancre .pubVue dans la page. Le HTML servi ' +
+                 'est probablement une version en cache — rechargez sans cache.');
+  }
 
   // Le bandeau du bas vit sous le contenu, hors de toute zone de jeu.
   const pied = document.querySelector('#pubBas');

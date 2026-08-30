@@ -100,6 +100,35 @@ WHITENOISE_ROOT = RACINE_JEU
 WHITENOISE_INDEX_FILE = True
 WHITENOISE_AUTOREFRESH = DEBUG
 
+
+def entetes_fichiers(headers, path, url):
+    """Deux régimes de cache, et c'est la combinaison qui compte.
+
+    Le HTML n'est jamais gardé : il porte les numéros de version des assets,
+    donc s'il est périmé, tout l'est. C'est exactement ce qui s'est produit —
+    un index.html en cache continuait à demander l'ancien JavaScript et à ne
+    pas contenir les nouveaux emplacements. Il revalide désormais à chaque
+    fois, ce qui ne coûte qu'un 304 grâce à l'ETag.
+
+    Le CSS et le JS, eux, sont demandés avec « ?v=N ». Une URL versionnée
+    désigne un contenu qui ne changera plus : on peut la garder un an. C'est
+    ce qui rend le versionnement utile — sans ça, on revalidait chaque fichier
+    à chaque visite et le « ?v=N » ne servait à rien.
+
+    Contrepartie assumée : oublier d'incrémenter la version sert du code
+    périmé. Le générateur de pages et index.html partagent ce numéro, ce qui
+    limite l'oubli à un seul endroit.
+    """
+    if path.endswith((".html", ".htm")) or url.endswith("/"):
+        headers["Cache-Control"] = "no-cache"
+    elif path.endswith((".js", ".css")):
+        headers["Cache-Control"] = "public, max-age=31536000"
+    elif path.endswith((".txt", ".xml")):        # robots.txt, sitemap.xml
+        headers["Cache-Control"] = "public, max-age=3600"
+
+
+WHITENOISE_ADD_HEADERS_FUNCTION = entetes_fichiers
+
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Europe/Paris"
 USE_I18N = True
