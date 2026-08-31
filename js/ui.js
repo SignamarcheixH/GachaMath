@@ -87,7 +87,11 @@ let idleSpin = null;
    qu'il arrive : on gagne le bouton Retour sans créer huit pages
    vides, ce qui pénaliserait le référencement au lieu de l'aider.
    ============================================================ */
-const VUES = ['gacha', 'collection', 'forge', 'theoremes', 'defis', 'revision', 'classement', 'oracle'];
+const VUES = ['gacha', 'collection', 'forge', 'bonus', 'minijeux', 'classement', 'oracle'];
+
+/* Les adresses des anciens onglets restent valides : un lien partagé, un
+   signet ou un onglet resté ouvert doivent continuer de fonctionner. */
+const ANCIENNES_VUES = { theoremes: 'bonus', defis: 'bonus', revision: 'minijeux' };
 
 const vueCourante = () => {
   const b = $('#tabs button.on');
@@ -96,7 +100,8 @@ const vueCourante = () => {
 
 const vueDuFragment = () => {
   const f = (location.hash || '').replace(/^#\/?/, '');
-  return VUES.includes(f) ? f : 'gacha';
+  if (VUES.includes(f)) return f;
+  return ANCIENNES_VUES[f] || 'gacha';
 };
 
 const surcoucheOuverte = () =>
@@ -114,6 +119,25 @@ function ouvrirOnglet(nom, pousser = true) {
   if (!VUES.includes(nom)) nom = 'gacha';
   const btn = $(`#tabs button[data-tab="${nom}"]`);
   if (!btn) return;
+
+  /* Quitter la Forge abandonne la commande en cours. Une grille laissée à
+     moitié résolue puis retrouvée trois jours plus tard ne veut plus rien
+     dire : on ne se souvient ni de son raisonnement, ni de la cible. Mieux
+     vaut repartir d'une commande fraîche. */
+  if (vueCourante() === 'forge' && nom !== 'forge' && state.commande) {
+    abandonner();
+    save();
+  }
+
+  /* Quitter les Mini-jeux abandonne la partie en cours, quel qu'en soit
+     l'avancement. Ce sont trois exercices courts et chronométrés : en
+     retrouver un figé au milieu d'une vague, trois jours plus tard, ne veut
+     rien dire — et laisser tourner un compte à rebours pendant qu'on regarde
+     ailleurs serait pire encore. On revient au choix du jeu. */
+  if (vueCourante() === 'minijeux' && nom !== 'minijeux') {
+    if (typeof calcArreterChrono === 'function') calcArreterChrono();
+    if (state.revision) { state.revision = null; save(); }
+  }
 
   $$('#tabs button').forEach(b => b.classList.toggle('on', b === btn));
   $$('main .tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + nom));
@@ -268,7 +292,7 @@ const SECTIONS = [
   ['forge',        () => renderForge(),    '#forgeZone'],
   ['théorèmes',    () => renderTheoremes(), '#theoList'],
   ['défis',        () => renderDefis(),    '#defiList'],
-  ['révision',     () => renderRevision(), '#revZone'],
+  ['mini-jeux',    () => renderRevision(), '#revZone'],
   ['classement',   () => renderClassement(), '#clZone'],
 ];
 const sectionsSignalees = new Set();
@@ -343,10 +367,10 @@ function buildPackSizes() {
 }
 
 function renderBadges() {
-  const t = pendingCollections().length;
-  const d = pendingDefis().length;
-  $('#bTheo').textContent  = t || '';
-  $('#bDefis').textContent = d || '';
+  // Théorèmes et Défis partagent un onglet : la pastille additionne les primes
+  // à encaisser des deux listes.
+  const aPrendre = pendingCollections().length + pendingDefis().length;
+  $('#bBonus').textContent = aPrendre || '';
   $('#bCollection').textContent = uniqueCount(state) || '';
 }
 
@@ -382,7 +406,14 @@ function doPull(count) {
   showReveal(res.results);
 }
 
-function showReveal(results, titre) {
+function showReveal(recolte, titre) {
+  /* Trié par valeur croissante, et sur une copie : `recolte` appartient à
+     l'appelant — la Forge, le Calcul rapide, un tirage — qui peut s'en servir
+     après coup, et le réordonner dans son dos serait une surprise désagréable.
+
+     L'ordre de pioche n'apprend rien à personne ; l'ordre numérique, lui, rend
+     un paquet de cent lisible d'un coup d'œil, et fait ressortir les suites. */
+  const results = [...recolte].sort((a, b) => a.n - b.n);
   const grid = $('#revealGrid');
   /* Au-delà d'une vingtaine, on renonce au retournement carte par carte :
      cent animations en cascade feraient attendre pour rien. */

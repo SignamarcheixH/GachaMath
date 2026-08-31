@@ -113,10 +113,17 @@ function renderRevision() {
   const zone = $('#revZone');
   const r = state.revision;
 
-  if (!r) { zone.innerHTML = revAccueilHTML(); cablerRevision(); return; }
+  if (!r) {                       // aucun jeu en cours : on présente celui du sélecteur
+    zone.innerHTML = accueilDuJeu(jeuChoisi());
+    cablerRevision(); cablerCalcul(); return;
+  }
   if (r.mode === 'appariement') {                       // l'autre exercice vit dans appariement.js
     zone.innerHTML = r.fini ? appBilanHTML(r) : appHTML(r);
     cablerRevision(); cablerAppariement(); return;
+  }
+  if (r.mode === 'calcul') {                            // et celui-ci dans calcul.js
+    zone.innerHTML = r.fini ? calcBilanHTML(r) : calcHTML(r);
+    cablerRevision(); cablerCalcul(); return;
   }
   if (r.fini) { zone.innerHTML = revBilanHTML(r); cablerRevision(); return; }
 
@@ -183,24 +190,66 @@ function proofTexte(trait, n) {
   catch { return null; }
 }
 
-function revAccueilHTML() {
+/* Le menu commande l'accueil affiché. Il est mémorisé par appareil : revenir
+   sur l'onglet redonne le jeu qu'on y pratiquait. */
+const CLE_MINIJEU = 'gachanombres.minijeu';
+const JEUX = ['vagues', 'appariement', 'calcul'];
+
+function jeuChoisi() {
+  const menu = $('#mjChoix');
+  if (menu && JEUX.includes(menu.value)) return menu.value;
+  try {
+    const m = localStorage.getItem(CLE_MINIJEU);
+    if (JEUX.includes(m)) return m;
+  } catch {}
+  return 'vagues';
+}
+
+function accueilDuJeu(jeu) {
+  if (jeu === 'calcul') return calcAccueilHTML();       // ne demande aucune collection
+
+  /* Les deux exercices de traits ont besoin d'une collection : sans nombres,
+     il n'y a pas de question à poser. */
   const assez = uniqueCount(state) >= REV_MIN_COLLEC;
+  if (!assez) {
+    return `<div class="forgeAccueil">
+      <div class="forgeAccueilArt">🎓</div>
+      <h3>Collection trop courte</h3>
+      <p class="tiny" style="color:#ff8a9c">Il vous faut ${REV_MIN_COLLEC} nombres différents
+         pour composer des questions. Vous en avez ${uniqueCount(state)}.</p>
+      <p class="tiny">Le Calcul rapide, lui, se joue dès maintenant.</p>
+    </div>`;
+  }
+
+  if (jeu === 'appariement') {
+    return `<div class="forgeAccueil">
+      <div class="forgeAccueilArt">🔗</div>
+      <h3>L'Appariement</h3>
+      <p>Dix traits à gauche, dix définitions à droite, dans le désordre.
+         Remettez chaque trait en face de la sienne.</p>
+      <p class="tiny">Le nom du trait est masqué dans sa définition : impossible de
+         deviner sans avoir compris.</p>
+      <div class="revChoix">
+        <button class="btn big gold" id="appStart"><b>Commencer</b><small>dix paires à reconstituer</small></button>
+      </div>
+    </div>`;
+  }
+
   return `<div class="forgeAccueil">
     <div class="forgeAccueilArt">🎓</div>
-    <h3>L'Examen</h3>
+    <h3>Les Vagues</h3>
     <p>Une suite de vagues. À chaque vague, <b>quatre nombres de votre collection</b>
        et un trait demandé : un seul des quatre le porte. À vous de le désigner.</p>
     <p class="tiny">Les cartes sont anonymes — ni couleur de rareté, ni surnom, ni emoji.
        La bonne réponse ne se lit que dans le nombre lui-même. Les traits subtils
        n'apparaissent qu'une fois les évidents passés, et vous avez ${REV_VIES} vies.</p>
-    ${assez
-      ? `<div class="revChoix">
-          <button class="btn big" id="revStart"><b>Les Vagues</b><small>reconnaitre un trait parmi quatre nombres</small></button>
-          <button class="btn big gold" id="appStart"><b>L'Appariement</b><small>remettre dix traits face a leur definition</small></button>
-        </div>`
-      : `<p class="tiny" style="color:#ff8a9c">Il vous faut ${REV_MIN_COLLEC} nombres différents pour composer des questions. Vous en avez ${uniqueCount(state)}.</p>`}
+    <div class="revChoix">
+      <button class="btn big" id="revStart"><b>Commencer</b><small>reconnaître un trait parmi quatre nombres</small></button>
+    </div>
   </div>`;
 }
+
+const revAccueilHTML = () => accueilDuJeu(jeuChoisi());
 
 function revBilanHTML(r) {
   return `<div class="forgeAccueil">
@@ -216,7 +265,27 @@ function revBilanHTML(r) {
   </div>`;
 }
 
+function cablerMenuMiniJeux() {
+  const menu = $('#mjChoix');
+  if (!menu || menu.dataset.cable) return;
+  menu.dataset.cable = '1';
+  menu.value = jeuChoisi();
+  menu.addEventListener('change', () => {
+    try { localStorage.setItem(CLE_MINIJEU, menu.value); } catch {}
+    /* Changer de jeu abandonne la partie en cours : garder deux exercices en
+       suspens dans le même onglet donnerait un état impossible à lire. */
+    if (typeof calcArreterChrono === 'function') calcArreterChrono();
+    state.revision = null;
+    save(); renderRevision();
+  });
+}
+
 function cablerRevision() {
+  cablerMenuMiniJeux();
+  const menu = $('#mjChoix');
+  if (menu && !state.revision) menu.disabled = false;
+  else if (menu) menu.disabled = !!state.revision && !state.revision.fini;
+
   const b = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
 
   b('#revStart', () => {

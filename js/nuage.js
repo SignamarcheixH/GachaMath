@@ -44,15 +44,16 @@ let _avaitLocal = false;
    par joueur pour une partie complète. On ne monte donc que si la progression a
    réellement avancé ; les jetons accumulés en veille partent au moment où
    l'onglet passe en arrière-plan. */
-function signatureUtile() {
-  const st = state.stats || {};
+function signatureDe(sauv) {
+  const st = (sauv && sauv.stats) || {};
   return [
-    uniqueCount(state), (state.claimed || []).length, (state.defis || []).length,
+    uniqueCount(sauv), (sauv.claimed || []).length, (sauv.defis || []).length,
     st.pulls | 0, st.forges | 0, Math.round(st.dustEarned || 0),
     st.bonnesReponses | 0, st.meilleureSerie | 0, st.appariements | 0,
-    state.commande ? state.commande.cible : 0,
+    sauv.commande ? sauv.commande.cible : 0,
   ].join('|');
 }
+const signatureUtile = () => signatureDe(state);
 let _derniereSignature = null;
 
 /* Empreinte bon marché d'une sauvegarde (FNV-1a), pour savoir si le local a
@@ -120,7 +121,24 @@ async function reconcilier() {
 
   if (!distant.donnees) return pousser(true);
   if (!local) return adopter(distant);
-  if (serveurBouge && localBouge) { nuage.etat = 'conflit'; renderNuage(); return proposerConflit(distant); }
+
+  if (serveurBouge && localBouge) {
+    /* « Les deux ont bougé » ne veut pas dire « les deux diffèrent ».
+       `localBouge` compare l'empreinte brute de la sauvegarde, et le revenu
+       passif modifie les jetons et l'horodatage à chaque tick : le local a donc
+       presque toujours bougé, même quand le joueur n'a rien fait. Résultat, on
+       demandait de choisir entre deux versions rigoureusement équivalentes.
+
+       On compare donc la progression réelle. Si elle est la même, il n'y a rien
+       à trancher : on garde la version la plus riche en jetons — l'écart ne
+       vient que de quelques secondes de veille — et le joueur n'est pas
+       dérangé. La question n'est posée que lorsqu'elle a un sens. */
+    const l = JSON.parse(local);
+    if (signatureDe(l) === signatureDe(distant.donnees)) {
+      return (l.coins || 0) >= (distant.donnees.coins || 0) ? pousser(true) : adopter(distant);
+    }
+    nuage.etat = 'conflit'; renderNuage(); return proposerConflit(distant);
+  }
   if (serveurBouge) return adopter(distant);
   if (localBouge) return pousser(true);
 
@@ -133,6 +151,7 @@ function adopter(distant) {
   state = Object.assign(freshState(), distant.donnees);
   state.stats = Object.assign(freshState().stats, distant.donnees.stats || {});
   if (!commandeValide(state.commande)) state.commande = null;
+  state.revision = null;        // même raison qu'au chargement local, voir load()
   invalideRevenu();
   const s = JSON.stringify(state);
   try { localStorage.setItem(SAVE_KEY, s); } catch {}
@@ -316,6 +335,8 @@ function telechargerSauvegarde() {
 function proposerConflit(distant) {
   const local = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
   const nb = s => Object.keys((s && s.owned) || {}).length;
+  const jetons = s => Math.floor((s && s.coins) || 0);
+  const quand = t => t ? new Date(t).toLocaleString('fr-FR') : 'date inconnue';
   const boite = $('#modalBox');
   boite.style.setProperty('--rc', 'var(--r-legendaire)');
   boite.innerHTML = `<h2>⚠ Deux versions de votre partie</h2>
@@ -323,9 +344,13 @@ function proposerConflit(distant) {
        à votre place — l'autre version sera écrasée.</p>
     <div class="nChoix">
       <button class="btn ghost" id="nGarderLocal">
-        <b>Garder celle-ci</b><small>${fmt(nb(local))} nombres · sur cet appareil</small></button>
+        <b>Garder celle-ci</b>
+        <small>${fmt(nb(local))} nombres · ${fmt(jetons(local))} 🪙</small>
+        <small>sur cet appareil · ${quand(local.lastTick)}</small></button>
       <button class="btn" id="nGarderDistant">
-        <b>Garder celle en ligne</b><small>${fmt(nb(distant.donnees))} nombres · ${new Date(distant.maj_le).toLocaleString('fr-FR')}</small></button>
+        <b>Garder celle en ligne</b>
+        <small>${fmt(nb(distant.donnees))} nombres · ${fmt(jetons(distant.donnees))} 🪙</small>
+        <small>en ligne · ${quand(distant.maj_le)}</small></button>
     </div>
     <p class="tiny">Dans le doute, téléchargez d'abord la version locale.</p>
     <div class="nBtns"><button class="btn ghost sm" id="nFichier">Télécharger celle-ci</button></div>`;

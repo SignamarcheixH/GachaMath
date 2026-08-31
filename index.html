@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=51">
+<link rel="stylesheet" href="css/style.css?v=66">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -48,9 +48,8 @@
   <button data-tab="gacha"      class="on"><span>🎰</span>Tirage<i class="badge" id="bTirage"></i></button>
   <button data-tab="collection"><span>🗃️</span>Collection<i class="badge" id="bCollection"></i></button>
   <button data-tab="forge"><span>⚒️</span>Forge</button>
-  <button data-tab="theoremes"><span>📐</span>Théorèmes<i class="badge alert" id="bTheo"></i></button>
-  <button data-tab="defis"><span>🏅</span>Défis<i class="badge alert" id="bDefis"></i></button>
-  <button data-tab="revision"><span>🎓</span>Révision</button>
+  <button data-tab="bonus"><span>🎁</span>Bonus<i class="badge alert" id="bBonus"></i></button>
+  <button data-tab="minijeux"><span>🎮</span>Mini-jeux</button>
   <button data-tab="classement"><span>🏆</span>Classement</button>
   <button data-tab="oracle"><span>🔮</span>Oracle</button>
 </nav>
@@ -138,48 +137,66 @@
 
   </section>
 
-  <!-- ══════════ THÉORÈMES ══════════ -->
-  <section id="tab-theoremes" class="tab">
+  <!-- ══════════ BONUS ══════════
+       Théorèmes et Défis réunis : dans les deux cas on réunit une condition et
+       on encaisse une prime permanente. Deux onglets pour une seule typologie
+       obligeaient à chercher au même endroit deux fois. -->
+  <section id="tab-bonus" class="tab">
     <div class="forgeIntro">
-      <h2>📐 Théorèmes</h2>
-      <p>Réunissez un ensemble complet pour le <b>démontrer</b> et empocher un bonus permanent. Certains ensembles sont hors de portée du tirage — la Forge est obligatoire.</p>
+      <h2>🎁 Bonus</h2>
+      <p>Deux façons de gagner des primes permanentes : <b>démontrer</b> un théorème
+         en réunissant un ensemble complet, ou franchir un <b>jalon</b>. Certains
+         ensembles sont hors de portée du tirage — la Forge est obligatoire.</p>
     </div>
     <div class="bonusSummary" id="bonusSummary"></div>
 
     <!-- Entre le resume et la liste. -->
-    <div class="pubVue" data-vue="theoremes" data-format="bas"></div>
+    <div class="pubVue" data-vue="bonus" data-format="bas"></div>
     <!-- Bandeau plutot que rectangle : la liste doit rester visible. -->
 
+    <h3 class="sousTitre">📐 Théorèmes</h3>
     <div class="theoList" id="theoList"></div>
-  </section>
 
-  <!-- ══════════ DÉFIS ══════════ -->
-  <section id="tab-defis" class="tab">
-    <div class="forgeIntro">
-      <h2>🏅 Défis</h2>
-      <p>Des jalons, des primes, et une mesure honnête du temps que vous avez investi là-dedans.</p>
-    </div>
+    <h3 class="sousTitre">🏅 Défis</h3>
     <div class="defiList" id="defiList"></div>
 
-    <!-- Entre les defis et les statistiques, loin d'Encaisser. -->
-    <div class="pubVue" data-vue="defis"></div>
-
     <div class="statsPanel" id="statsPanel"></div>
+
+    <div class="reglage">
+      <label for="fondDensite">🔢 Décor mathématique</label>
+      <input type="range" id="fondDensite" min="0" max="100" step="5" value="45">
+      <output id="fondDensiteVal">45 %</output>
+      <p class="tiny">Densité des nombres et identités qui s'écrivent en fond.
+         À zéro, le décor disparaît. Les décorations évitent d'elles-mêmes les
+         zones occupées par le contenu.</p>
+    </div>
+
     <div class="dangerZone">
       <button class="btn ghost danger" id="btnWipe">Effacer la sauvegarde</button>
     </div>
   </section>
 
-  <!-- ══════════ RÉVISION ══════════ -->
-  <section id="tab-revision" class="tab">
+  <!-- ══════════ MINI-JEUX ══════════ -->
+  <section id="tab-minijeux" class="tab">
     <div class="forgeIntro">
-      <h2>🎓 Révision</h2>
-      <p>Vous savez reconnaître un nombre parfait quand la fiche vous le dit. Mais sans la fiche ? Quatre nombres de votre collection, un trait demandé, un seul qui le porte. Les cartes sont anonymes : aucune couleur, aucun surnom, rien qui trahisse la réponse.</p>
+      <h2>🎮 Mini-jeux</h2>
+      <p>Trois exercices courts. Les deux premiers apprennent à reconnaître les
+         traits sans l'aide de la fiche ; le troisième ne demande que de la vitesse.</p>
     </div>
+
+    <div class="mjBarre">
+      <label for="mjChoix">Jeu</label>
+      <select id="mjChoix">
+        <option value="vagues">🎓 Les Vagues</option>
+        <option value="appariement">🔗 L'Appariement</option>
+        <option value="calcul">⚡ Le Calcul rapide</option>
+      </select>
+    </div>
+
     <div id="revZone"></div>
 
-    <!-- Apres l'exercice : le quiz est chronometre. -->
-    <div class="pubVue" data-vue="revision"></div>
+    <!-- Apres l'exercice : les jeux sont chronometres. -->
+    <div class="pubVue" data-vue="minijeux"></div>
 
   </section>
 
@@ -251,17 +268,19 @@
 
 <div id="toasts"></div>
 
-<script src="js/config.js?v=51"></script>
-<script src="js/pub.js?v=51"></script>
-<script src="js/numerology.js?v=51"></script>
-<script src="js/data.js?v=51"></script>
-<script src="js/state.js?v=51"></script>
-<script src="js/nuage.js?v=51"></script>
-<script src="js/classement.js?v=51"></script>
-<script src="js/forge.js?v=51"></script>
-<script src="js/forge-ui.js?v=51"></script>
-<script src="js/revision.js?v=51"></script>
-<script src="js/appariement.js?v=51"></script>
-<script src="js/ui.js?v=51"></script>
+<script src="js/config.js?v=66"></script>
+<script src="js/pub.js?v=66"></script>
+<script src="js/numerology.js?v=66"></script>
+<script src="js/data.js?v=66"></script>
+<script src="js/state.js?v=66"></script>
+<script src="js/nuage.js?v=66"></script>
+<script src="js/classement.js?v=66"></script>
+<script src="js/forge.js?v=66"></script>
+<script src="js/forge-ui.js?v=66"></script>
+<script src="js/revision.js?v=66"></script>
+<script src="js/appariement.js?v=66"></script>
+<script src="js/calcul.js?v=66"></script>
+<script src="js/fond.js?v=66"></script>
+<script src="js/ui.js?v=66"></script>
 </body>
 </html>

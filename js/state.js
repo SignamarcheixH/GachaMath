@@ -101,6 +101,16 @@ function load() {
       state.commande = null;
       state.commandePerimee = true;      // pour prévenir le joueur au démarrage
     }
+
+    /* Aucun mini-jeu ne survit à un rechargement. Les trois sont courts et
+       chronométrés : quitter l'onglet les abandonne déjà, et un rechargement
+       est une interruption au moins aussi franche.
+
+       Cela ferme surtout une classe entière de pannes : une partie enregistrée
+       par une version antérieure — ou reçue du serveur depuis un appareil resté
+       sur l'ancienne — n'a pas forcément la forme que le code attend. C'est
+       exactement ce qui est arrivé en ajoutant l'historique du Calcul rapide. */
+    state.revision = null;
     return true;
   } catch (e) { console.warn('Sauvegarde illisible', e); return false; }
 }
