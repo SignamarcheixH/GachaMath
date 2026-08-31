@@ -43,6 +43,26 @@ const PUB = {
      revenir à l'emplacement dans le contenu partout. */
   rails: true,
 
+  /* Rafraîchissement des annonces.
+
+     Le jeu est une application d'une seule page : sans cela, les annonces se
+     chargent une fois par visite et ne bougent plus, qu'on joue deux minutes
+     ou deux heures. Le changement d'onglet est une vraie navigation — il a
+     même sa propre adresse — donc un déclencheur honnête.
+
+     Les trois garde-fous ne sont pas décoratifs. Un rafraîchissement au
+     minuteur sur une page que personne ne regarde gonfle les impressions sans
+     audience : c'est exactement ce que la détection de trafic invalide
+     cherche, et c'est un motif de fermeture de compte. Les valeurs ci-dessous
+     suivent les règles que Google documente pour Ad Manager.
+
+     Mettre `actif: false` pour revenir à une seule demande par visite. */
+  rafraichissement: {
+    actif: true,
+    delaiMin: 60,       // secondes minimum entre deux demandes, sur un même emplacement
+    maxParVisite: 10,   // plafond par emplacement, pour une visite
+  },
+
   /* Les vues qui reçoivent un rectangle dans leur contenu.
 
      L'emplacement est ancré dans le HTML de chaque onglet (`.pubVue`), à un

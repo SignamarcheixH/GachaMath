@@ -120,6 +120,20 @@ function poser(bloc) {
   if (!PUB.client || !unite) return replierEmplacement(bloc);
 
   _posesFaites.add(bloc);
+  demanderAnnonce(bloc, unite);
+}
+
+/* Construit l'unité, la remplace si elle existait déjà, et demande l'annonce.
+   Partagée par la première pose et par le rafraîchissement — les deux doivent
+   produire exactement la même chose, sinon une annonce rafraîchie n'aurait pas
+   le format de celle qu'elle remplace. */
+function demanderAnnonce(bloc, unite) {
+  // Replier un emplacement supprime sa zone : sans ce garde-fou, la fonction
+  // dépendrait de l'ordre des vérifications faites par l'appelant.
+  const zone = bloc.querySelector('.pubZone');
+  if (!zone) return;
+  zone.innerHTML = '';
+
   const ins = document.createElement('ins');
   ins.className = 'adsbygoogle';
   ins.style.display = 'block';
@@ -135,7 +149,12 @@ function poser(bloc) {
     ins.setAttribute('data-ad-format', bloc.classList.contains('bas') ? 'horizontal' : 'rectangle');
     ins.setAttribute('data-full-width-responsive', 'true');
   }
-  bloc.querySelector('.pubZone').appendChild(ins);
+  zone.appendChild(ins);
+
+  const suivi = _suivi.get(bloc) || { demandes: 0, dernier: 0 };
+  suivi.demandes++;
+  suivi.dernier = Date.now();
+  _suivi.set(bloc, suivi);
 
   try {
     (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -159,6 +178,64 @@ function temoinApercu() {
     location.href = location.pathname + location.hash;
   });
   document.body.appendChild(t);
+}
+
+
+/* ============================================================
+   RAFRAÎCHISSEMENT
+
+   Le jeu est une application d'une seule page : sans rafraîchissement, les
+   annonces se chargent une fois et ne bougent plus, que la partie dure deux
+   minutes ou deux heures.
+
+   Le déclencheur est le changement d'onglet — une vraie navigation, qui a sa
+   propre adresse et résulte d'un geste du joueur. Jamais un minuteur : une
+   annonce renouvelée sur une page que personne ne regarde produit des
+   impressions sans audience, ce que la détection de trafic invalide cherche
+   précisément, et c'est un motif de fermeture de compte.
+
+   `pourquoiPas` retourne la raison du refus plutôt qu'un booléen : c'est ce
+   qui rend la règle vérifiable de l'extérieur, et lisible quand on se demande
+   six mois plus tard pourquoi un emplacement ne bouge pas.
+   ============================================================ */
+const _suivi = new WeakMap();
+
+const surcouchePresente = () =>
+  !!document.querySelector('#reveal.on, #modal.on');
+
+/* Visible signifie « une partie du cadre est réellement dans la fenêtre ».
+   Un onglet masqué a un cadre de taille nulle : il est donc écarté d'office. */
+function dansLaFenetre(bloc) {
+  const r = bloc.getBoundingClientRect();
+  if (r.width === 0 || r.height === 0) return false;
+  return r.bottom > 0 && r.top < (window.innerHeight || 0);
+}
+
+function pourquoiPas(bloc, maintenant = Date.now()) {
+  const reg = PUB.rafraichissement || {};
+  if (!reg.actif) return 'désactivé';
+  if (APERCU() || !PUB.client) return 'pas de régie';
+  if (bloc.classList.contains('vide')) return 'emplacement replié';
+  if (document.visibilityState !== 'visible') return 'onglet du navigateur en arrière-plan';
+  if (surcouchePresente()) return 'une surcouche masque la page';
+  if (!dansLaFenetre(bloc)) return 'hors de la fenêtre';
+
+  const suivi = _suivi.get(bloc);
+  if (!suivi) return 'jamais posé';
+  if (suivi.demandes >= (reg.maxParVisite || 10)) return 'plafond de la visite atteint';
+  const ecoule = (maintenant - suivi.dernier) / 1000;
+  if (ecoule < (reg.delaiMin || 60)) return `trop tôt (${Math.round(ecoule)} s)`;
+  return null;
+}
+
+function rafraichirVisibles() {
+  document.querySelectorAll('.pub').forEach(bloc => {
+    if (pourquoiPas(bloc)) return;
+    const nom = bloc.dataset.pub;
+    const emp = PUB.emplacements || {};
+    const unite = emp[nom] || (nom === 'bas' ? '' : (nom.startsWith('rail') ? emp.rail || emp.lecture : emp.lecture));
+    if (unite) demanderAnnonce(bloc, unite);
+  });
 }
 
 /* ---------- insertion dans le jeu ---------- */
@@ -284,6 +361,10 @@ function majPubVue() {
   const onglet = document.querySelector('#tabs button.on');
   if (!onglet) return;                                // page de contenu : rien à faire
   const vue = onglet.dataset.tab;
+
+  // Un changement d'onglet est une navigation : les emplacements déjà en
+  // place et toujours visibles peuvent redemander une annonce.
+  rafraichirVisibles();
 
   /* Filet : si la fenêtre a été élargie sans qu'aucun événement ne nous
      parvienne, un simple changement d'onglet rétablit les colonnes. Les deux
