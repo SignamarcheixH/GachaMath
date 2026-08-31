@@ -9,4 +9,5 @@ urlpatterns = [
     path("deconnexion", views.deconnexion),
     path("partie", views.partie),
     path("classement", views.classement),
+    path("retour", views.retour),
 ]

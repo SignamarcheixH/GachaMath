@@ -8,7 +8,7 @@
 <meta property="og:title" content="Confidentialité — Gacha des Nombres">
 <meta property="og:description" content="Ni e-mail, ni mot de passe, ni compte. Ce qui est conservé, et comment le récupérer ou l'effacer.">
 <meta property="og:type" content="article">
-<link rel="stylesheet" href="css/style.css?v=66">
+<link rel="stylesheet" href="css/style.css?v=67">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -94,6 +94,22 @@
      <a href="https://policies.google.com/technologies/partner-sites" rel="noopener nofollow" target="_blank">
      leur page dédiée</a>.</p>
 
+  <h2>Si vous envoyez un retour</h2>
+  <p>Le bouton ✉️ en bas de chaque page envoie un message à l'équipe. Sont
+     alors conservés :</p>
+  <ul>
+    <li><b>L'objet et le texte</b> que vous avez écrits.</li>
+    <li><b>La page</b> depuis laquelle vous écrivez, et la version des fichiers
+        du jeu — pour reproduire un bug.</li>
+    <li><b>Le nom de votre navigateur</b>, tel qu'il s'annonce lui-même.</li>
+    <li><b>Votre pseudo</b>, si vous en avez choisi un. Sinon le retour est
+        anonyme, et il est tout aussi utile.</li>
+  </ul>
+  <p>Votre adresse IP <b>n'est pas conservée</b> avec le message. Nous en
+     gardons une empreinte chiffrée, qui sert uniquement à limiter le nombre
+     d'envois par heure et ne permet pas de remonter à vous. Le contenu de
+     votre partie n'est jamais joint.</p>
+
   <h2>Journaux du serveur</h2>
   <p>Comme tout serveur web, le nôtre enregistre les requêtes reçues, ce qui
      inclut votre adresse IP, la date et la page demandée. Ces journaux servent
@@ -136,7 +152,8 @@
   <a href="https://github.com/SignamarcheixH/GachaMath" rel="noopener" target="_blank">Code source</a>
 </footer>
 
-<script src="js/config.js?v=66"></script>
+<script src="js/config.js?v=67"></script>
+<script src="js/retour.js?v=67"></script>
 <script>
   // Sans identifiant éditeur, aucune annonce n'est diffusée : annoncer de la
   // publicité serait alors faux. On retire la section.

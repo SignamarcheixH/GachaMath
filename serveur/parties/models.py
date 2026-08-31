@@ -1,5 +1,6 @@
 """
-Le modèle de données tient en deux tables : un joueur, une sauvegarde.
+Le modèle de données tient en trois tables : un joueur, une sauvegarde, et les
+retours envoyés depuis le jeu.
 
 Les métriques du classement ne sont pas envoyées par le client — elles sont
 **recalculées ici** à chaque enregistrement, à partir de la sauvegarde reçue.
@@ -69,3 +70,57 @@ class Sauvegarde(models.Model):
 
     def __str__(self):
         return f"sauvegarde de {self.joueur.pseudo} ({self.octets // 1024} Ko)"
+
+
+class Retour(models.Model):
+    """Un message envoyé depuis le bouton de retour, en jeu ou sur une page.
+
+    Tout ce qui arrive ici vient du visiteur, donc rien n'est digne de
+    confiance. Trois règles tiennent la sécurité :
+
+    1. `objet` est un choix fermé, jamais du texte libre. La vue rejette toute
+       valeur absente de OBJETS, sans quoi ce champ deviendrait un second champ
+       de texte non contrôlé.
+    2. Le message est stocké tel quel et **jamais réinjecté dans le jeu**. Il
+       n'apparaît que dans l'admin Django, dont les gabarits échappent le HTML
+       par défaut — à condition de ne jamais le passer par format_html.
+    3. Aucune adresse IP n'est conservée. Le contrôle de cadence s'appuie sur
+       une empreinte salée par la clé secrète : elle suffit à reconnaître un
+       envoyeur pendant une heure, sans permettre de remonter à lui.
+    """
+
+    OBJETS = [
+        ("bug", "Un bug"),
+        ("idee", "Une idée"),
+        ("maths", "Une erreur mathématique"),
+        ("equilibrage", "Équilibrage"),
+        ("autre", "Autre"),
+    ]
+    OBJETS_VALIDES = {cle for cle, _ in OBJETS}
+
+    MESSAGE_MAX = 2000
+
+    objet = models.CharField("objet", max_length=16, choices=OBJETS)
+    message = models.TextField("message", max_length=MESSAGE_MAX)
+
+    # Facultatif : un retour anonyme reste un retour utile.
+    joueur = models.ForeignKey(Joueur, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="retours", verbose_name="joueur")
+
+    # Contexte, utile surtout pour les rapports de bug. Fourni par le client,
+    # donc tronqué et traité comme du texte quelconque.
+    page = models.CharField("page", max_length=120, blank=True)
+    version = models.CharField("version des fichiers", max_length=16, blank=True)
+    agent = models.CharField("navigateur", max_length=200, blank=True)
+
+    empreinte = models.CharField("empreinte d'envoi", max_length=32, blank=True, db_index=True)
+    cree_le = models.DateTimeField("reçu le", auto_now_add=True)
+    traite = models.BooleanField("traité", default=False)
+
+    class Meta:
+        verbose_name = "retour"
+        verbose_name_plural = "retours"
+        ordering = ["-cree_le"]
+
+    def __str__(self):
+        return f"{self.get_objet_display()} — {self.message[:60]}"

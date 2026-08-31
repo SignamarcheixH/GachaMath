@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RACINE = path.join(__dirname, '..');
-const V = 66;                                   // version des assets, cf. index.html
+const V = 67;                                   // version des assets, cf. index.html
 
 const source = ['js/numerology.js', 'js/data.js']
   .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8'))
@@ -105,6 +105,7 @@ ${corps}
 <script src="js/config.js?v=${V}"></script>
 <script src="js/pub.js?v=${V}"></script>
 <script src="js/doc.js?v=${V}"></script>
+<script src="js/retour.js?v=${V}"></script>
 <script>if (typeof initPub === 'function') initPub();</script>
 </body>
 </html>

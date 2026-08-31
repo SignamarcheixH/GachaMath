@@ -8,7 +8,7 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .metriques import incoherences, mesurer
-from .models import Joueur, Sauvegarde
+from .models import Joueur, Retour, Sauvegarde
 
 
 class SauvegardeInline(admin.StackedInline):
@@ -90,6 +90,46 @@ class SauvegardeAdmin(admin.ModelAdmin):
     @admin.display(description="poids", ordering="octets")
     def poids(self, obj):
         return f"{obj.octets / 1024:.0f} Ko"
+
+
+@admin.register(Retour)
+class RetourAdmin(admin.ModelAdmin):
+    """Le message n'est jamais passé par format_html.
+
+    Les gabarits de l'admin échappent le HTML d'office ; format_html ne le
+    ferait plus, et un retour contenant du script s'exécuterait dans la seule
+    page où l'on est authentifié en administrateur. L'aperçu ci-dessous rend
+    donc du texte, pas du balisage.
+    """
+
+    list_display = ("cree_le", "objet", "extrait", "qui", "traite")
+    list_filter = ("objet", "traite", "cree_le")
+    search_fields = ("message", "joueur__pseudo")
+    readonly_fields = ("objet", "message", "joueur", "page", "version",
+                       "agent", "empreinte", "cree_le")
+    ordering = ("-cree_le",)
+    actions = ["marquer_traite", "marquer_a_faire"]
+    list_per_page = 50
+
+    @admin.display(description="message")
+    def extrait(self, obj):
+        texte = " ".join(obj.message.split())
+        return texte[:90] + ("…" if len(texte) > 90 else "")
+
+    @admin.display(description="joueur")
+    def qui(self, obj):
+        return obj.joueur.pseudo if obj.joueur else "—"
+
+    @admin.action(description="Marquer comme traité")
+    def marquer_traite(self, requete, lot):
+        self.message_user(requete, f"{lot.update(traite=True)} retour(s) traité(s).")
+
+    @admin.action(description="Remettre à traiter")
+    def marquer_a_faire(self, requete, lot):
+        self.message_user(requete, f"{lot.update(traite=False)} retour(s) à traiter.")
+
+    def has_add_permission(self, requete):
+        return False        # les retours arrivent par l'API, jamais à la main
 
 
 admin.site.site_header = "Gacha des Nombres"
