@@ -135,8 +135,23 @@ STATIC_ROOT = BASE_DIR / "statique"
 
 # WhiteNoise sert le jeu depuis la racine du dépôt : index.html à /,
 # et css/ et js/ à leurs chemins relatifs, exactement comme en local.
-WHITENOISE_ROOT = RACINE_JEU
-WHITENOISE_INDEX_FILE = True
+# WhiteNoise ne sert le dépôt QUE en développement, où il n'y a pas de nginx
+# devant. En production c'est nginx qui sert le jeu, à partir d'une liste
+# explicite de chemins.
+#
+# La distinction n'est pas une optimisation, c'est une correction de faille.
+# WHITENOISE_ROOT pointait sur la racine du dépôt en permanence, et WhiteNoise
+# ne distingue pas ce qui est public de ce qui ne l'est pas : /.env et
+# /serveur/db.sqlite3 étaient téléchargeables par tout le monde — la clé de
+# signature et l'intégralité des parties des joueurs.
+#
+# Servir des fichiers depuis un dossier qui contient aussi des secrets ne peut
+# pas être sécurisé par une liste d'exclusions : il y aura toujours un fichier
+# qu'on a oublié d'exclure. C'est l'inverse qu'il faut faire — énumérer ce qui
+# est public, et refuser le reste par défaut.
+if DEBUG:
+    WHITENOISE_ROOT = RACINE_JEU
+    WHITENOISE_INDEX_FILE = True
 WHITENOISE_AUTOREFRESH = DEBUG
 
 
