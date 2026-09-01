@@ -1016,6 +1016,16 @@ select option { background: var(--bg2); }
 
   .gCell { min-width: 0; height: 44px; padding: 0 6px; font-size: 16px; }
   .gCell.op { min-width: 42px; }
+
+  /* --- la ligne unaire de l'Expédition ---
+     « ⊕ a = res » n'a que cinq cases, là où la Forge en a six. Sans ce plan
+     propre, chaque case héritait de la colonne de sa voisine : le nom de
+     l'opérateur venait se poser sur le nombre. */
+  .gLigne.unaire > :nth-child(2) { grid-column: 2; }                     /* opérateur */
+  .gLigne.unaire > :nth-child(3) { grid-column: 3 / 5; }                 /* opérande  */
+  .gLigne.unaire > :nth-child(4) { grid-column: 2; justify-self: end; }  /* le signe = */
+  .gLigne.unaire > :nth-child(5) { grid-column: 3 / 5; justify-self: stretch; }
+
   .gRes { min-width: 0; height: 44px; padding: 0 8px; font-size: 16px; }
   .gEq { font-size: 17px; margin: 0; }
   .gNum { width: 20px; height: 20px; font-size: 10px; }
@@ -1481,3 +1491,315 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
 /* Les colonnes publicitaires ne montent jamais jusqu'en bas, mais autant que
    l'ordre d'empilement soit explicite : le retour passe devant. */
 .pubRail { z-index: 30; }
+
+/* ══════════ L'EXPÉDITION ══════════ */
+.expZone { max-width: 720px; margin: 0 auto; }
+
+.expTete {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.expPorte { display: flex; flex-direction: column; }
+.expPorte small {
+  font-size: 10.5px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim2);
+}
+.expPorte b {
+  font-family: var(--mono); font-size: 34px; font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 26px rgba(124,92,255,.45);
+}
+.expScore { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--dim2); }
+.expScore b { color: var(--txt); font-family: var(--mono); }
+
+/* ---------- la carte ----------
+   Les nœuds sont posés en pourcentages, les liens tracés dans un SVG au même
+   repère : rien à mesurer dans le DOM, donc rien à recalculer au
+   redimensionnement. */
+.expCarte {
+  position: relative; height: 440px; margin: 4px 0 18px;
+  /* La piste est bien plus haute que son cadre, et sans fin depuis qu'elle se
+     déroule au fur et à mesure : la caméra suit le joueur, et le joueur peut
+     remonter voir d'où il vient.
+
+     Le raccourci `overflow: hidden` traînait ici après `overflow-y: auto` et
+     l'annulait : la carte ne défilait qu'au clavier et à la main. */
+  overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
+  border: 1px solid var(--line); border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 50% 100%, rgba(124,92,255,.14), transparent 65%),
+    var(--panel);
+}
+/* La hauteur est posée au rendu : elle suit le nombre de couches déroulées. */
+.expPiste { position: relative; margin: 30px 38px; }
+.expLiens { position: absolute; inset: 0; width: 100%; height: 100%; }
+.expLien { stroke: var(--line2); stroke-width: .35; vector-effect: non-scaling-stroke; }
+.expLien.pris { stroke: var(--accent); stroke-width: 1.2; }
+
+.expNoeud {
+  position: absolute; transform: translate(-50%, 50%);
+  width: 46px; height: 46px; border-radius: 50%; padding: 0;
+  display: grid; place-items: center; cursor: default;
+  background: var(--bg2); border: 2px solid var(--line2); color: var(--dim2);
+  opacity: .45; transition: transform .12s ease;
+}
+/* L'emoji est centré par la grille, mais sa boîte de ligne le décale d'un
+   cheveu : on la neutralise plutôt que de bricoler une marge. */
+.expNoeud > span {
+  display: block; font-size: 19px; line-height: 1;
+}
+.expNoeud.vu { opacity: .9; }
+.expNoeud.ouvert {
+  opacity: 1; cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(124,92,255,.28), 0 0 18px rgba(124,92,255,.35);
+}
+.expNoeud.ouvert:hover { transform: translate(-50%, 50%) scale(1.14); }
+
+/* ---------- infobulle des nœuds ----------
+   Le titre natif du navigateur met une seconde à venir et n'a pas la couleur du
+   jeu. Celle-ci apparaît tout de suite, et dit la nature du nœud — la seule
+   information dont dispose le joueur pour tracer sa route.
+
+   Elle est posée sur la page, pas dans la carte : la carte défile dans un cadre
+   plus court que la piste, et une infobulle dessinée à l'intérieur se serait
+   fait couper dès qu'un nœud approchait un bord. */
+.expTip {
+  position: fixed; z-index: 150; pointer-events: none;
+  max-width: 260px; padding: 7px 12px; border-radius: 10px;
+  background: var(--panel2); border: 1px solid var(--line2); color: var(--txt);
+  font-size: 12.5px; line-height: 1.35; letter-spacing: .01em;
+  box-shadow: 0 10px 26px rgba(0,0,0,.6);
+  opacity: 0; transform: translateY(4px); transition: opacity .13s ease, transform .13s ease;
+}
+.expTip.on { opacity: 1; transform: translateY(0); }
+.expTip b { color: var(--coin); font-weight: 700; }
+.expTip::after {
+  content: ''; position: absolute; left: var(--fleche, 50%); margin-left: -5px;
+  border: 5px solid transparent;
+}
+.expTip.dessus::after { top: 100%; border-top-color: var(--line2); }
+.expTip.dessous::after { bottom: 100%; border-bottom-color: var(--line2); }
+
+.expNoeud.ici {
+  opacity: 1; border-color: var(--coin); color: var(--coin);
+  box-shadow: 0 0 0 3px rgba(255,215,106,.3), 0 0 22px rgba(255,215,106,.45);
+}
+.expNoeud:focus-visible { outline: 2px solid var(--coin); outline-offset: 3px; }
+
+/* Une couleur par nature de nœud : c'est la seule information dont dispose le
+   joueur pour tracer sa route. */
+.expNoeud.nombres    { border-color: var(--r-rare); }
+.expNoeud.operateurs { border-color: var(--r-epique); }
+.expNoeud.contrainte { border-color: var(--gold); }
+.expNoeud.tresor     { border-color: var(--r-peucommun); }
+/* Le camp est la seule sortie payante : il se voit de loin sur la piste. */
+.expNoeud.checkpoint {
+  border-color: var(--coin); border-style: double; border-width: 4px;
+  background: radial-gradient(circle at 50% 45%, rgba(255,215,106,.22), var(--bg2) 70%);
+}
+
+/* ---------- le camp de base ----------
+   Un bandeau, pas une modale : la décision de rentrer ou de pousser plus loin
+   se prend en regardant la carte, qui reste visible juste en dessous. */
+.expCamp {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 13px 16px; margin-bottom: 16px;
+  border: 1px solid var(--coin); border-radius: 14px;
+  background: rgba(255,215,106,.09);
+}
+.expCampTitre { font-size: 15.5px; color: var(--coin); font-weight: 600; }
+.expCampAide { font-size: 13px; color: var(--dim); flex: 1; min-width: 180px; }
+.expPrime { color: var(--coin); }
+/* Le deuxième clic d'un abandon : le bouton dit ce qu'il coûte. */
+.btn.ghost.danger {
+  border-color: #ff6b81; color: #ff9aa8; background: rgba(255,107,129,.12);
+}
+
+/* ---------- l'épreuve ---------- */
+.expEpreuve {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 13px 16px; margin-bottom: 16px;
+  border: 1px solid var(--gold); border-radius: 14px;
+  background: rgba(255,176,46,.10);
+}
+.expEpreuveTitre { font-size: 15.5px; color: var(--gold); font-weight: 600; }
+.expEpreuveAide { font-size: 13px; color: var(--dim); flex: 1; min-width: 180px; }
+
+/* ---------- le dépôt ----------
+   La case qui juge, dans le bandeau de la contrainte plutôt que sur l'établi :
+   c'est le geste de présenter son nombre à l'épreuve, pas une opération de
+   plus. Les lignes en dessous ne font que fabriquer. */
+.expDepotBloc { display: flex; align-items: center; gap: 10px; }
+.expDepotNom {
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold);
+}
+.expEpreuve .gCell.expDepot {
+  min-width: 104px; height: 50px;
+  border-width: 2px; border-style: dashed; border-color: var(--gold);
+  background: rgba(255,176,46,.10); color: var(--gold); cursor: pointer;
+}
+.expEpreuve .gCell.expDepot.survol,
+.expEpreuve .gCell.expDepot.trou:hover {
+  background: rgba(255,176,46,.24); transform: scale(1.04);
+}
+/* Un nombre qui convenait ne resterait pas là : l'épreuve serait déjà levée.
+   Ce qui s'affiche est donc toujours un refus. */
+.expEpreuve .gCell.expDepot.refuse {
+  border-style: solid; border-color: #ff6b81;
+  background: rgba(255,107,129,.16); color: #ff9aa8;
+}
+.expEpreuve .gCell.expDepot.refuse:hover { background: rgba(255,107,129,.3); }
+
+.calcGain.perdu { color: var(--dim); font-weight: 500; }
+
+/* ---------- la besace ---------- */
+.expBesace {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px;
+}
+.expBesaceLot {
+  border: 1px solid var(--line); border-radius: 14px; padding: 11px 13px;
+  background: var(--panel);
+}
+.expBesaceLot h4 {
+  margin: 0 0 8px; font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--dim2);
+}
+.expJetons { display: flex; flex-wrap: wrap; gap: 6px; }
+.expVide { font-size: 12.5px; color: var(--dim2); font-style: italic; }
+
+.expJetonOp, .expJetonNum {
+  font-family: var(--mono); font-size: 13px; cursor: pointer;
+  padding: 5px 10px; border-radius: 99px;
+  background: var(--panel2); color: var(--txt); border: 1px solid var(--line2);
+}
+.expJetonOp:disabled, .expJetonNum:disabled { opacity: .4; cursor: default; }
+.expJetonOp:not(:disabled):hover, .expJetonNum:not(:disabled):hover { border-color: var(--accent); }
+/* Un binaire réclame un nombre : autant que ça se voie avant de cliquer. */
+.expJetonOp.base { border-style: dashed; opacity: .95; }
+/* ---------- la bulle de quantité ----------
+   Posée dans le coin du jeton, elle ne se lit plus comme un facteur — et le
+   jeton garde la largeur de sa valeur, quel qu'en soit le nombre. */
+.jeton, .expJetonOp, .expJetonNum { position: relative; overflow: visible; }
+.jetonNb {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  display: grid; place-items: center; box-sizing: border-box;
+  border-radius: 99px; background: var(--coin); color: #201800;
+  font-family: var(--mono); font-style: normal; font-size: 10.5px;
+  font-weight: 700; line-height: 1; letter-spacing: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,.45);
+}
+.jeton.derive .jetonNb { background: #b567ff; color: #fff; }
+.expJetonNum em {
+  font-style: normal; font-size: 10px; margin-left: 4px;
+  background: var(--coin); color: #201800; border-radius: 99px; padding: 0 5px;
+}
+.expToujours {
+  font-size: 9.5px; letter-spacing: .1em; color: var(--dim2);
+  border: 1px solid var(--line2); border-radius: 99px; padding: 1px 6px; margin-left: 6px;
+}
+.secondTitre { margin-top: 12px; }
+.expJetonOp.choisi { border-color: var(--coin); color: var(--coin); box-shadow: 0 0 12px rgba(255,215,106,.35); }
+.expJetonNum { color: var(--r-rare); }
+
+.expPied { display: flex; justify-content: center; margin-top: 6px; }
+
+@media (max-width: 560px) {
+  .expBesace { grid-template-columns: 1fr; }
+  .expCarte { height: 360px; }
+  .expPorte b { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .expNoeud { transition: none; }
+}
+
+/* ---------- l'établi de l'Expédition ----------
+   Il emprunte .gLigne, .gCell et .jeton à la Forge : mêmes gestes, même
+   apparence, rien de neuf à apprendre. */
+.expEtabli { margin-bottom: 18px; }
+.expEtabli .guide { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.expEtabli .gCell.resultat {
+  border: 2px solid var(--line2); background: rgba(255,255,255,.05);
+  color: var(--dim); cursor: default; min-width: 68px;
+}
+.expEtabli .gCell.resultat.gagnant {
+  border-color: var(--r-peucommun); color: var(--r-peucommun);
+  background: rgba(78,201,122,.18);
+}
+.expEtabli .gEgal { color: var(--dim2); padding: 0 2px; }
+
+.expReserve {
+  border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  background: var(--panel);
+}
+.expReserve h4 {
+  margin: 0 0 8px; font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--dim2);
+}
+.expReserve .jetons { display: flex; flex-wrap: wrap; gap: 9px 7px; margin-bottom: 2px; }
+/* « Chiffres décroissants » sur un rang de cinq signes : les spéciaux ont leur
+   propre rang, en plus petit, pour que les deux familles restent lisibles.
+
+   Il faut aussi défaire le carré de 46 px que la classe `.op` impose partout
+   ailleurs dans le jeu : un signe y tient, un nom ne tient pas, et le texte
+   sortait de la pastille. */
+.expReserve .jetons.speciaux .jeton.op {
+  /* `display: grid` laissait le nom sortir de la pastille au lieu de le plier :
+     une piste de grille se dimensionne sur son contenu et déborde son cadre. */
+  display: flex; align-items: center; justify-content: center;
+  width: auto; max-width: 168px; height: auto; min-width: 0;
+  padding: 8px 13px; font-size: 13.5px; line-height: 1.15;
+  white-space: normal; text-align: center; overflow-wrap: anywhere;
+}
+
+/* Une case d'opérateur reçoit aussi bien « × » que « Chiffres décroissants ».
+   Elle s'élargit jusqu'à un point, puis le nom passe à la ligne : rien ne sort
+   jamais du cadre. */
+.expEtabli .gCell.op {
+  /* `width: max-content` borné donne la largeur du nom quand il tient, et
+     déclenche le retour à la ligne quand il ne tient pas. Sans `flex: 0 0 auto`
+     la ligne écrasait la case bien en deçà de sa largeur minimale. */
+  flex: 0 0 auto; width: max-content;
+  min-width: 54px; max-width: 116px; padding: 0 8px;
+  font-size: 12.5px; line-height: 1.14; text-align: center;
+  white-space: normal; overflow-wrap: anywhere; hyphens: auto;
+}
+/* Un signe de base reste un signe : il garde sa taille. */
+.expEtabli .gCell.op.base { font-size: 19px; }
+.expEtabli .gCell:not(.op):not(.resultat) { max-width: 120px; overflow: hidden; }
+
+/* La ligne vierge du bas est une invitation, pas une étape : elle s'efface. */
+.expEtabli .gLigne.vierge { opacity: .55; transition: opacity .15s; }
+.expEtabli .gLigne.vierge:hover, .expEtabli .gLigne.vierge:focus-within { opacity: 1; }
+
+/* Ce bloc vient après ses jumelles de bureau, sinon il ne s'appliquerait
+   jamais : à spécificité égale, c'est le dernier écrit qui l'emporte, media
+   query ou pas. Dans une colonne étroite la case suit sa colonne plutôt que
+   son texte, et grandit en hauteur si le nom se plie. */
+@media (max-width: 620px) {
+  .expEtabli .gCell.op {
+    width: auto; max-width: 100%; min-width: 0;
+    height: auto; min-height: 44px; font-size: 11.5px;
+  }
+  .expEtabli .gCell:not(.op):not(.resultat) { max-width: none; }
+}
+.jeton.op { color: var(--coin); border-color: rgba(255,215,106,.45); }
+/* Un spécial se consomme : autant que sa rareté se voie. */
+.jeton.op.speciale { color: #cbb6ff; border-color: rgba(181,103,255,.55); }
+
+/* ---------- classement détaillé des mini-jeux ----------
+   Sept colonnes ne tiennent pas sur un téléphone : le tableau défile dans son
+   propre cadre plutôt que de faire déborder la page entière. */
+.clLarge { overflow-x: auto; }
+.clTable.detail { min-width: 460px; }
+.clTable.detail thead th {
+  font-size: 15px; font-weight: 400; padding: 0 6px 8px;
+  border-bottom: 1px solid var(--line); text-align: center;
+}
+.clTable.detail thead th:last-child {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim2);
+}
+.clJeu {
+  text-align: center; font-family: var(--mono); font-size: 13.5px;
+  font-variant-numeric: tabular-nums; padding: 0 6px;
+}
+.clJeu.zero { color: var(--dim2); opacity: .45; }
+.clTable.detail .clVal { text-align: right; }

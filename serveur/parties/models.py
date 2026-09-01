@@ -46,6 +46,13 @@ class Joueur(models.Model):
     defis = models.PositiveIntegerField("défis validés", default=0)
     tirages = models.PositiveIntegerField(default=0)
     examen = models.PositiveIntegerField("meilleur examen", default=0)
+    minijeux = models.PositiveIntegerField("mini-jeux terminés", default=0)
+    jeux_vagues = models.PositiveIntegerField("parties de Vagues", default=0)
+    jeux_appariement = models.PositiveIntegerField("parties d'Appariement", default=0)
+    jeux_calcul = models.PositiveIntegerField("parties de Calcul rapide", default=0)
+    jeux_expedition = models.PositiveIntegerField("expéditions menées", default=0)
+    expedition = models.PositiveIntegerField("couche la plus profonde", default=0)
+    calcul = models.PositiveIntegerField("meilleur calcul rapide", default=0)
     suspect = models.CharField("incohérence relevée", max_length=200, blank=True)
 
     class Meta:

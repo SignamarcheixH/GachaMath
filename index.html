@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=67">
+<link rel="stylesheet" href="css/style.css?v=96">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -162,15 +162,6 @@
 
     <div class="statsPanel" id="statsPanel"></div>
 
-    <div class="reglage">
-      <label for="fondDensite">🔢 Décor mathématique</label>
-      <input type="range" id="fondDensite" min="0" max="100" step="5" value="45">
-      <output id="fondDensiteVal">45 %</output>
-      <p class="tiny">Densité des nombres et identités qui s'écrivent en fond.
-         À zéro, le décor disparaît. Les décorations évitent d'elles-mêmes les
-         zones occupées par le contenu.</p>
-    </div>
-
     <div class="dangerZone">
       <button class="btn ghost danger" id="btnWipe">Effacer la sauvegarde</button>
     </div>
@@ -180,8 +171,9 @@
   <section id="tab-minijeux" class="tab">
     <div class="forgeIntro">
       <h2>🎮 Mini-jeux</h2>
-      <p>Trois exercices courts. Les deux premiers apprennent à reconnaître les
-         traits sans l'aide de la fiche ; le troisième ne demande que de la vitesse.</p>
+      <p>Quatre exercices courts. Les deux premiers apprennent à reconnaître les
+         traits sans l'aide de la fiche, le troisième ne demande que de la vitesse,
+         et le dernier emmène un nombre aussi loin qu'il peut aller.</p>
     </div>
 
     <div class="mjBarre">
@@ -190,6 +182,7 @@
         <option value="vagues">🎓 Les Vagues</option>
         <option value="appariement">🔗 L'Appariement</option>
         <option value="calcul">⚡ Le Calcul rapide</option>
+        <option value="expedition">🛤️ L'Expédition</option>
       </select>
     </div>
 
@@ -268,20 +261,21 @@
 
 <div id="toasts"></div>
 
-<script src="js/config.js?v=67"></script>
-<script src="js/pub.js?v=67"></script>
-<script src="js/numerology.js?v=67"></script>
-<script src="js/data.js?v=67"></script>
-<script src="js/state.js?v=67"></script>
-<script src="js/nuage.js?v=67"></script>
-<script src="js/classement.js?v=67"></script>
-<script src="js/forge.js?v=67"></script>
-<script src="js/forge-ui.js?v=67"></script>
-<script src="js/revision.js?v=67"></script>
-<script src="js/appariement.js?v=67"></script>
-<script src="js/calcul.js?v=67"></script>
-<script src="js/fond.js?v=67"></script>
-<script src="js/ui.js?v=67"></script>
-<script src="js/retour.js?v=67"></script>
+<script src="js/config.js?v=96"></script>
+<script src="js/pub.js?v=96"></script>
+<script src="js/numerology.js?v=96"></script>
+<script src="js/data.js?v=96"></script>
+<script src="js/state.js?v=96"></script>
+<script src="js/nuage.js?v=96"></script>
+<script src="js/classement.js?v=96"></script>
+<script src="js/forge.js?v=96"></script>
+<script src="js/forge-ui.js?v=96"></script>
+<script src="js/revision.js?v=96"></script>
+<script src="js/appariement.js?v=96"></script>
+<script src="js/calcul.js?v=96"></script>
+<script src="js/expedition.js?v=96"></script>
+<script src="js/fond.js?v=96"></script>
+<script src="js/ui.js?v=96"></script>
+<script src="js/retour.js?v=96"></script>
 </body>
 </html>

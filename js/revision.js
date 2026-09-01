@@ -99,9 +99,16 @@ function vagueSuivante() {
   r.vague++;
   r.reponse = null;
   const q = nouvelleVague();
-  if (!q) { r.fini = true; return null; }
+  if (!q) { r.fini = true; cloreExamen(r); return null; }
   r.question = q;
   return q;
+}
+
+/* Une partie de Vagues achevée compte, comme les autres mini-jeux. */
+function cloreExamen(r) {
+  if (!r || r.compte) return;
+  r.compte = true;
+  state.stats.examens = (state.stats.examens || 0) + 1;
 }
 
 function quitterRevision() { state.revision = null; }
@@ -115,7 +122,7 @@ function renderRevision() {
 
   if (!r) {                       // aucun jeu en cours : on présente celui du sélecteur
     zone.innerHTML = accueilDuJeu(jeuChoisi());
-    cablerRevision(); cablerCalcul(); return;
+    cablerRevision(); cablerCalcul(); cablerExpedition(); return;
   }
   if (r.mode === 'appariement') {                       // l'autre exercice vit dans appariement.js
     zone.innerHTML = r.fini ? appBilanHTML(r) : appHTML(r);
@@ -124,6 +131,10 @@ function renderRevision() {
   if (r.mode === 'calcul') {                            // et celui-ci dans calcul.js
     zone.innerHTML = r.fini ? calcBilanHTML(r) : calcHTML(r);
     cablerRevision(); cablerCalcul(); return;
+  }
+  if (r.mode === 'expedition') {                        // expedition.js
+    zone.innerHTML = r.fini ? expBilanHTML(r) : expHTML(r);
+    cablerRevision(); cablerExpedition(); return;
   }
   if (r.fini) { zone.innerHTML = revBilanHTML(r); cablerRevision(); return; }
 
@@ -193,7 +204,7 @@ function proofTexte(trait, n) {
 /* Le menu commande l'accueil affiché. Il est mémorisé par appareil : revenir
    sur l'onglet redonne le jeu qu'on y pratiquait. */
 const CLE_MINIJEU = 'gachanombres.minijeu';
-const JEUX = ['vagues', 'appariement', 'calcul'];
+const JEUX = ['vagues', 'appariement', 'calcul', 'expedition'];
 
 function jeuChoisi() {
   const menu = $('#mjChoix');
@@ -207,6 +218,7 @@ function jeuChoisi() {
 
 function accueilDuJeu(jeu) {
   if (jeu === 'calcul') return calcAccueilHTML();       // ne demande aucune collection
+  if (jeu === 'expedition') return expAccueilHTML();    // idem
 
   /* Les deux exercices de traits ont besoin d'une collection : sans nombres,
      il n'y a pas de question à poser. */
@@ -301,7 +313,7 @@ function cablerRevision() {
   });
   b('#revSuivant', () => {
     const r = state.revision;
-    if (r.vies <= 0) { r.fini = true; save(); return renderRevision(); }
+    if (r.vies <= 0) { r.fini = true; cloreExamen(r); save(); return renderRevision(); }
     vagueSuivante(); save(); renderRevision();
   });
 

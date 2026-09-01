@@ -13,6 +13,13 @@ const TRIS = [
   ['theoremes',  '📐', 'Théorèmes',   'théorèmes'],
   ['forges',     '⚒️', 'Forgés',      'forgés'],
   ['examen',     '🎓', 'Examen',      'réussites'],
+
+  /* Deux mesures de nature différente pour les mini-jeux, et c'est voulu : le
+     nombre de parties récompense l'assiduité, la couche atteinte récompense
+     l'adresse. N'avoir que la première couronnerait celui qui joue le plus,
+     pas celui qui joue le mieux. */
+  ['minijeux',   '🎮', 'Mini-jeux',   'parties'],   // affiché en détail, voir ligneDetailHTML
+  ['expedition', '🛤️', 'Expédition',  'couches'],
 ];
 
 let triClassement = 'completion';
@@ -51,6 +58,15 @@ function renderClassement() {
 
     ${!c ? `<div class="empty">Chargement…</div>` : !c.lignes.length
       ? `<div class="empty">Personne n'est encore classé. À vous de jouer.</div>`
+      : triClassement === 'minijeux'
+      ? `<div class="clLarge"><table class="clTable detail">
+          <thead><tr><th></th><th></th>
+            <th title="Les Vagues">🎓</th><th title="L'Appariement">🔗</th>
+            <th title="Le Calcul rapide">⚡</th><th title="L'Expédition">🛤️</th>
+            <th>total</th></tr></thead>
+          <tbody>${c.lignes.map(ligneDetailHTML).join('')}
+          ${c.moi ? `<tr class="clSep"><td colspan="7">…</td></tr>` + ligneDetailHTML(c.moi) : ''}
+          </tbody></table></div>`
       : `<table class="clTable">
           <tbody>${c.lignes.map(l => ligneHTML(l, unite)).join('')}
           ${c.moi ? `<tr class="clSep"><td colspan="3">…</td></tr>` + ligneHTML(c.moi, unite) : ''}
@@ -62,12 +78,35 @@ function renderClassement() {
   cablerClassement();
 }
 
+/* Une colonne par mini-jeu : le total seul ne dit pas si le joueur a tout
+   pratiqué ou creusé un seul sillon. Une case à zéro reste grisée pour que
+   l'œil trouve d'emblée ce qui n'a jamais été touché. */
+function ligneDetailHTML(l) {
+  const medaille = { 1: '🥇', 2: '🥈', 3: '🥉' }[l.rang] || l.rang;
+  const d = l.detail || {};
+  const c = v => `<td class="clJeu${v ? '' : ' zero'}">${fmt(v || 0)}</td>`;
+  return `<tr class="${l.moi ? 'moi' : ''}">
+    <td class="clRang">${medaille}</td>
+    <td class="clNom">${echapper(l.pseudo)}${l.moi ? ' <span class="tiny">— vous</span>' : ''}</td>
+    ${c(d.jeux_vagues)}${c(d.jeux_appariement)}${c(d.jeux_calcul)}${c(d.jeux_expedition)}
+    <td class="clVal"><b>${fmt(l.valeur)}</b></td>
+  </tr>`;
+}
+
+/* « 0 couches » se lit de travers dans une colonne où beaucoup de joueurs sont
+   à zéro ou à un. Les unités sont écrites au pluriel dans TRIS ; on les remet
+   au singulier quand le compte l'exige. */
+function uniteAccordee(unite, valeur) {
+  if (Math.abs(valeur) >= 2) return unite;
+  return unite.endsWith('s') ? unite.slice(0, -1) : unite;
+}
+
 function ligneHTML(l, unite) {
   const medaille = { 1: '🥇', 2: '🥈', 3: '🥉' }[l.rang] || l.rang;
   return `<tr class="${l.moi ? 'moi' : ''}">
     <td class="clRang">${medaille}</td>
     <td class="clNom">${echapper(l.pseudo)}${l.moi ? ' <span class="tiny">— vous</span>' : ''}</td>
-    <td class="clVal"><b>${fmt(l.valeur)}</b> <span class="tiny">${unite}</span></td>
+    <td class="clVal"><b>${fmt(l.valeur)}</b> <span class="tiny">${uniteAccordee(unite, l.valeur)}</span></td>
   </tr>`;
 }
 

@@ -41,6 +41,8 @@ CLASSEMENTS = {
     "theoremes": ("-theoremes", "theoremes"),
     "examen": ("-examen", "examen"),
     "forges": ("-forges", "forges"),
+    "minijeux": ("-minijeux", "minijeux"),
+    "expedition": ("-expedition", "expedition"),
 }
 
 
@@ -186,19 +188,31 @@ def classement(requete):
     joueur = joueur_courant(requete)
     base = Joueur.objects.filter(banni=False).exclude(suspect__gt="")
 
-    lignes = [{
-        "rang": i,
-        "pseudo": j.pseudo,
-        "valeur": getattr(j, champ),
-        "completion": j.completion,
-        "moi": bool(joueur and j.id == joueur.id),
-    } for i, j in enumerate(base.order_by(ordre, "cree_le")[:100], start=1)]
+    # Le tri « mini-jeux » affiche une colonne par jeu : le total seul ne dit
+    # pas si l'on a tout pratiqué ou creusé un seul sillon.
+    DETAIL = ("jeux_vagues", "jeux_appariement", "jeux_calcul", "jeux_expedition")
+
+    def ligne(i, j):
+        l = {
+            "rang": i,
+            "pseudo": j.pseudo,
+            "valeur": getattr(j, champ),
+            "completion": j.completion,
+            "moi": bool(joueur and j.id == joueur.id),
+        }
+        if tri == "minijeux":
+            l["detail"] = {k: getattr(j, k) for k in DETAIL}
+        return l
+
+    lignes = [ligne(i, j) for i, j in enumerate(base.order_by(ordre, "cree_le")[:100], start=1)]
 
     mien = None
     if joueur and not any(l["moi"] for l in lignes):
         devant = base.filter(**{f"{champ}__gt": getattr(joueur, champ)}).count()
         mien = {"rang": devant + 1, "pseudo": joueur.pseudo,
                 "valeur": getattr(joueur, champ), "completion": joueur.completion, "moi": True}
+        if tri == "minijeux":
+            mien["detail"] = {k: getattr(joueur, k) for k in DETAIL}
 
     return JsonResponse({"tri": tri, "lignes": lignes, "moi": mien,
                          "total": base.count()})

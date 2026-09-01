@@ -128,8 +128,13 @@ function calcRepondre(reponse) {
      d'affilée, sans rien à cliquer entre deux — c'est ce qui fait la tension du
      jeu. Le détail de chaque manche n'est pas perdu pour autant, il est relu au
      bilan, règle de précision comprise. */
-  if (r.manche >= CALC.manches) r.fini = true;
-  else calcMancheSuivante();
+  if (r.manche >= CALC.manches) {
+    r.fini = true;
+    /* Une partie terminée compte, et le meilleur score se garde : sans ça le
+       Calcul rapide était le seul mini-jeu à ne rien laisser derrière lui. */
+    state.stats.calculs = (state.stats.calculs || 0) + 1;
+    state.stats.calculRecord = Math.max(state.stats.calculRecord || 0, r.reussies);
+  } else calcMancheSuivante();
   return bilan;
 }
 

@@ -69,6 +69,24 @@ def mesurer(donnees: dict) -> dict:
         "defis": len(donnees.get("defis") or []),
         "tirages": int(stats.get("pulls") or 0),
         "examen": int(stats.get("meilleureSerie") or 0),
+
+        # Mini-jeux. Deux mesures de nature différente, et c'est voulu : le
+        # nombre de parties récompense l'assiduité, la couche atteinte
+        # récompense l'adresse. Un classement qui n'aurait que la première
+        # couronnerait celui qui joue le plus, pas celui qui joue le mieux.
+        # Le détail est stocké en plus de la somme : recalculer la répartition
+        # depuis les sauvegardes au moment d'afficher le classement obligerait
+        # à charger cent parties de plusieurs mégaoctets pour quatre entiers.
+        "jeux_vagues": int(stats.get("examens") or 0),
+        "jeux_appariement": int(stats.get("appariements") or 0),
+        "jeux_calcul": int(stats.get("calculs") or 0),
+        "jeux_expedition": int(stats.get("expeditions") or 0),
+        "minijeux": (int(stats.get("examens") or 0)
+                     + int(stats.get("appariements") or 0)
+                     + int(stats.get("calculs") or 0)
+                     + int(stats.get("expeditions") or 0)),
+        "expedition": int(stats.get("meilleureCouche") or 0),
+        "calcul": int(stats.get("calculRecord") or 0),
     }
 
 
@@ -84,14 +102,36 @@ def incoherences(donnees: dict, m: dict) -> str:
     # Un nombre du vivier vient d'un tirage, d'une carte bonus de commande, ou
     # d'un doublon recyclé. En rester très large : deux fois le nombre de
     # tirages plus dix par commande couvre largement le jeu honnête.
-    plafond = int(stats.get("pulls") or 0) * 2 + int(stats.get("forges") or 0) * 10 + 50
+    # L'Expédition n'a plus de profondeur maximale : une seule course peut
+    # compter cinquante couches. Un plafond calculé sur le NOMBRE DE PARTIES
+    # signalerait donc les joueurs qui vont loin — exactement les meilleurs, et
+    # sans qu'ils l'apprennent jamais. On compte les couches réellement
+    # parcourues ; les sauvegardes antérieures, qui n'ont pas ce compteur,
+    # gardent l'ancienne estimation.
+    couches = max(int(stats.get("couchesExpedition") or 0),
+                  int(stats.get("expeditions") or 0) * 12)
+    plafond = (int(stats.get("pulls") or 0) * 2
+               + int(stats.get("forges") or 0) * 10
+               + couches * 4                                # jusqu'à 4 nombres par couche
+               + int(stats.get("calculs") or 0) * 3         # 3 cartes bonus par partie
+               + 50)
     tirables = m.get("completion", 0) / 100 * VIVIER
     if tirables > plafond:
         motifs.append(f"{int(tirables)} nombres tirables pour {stats.get('pulls', 0)} tirages")
 
-    # Chaque nombre au-delà du mur demande une commande de forge résolue.
-    if m.get("forges", 0) > int(stats.get("forges") or 0) + 5:
-        motifs.append(f"{m['forges']} nombres forgés pour {stats.get('forges', 0)} commandes")
+    # Un nombre au-delà du mur vient d'une commande de forge résolue — mais
+    # plus seulement : l'Expédition en distribue aussi, la contrainte
+    # « exactement 5 chiffres » en produit par construction, et le Calcul
+    # rapide donne des cartes tirées au hasard.
+    #
+    # Sans ce complément, un joueur honnête qui joue les mini-jeux finissait
+    # signalé, donc **écarté du classement**, sans jamais l'apprendre. Un
+    # contrôle de plausibilité qui punit le jeu normal est pire qu'absent.
+    voies_forge = (int(stats.get("forges") or 0)
+                   + couches                                # au plus une carte par couche
+                   + int(stats.get("calculs") or 0) * 3)
+    if m.get("forges", 0) > voies_forge + 10:
+        motifs.append(f"{m['forges']} nombres forgés pour {voies_forge} occasions d'en obtenir")
 
     # Les douze mythiques et onze légendaires du vivier sont un plafond absolu.
     if m.get("mythiques", 0) > 12 or m.get("legendaires", 0) > 11:

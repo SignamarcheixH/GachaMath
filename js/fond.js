@@ -34,12 +34,13 @@ const ZONES_ACTIVES = [
 
 const FOND = {
   clicsParMinute: 120,   // au-delà, le clic n'est plus payé
-  densiteDefaut: 45,     // 0 à 100, réglable par le joueur
+  /* Le curseur de densité n'était là que pour trouver le bon réglage. Il est
+     trouvé : tout le monde voit le même décor, et il n'y a plus une préférence
+     de plus à stocker, à synchroniser et à expliquer. */
+  densite: 100,
   essaisDePlacement: 30, // tentatives avant de renoncer à poser une décoration
   vitesseFrappe: 55,     // millisecondes par caractère
 };
-
-const CLE_DENSITE = 'gachanombres.densiteFond';
 
 /* Identités vraies, toutes vérifiables, et nombres remarquables. */
 const DECORS = [
@@ -73,16 +74,8 @@ const DECORS = [
   couche.id = 'fondMath';
   couche.setAttribute('aria-hidden', 'true');   // décor : rien à annoncer
 
-  let densite = lireDensite();
   let minuteur = null;
   let _guetteurContenu = null;      // référence gardée : sans elle, il peut être ramassé
-
-  function lireDensite() {
-    try {
-      const v = parseInt(localStorage.getItem(CLE_DENSITE), 10);
-      return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : FOND.densiteDefaut;
-    } catch { return FOND.densiteDefaut; }
-  }
 
   /* ---------- sonder l'espace ----------
 
@@ -122,7 +115,7 @@ const DECORS = [
 
   /* ---------- poser une décoration ---------- */
   function apparaitre() {
-    if (densite <= 0 || document.visibilityState !== 'visible') return;
+    if (document.visibilityState !== 'visible') return;
 
     const texte = DECORS[(Math.random() * DECORS.length) | 0];
 
@@ -198,31 +191,16 @@ const DECORS = [
   /* La cadence suit la densité : environ quatre secondes entre deux
      apparitions au plus calme, un tiers de seconde au plus dense. */
   function cadence() {
-    return 4000 - (densite / 100) * 3650;
+    return 4000 - (FOND.densite / 100) * 3650;
   }
 
   function programmer() {
     clearTimeout(minuteur);
-    if (densite <= 0) { minuteur = null; return; }
     minuteur = setTimeout(() => { apparaitre(); programmer(); },
                           cadence() * (0.6 + Math.random() * 0.8));
   }
 
   function arreter() { clearTimeout(minuteur); minuteur = null; }
-
-  function reglerDensite(v) {
-    densite = Math.min(100, Math.max(0, v | 0));
-    try { localStorage.setItem(CLE_DENSITE, densite); } catch {}
-    if (densite <= 0) {
-      arreter();
-      couche.querySelectorAll('.fondDeco').forEach(e => {
-        if (e._frappe) clearInterval(e._frappe);
-        e.remove();
-      });
-    } else if (!minuteur) programmer();
-  }
-  window.reglerDensiteFond = reglerDensite;
-  window.densiteFond = () => densite;
 
   /* ---------- le clic qui rapporte ---------- */
 
@@ -302,18 +280,4 @@ const DECORS = [
     clic(ev);
   });
 
-  /* Le curseur de densité vit dans l'onglet Défis, avec les autres réglages. */
-  function cablerCurseur() {
-    const c = document.querySelector('#fondDensite');
-    if (!c || c.dataset.cable) return;
-    c.dataset.cable = '1';
-    c.value = densite;
-    const etiquette = document.querySelector('#fondDensiteVal');
-    const afficher = () => { if (etiquette) etiquette.textContent = c.value + ' %'; };
-    afficher();
-    c.addEventListener('input', () => { reglerDensite(+c.value); afficher(); });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cablerCurseur);
-  } else cablerCurseur();
 })();

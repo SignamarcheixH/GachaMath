@@ -31,13 +31,15 @@ class SauvegardeInline(admin.StackedInline):
 @admin.register(Joueur)
 class JoueurAdmin(admin.ModelAdmin):
     list_display = ("pseudo", "barre", "nombres", "mythiques", "legendaires",
-                    "forges", "theoremes", "examen", "alerte", "vu_le")
+                    "forges", "theoremes", "examen", "minijeux", "expedition",
+                    "alerte", "vu_le")
     list_filter = ("banni", "cree_le")
     search_fields = ("pseudo", "code", "id")
     ordering = ("-nombres",)
     readonly_fields = ("id", "code", "cree_le", "vu_le", "nombres", "completion",
                        "mythiques", "legendaires", "forges", "theoremes", "defis",
-                       "tirages", "examen", "suspect")
+                       "tirages", "examen", "minijeux", "expedition", "calcul",
+                       "suspect")
     inlines = [SauvegardeInline]
     actions = ["recalculer", "bannir", "reintegrer"]
 
