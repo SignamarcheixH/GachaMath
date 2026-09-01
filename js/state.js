@@ -19,8 +19,15 @@ const PAQUETS = [1, 10, 25, 50, 100];
 const remisePour = count => (REMISES.find(([n]) => count >= n) || [0, 1])[1];
 const pullCost = count => Math.round(prixUnitaire() * count * remisePour(count));
 
-/* Combien de tirages le portefeuille permet, au prix unitaire. */
-const tiragesPossibles = () => Math.floor(state.coins / prixUnitaire());
+/* Combien de tirages le portefeuille permet, AU TARIF QUE LE JOUEUR VA PAYER.
+   Compter au prix unitaire plein était faux dès qu'un paquet remisé était
+   choisi : avec exactement de quoi lancer un ×100, la pastille annonçait 80 et
+   restait éteinte, pendant que le bouton « Tirer ×100 » était actif. Elle
+   disait donc le contraire de ce que la page permettait. */
+const tiragesPossibles = (paquet) => {
+  const n = Math.max(1, paquet || 1);
+  return Math.floor(state.coins / (pullCost(n) / n));
+};
 
 /* ---------- état ---------- */
 let state = null;

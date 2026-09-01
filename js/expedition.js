@@ -28,6 +28,7 @@ const EXP = {
   camp: 5,               // un camp de base barre la piste toutes les N couches
   largeurMax: 3,         // nœuds par couche, au plus
   plafond: 99999,
+  defiCalculs: 3,        // calculs d'affilée à passer au poste de calcul
 };
 
 /* ---------- opérateurs ----------
@@ -117,7 +118,9 @@ const EXP_NOEUDS = {
   operateurs: { nom: 'Atelier',      emoji: '⚙️', desc: 'des opérateurs' },
   contrainte: { nom: 'Épreuve',      emoji: '🎯', desc: 'une contrainte à lever' },
   tresor:     { nom: 'Trésor',       emoji: '💰', desc: 'jetons, parfois une carte' },
-  checkpoint: { nom: 'Camp de base', emoji: '🏕️', desc: 'rentrer avec la prime, ou pousser plus loin' },
+  checkpoint: { nom: 'Camp de base', emoji: '🏕️', desc: 'rentrer avec la récolte, ou pousser plus loin' },
+  calcul:     { nom: 'Poste de calcul', emoji: '⚡', desc: `${EXP.defiCalculs} calculs de tête, sans traîner` },
+  revision:   { nom: 'Halte d’étude',   emoji: '📖', desc: 'reconnaître un trait à sa définition' },
 };
 
 const auHasard = a => a[(Math.random() * a.length) | 0];
@@ -160,9 +163,14 @@ function expTirerTypeNoeud(couche) {
   const durete = Math.min(0.25, (couche - 2) * 0.010);
   const r = Math.random();
   if (r < 0.30 + durete) return 'contrainte';
-  if (r < 0.58) return 'nombres';
-  if (r < 0.85) return 'operateurs';
-  return 'tresor';
+  if (r < 0.52) return 'nombres';
+  if (r < 0.76) return 'operateurs';
+  if (r < 0.84) return 'tresor';
+  /* Deux haltes qui paient l'adresse plutôt que la chance. Elles prennent leur
+     part sur le trésor : c'était le seul nœud qui donnait sans rien demander,
+     et il en donne encore, moins souvent. */
+  if (r < 0.92) return 'calcul';
+  return 'revision';
 }
 
 /* Une couche, tirée d'un coup et pour de bon. Les positions sont mémorisées :
@@ -245,6 +253,7 @@ function expDemarrer() {
        chercher aux gisements ce qu'il manque. */
     besace: { nombres: Array.from({ length: 6 }, expNombreCadeau), operateurs: [] },
     epreuve: null,                  // { texte, test, coups } sur un nœud contrainte
+    defi: null,                     // le poste de calcul ou la halte d'étude en cours
     jetons: 0,                      // promis, pas versés
     nombres: [],                    // promis eux aussi : acquis au camp seulement
     cartes: [],                     // remplies à l'arrivée, par expVerser
@@ -257,7 +266,7 @@ function expDemarrer() {
 
 /* Où peut-on aller depuis la position courante ? */
 function expAccessibles(r) {
-  if (r.epreuve || r.fini) return [];      // il faut d'abord lever l'épreuve
+  if (r.epreuve || r.defi || r.fini) return [];   // on règle d'abord ce qui est devant
   if (!r.position) return r.carte[0].map((_, i) => ({ couche: 0, index: i }));
   /* La piste se déroule ici aussi : c'est la garantie qu'il y a toujours un pas
      devant, quelle que soit la route par laquelle on est arrivé. Sans fin de
@@ -300,7 +309,7 @@ const expNombreCadeau = () => auHasard(EXP_VIVIER);
 
 function expEntrer(couche, index) {
   const r = state.revision;
-  if (!r || r.mode !== 'expedition' || r.fini || r.epreuve) return null;
+  if (!r || r.mode !== 'expedition' || r.fini || r.epreuve || r.defi) return null;
   if (!expAccessibles(r).some(p => p.couche === couche && p.index === index)) return null;
 
   r.position = { couche, index };
@@ -334,6 +343,9 @@ function expEntrer(couche, index) {
   } else if (noeud.type === 'contrainte') {
     const c = auHasard(EXP_CONTRAINTES);
     r.epreuve = expNouvelEtabli(c, r.besace.nombres);
+  } else if (noeud.type === 'calcul' || noeud.type === 'revision') {
+    r.defi = noeud.type === 'calcul' ? expNouveauCalcul() : expNouvelleRevision();
+    recolte.defi = noeud.type;
   }
 
   recolte.jetons += expGain(couche);
@@ -484,6 +496,54 @@ function expPoser(ligne, emplacement, id) {
   return expVerdict(r);
 }
 
+/* ---------- les deux haltes ----------
+   Elles empruntent au Calcul rapide sa jauge et sa mise en page : un joueur qui
+   connaît le mini-jeu n'a rien de neuf à apprendre en tombant sur le nœud. */
+function expDefiHTML(r) {
+  const d = r.defi;
+  return d.type === 'calcul' ? expDefiCalculHTML(d) : expDefiRevisionHTML(d);
+}
+
+function expDefiCalculHTML(d) {
+  const perles = [];
+  for (let i = 0; i < EXP.defiCalculs; i++) {
+    const h = d.historique[i];
+    perles.push(`<i class="${!h ? (i === d.manche - 1 ? 'encours' : 'avenir')
+                              : h.juste ? 'bon' : 'rate'}"></i>`);
+  }
+  const dernier = d.historique[d.historique.length - 1];
+  return `<div class="expDefi calcZone">
+    <div class="expDefiTitre">⚡ Poste de calcul</div>
+    <p class="expDefiAide">Trois calculs d'affilée, ${CALC.duree / 1000} secondes chacun.
+      Une estimation à moins de ${Math.round(CALC.tolerance * 100)} % suffit —
+      mais <b>une seule erreur ferme la halte</b>.</p>
+
+    <div class="calcChapelet">${perles.join('')}</div>
+    <div class="calcExpr">${calcTexte(d.expr)} =</div>
+    <div class="calcBarre"><i id="expCalcJauge"></i></div>
+    <div class="calcSaisie">
+      <input type="number" id="expCalcInput" inputmode="numeric" autocomplete="off"
+             placeholder="…" aria-label="Votre réponse">
+      <button class="btn" id="expCalcValider">Valider</button>
+    </div>
+    ${dernier ? `<p class="calcRetour ${dernier.juste ? 'bon' : 'rate'}">${dernier.texte} =
+      <b>${fmt(dernier.vrai)}</b> — ${dernier.donnee === null ? 'pas de réponse'
+        : dernier.juste ? 'juste' : `${fmt(dernier.donnee)}, ${Math.round(dernier.ecart * 100)} % d'écart`}</p>` : ''}
+  </div>`;
+}
+
+function expDefiRevisionHTML(d) {
+  return `<div class="expDefi">
+    <div class="expDefiTitre">📖 Halte d'étude</div>
+    <p class="expDefiAide">Laquelle de ces définitions est celle du trait
+      <b>${TRAIT_BY_ID[d.traitId].emoji} ${TRAIT_BY_ID[d.traitId].label}</b> ?</p>
+    <div class="expChoix">
+      ${d.choix.map(id => `<button class="expChoixItem" data-trait="${id}">${
+        defMasquee(TRAIT_BY_ID[id])}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
 /* ---------- le dépôt ----------
    Poser un nombre dans le bandeau, c'est le présenter à la contrainte. Tant
    qu'aucun n'y est posé, rien n'est jugé : c'est le geste du joueur qui
@@ -515,6 +575,32 @@ function expReprendre() {
   const e = r && r.epreuve;
   if (!e || r.fini) return;
   e.depot = null;
+}
+
+/* Le cycle des cinq usuels : vide → + → − → × → ÷ → ‖ → vide. Traverser la
+   réserve pour changer d'opérateur coûtait un aller-retour à chaque essai,
+   alors que le geste utile est d'en essayer plusieurs à la suite sur la même
+   ligne. Le glissement reste là pour les spéciaux, et pour les usuels aussi.
+
+   Le passage par le vide est volontaire : sans lui, un clic malheureux sur la
+   ligne vierge poserait un « + » impossible à retirer. */
+function expBasculerOp(ligne) {
+  const r = state.revision;
+  const e = r && r.epreuve;
+  if (!e || r.fini) return {};
+  const l = e.lignes[ligne];
+  if (!l) return {};
+
+  /* Un spécial n'est pas dans le cycle : on entre au début plutôt que de le
+     remplacer par un usuel pris au hasard. */
+  const rang = l.op ? EXP_BASE.indexOf(l.op) : -1;
+  const suivant = EXP_BASE[(rang + 1) % (EXP_BASE.length + 1)];   // undefined = le vide
+
+  if (!suivant) { expRetirer(ligne, 'op'); return {}; }
+  /* Les cinq usuels sont binaires : passer de l'un à l'autre ne perd jamais
+     d'opérande. Seul le départ d'un spécial unaire libère une case, et c'est
+     expPoser qui s'en charge. */
+  return expPoser(ligne, 'op', suivant);
 }
 
 function expRetirer(ligne, emplacement) {
@@ -603,6 +689,7 @@ function expFin(r, cause) {
   r.fini = true;
   r.cause = cause;
   r.epreuve = null;
+  r.defi = null;
   /* Ce qui n'a pas été versé au camp n'a jamais existé. On le met de côté pour
      le bilan — dire ce qu'on a laissé sur la piste fait partie de la leçon —
      mais on le retire de la récolte, sans quoi l'écran de fin annoncerait un
@@ -613,6 +700,115 @@ function expFin(r, cause) {
   state.stats.meilleureCouche = Math.max(state.stats.meilleureCouche || 0, atteint);
 }
 
+/* ============================================================
+   LES DEUX HALTES
+
+   Un poste de calcul et une halte d'étude. Toutes deux paient l'adresse, là où
+   gisements, ateliers et trésors paient la chance.
+
+   ELLES NE TUENT PAS. Une expédition ne s'arrête que d'une façon : devant une
+   contrainte qu'on n'a plus de quoi lever. Faire mourir une course sur un
+   calcul mental raté aurait mis un réflexe de trois secondes en travers d'une
+   récolte de vingt couches — la sanction n'aurait plus rien à voir avec la
+   faute. Rater une halte, c'est repartir les mains vides, et c'est tout.
+   ============================================================ */
+const expPrimeDefi = couche => expGain(couche) * 3;
+
+/* ---------- le poste de calcul ----------
+   Le même exercice que le mini-jeu dédié, en plus court : trois expressions
+   d'affilée, chacune à estimer avant la fin du décompte. « Survivre », c'est
+   rester dans la tolérance à chaque fois. */
+function expNouveauCalcul() {
+  const d = {
+    type: 'calcul',
+    manche: 0, reussies: 0,
+    expr: null, debut: 0,
+    historique: [],
+    fini: false, gagne: false,
+  };
+  expCalculMancheSuivante(d);       // la première manche part avec la halte
+  return d;
+}
+
+function expCalculMancheSuivante(d) {
+  d.manche++;
+  d.expr = calcNouvelleExpression(d.reussies);   // le générateur du mini-jeu
+  d.debut = Date.now();
+}
+
+/* `reponse` vaut null quand le décompte s'achève sans saisie. */
+function expCalculRepondre(reponse) {
+  const r = state.revision;
+  const d = r && r.defi;
+  if (!d || d.type !== 'calcul' || d.fini) return null;
+
+  const vrai = d.expr.valeur;
+  const donnee = Number.isFinite(reponse) ? reponse : null;
+  const ecart = donnee === null ? Infinity
+              : Math.abs(donnee - vrai) / Math.max(1, Math.abs(vrai));
+  const juste = ecart <= CALC.tolerance;
+
+  d.historique.push({ texte: calcTexte(d.expr), donnee, vrai, ecart, juste });
+  if (juste) d.reussies++;
+
+  /* Une seule erreur suffit : « survivre à trois calculs » n'aurait pas de sens
+     si l'on pouvait en manquer un. La halte se ferme aussitôt — inutile de
+     faire jouer deux manches dont le résultat est déjà écrit. */
+  if (!juste) { d.fini = true; d.gagne = false; return expCloreDefi(r); }
+  if (d.reussies >= EXP.defiCalculs) { d.fini = true; d.gagne = true; return expCloreDefi(r); }
+  expCalculMancheSuivante(d);
+  return { manche: d.manche };
+}
+
+/* ---------- la halte d'étude ----------
+   Un trait est nommé, quatre définitions sont proposées. Les leurres viennent
+   de vrais traits : reconnaître la bonne demande de les avoir lus, pas
+   d'éliminer trois phrases absurdes.
+
+   Le nom du trait est masqué DANS les définitions — `defMasquee` s'en charge —
+   sans quoi la réponse se lirait sans rien connaître au sujet. */
+function expNouvelleRevision() {
+  const questionnables = TRAITS.filter(t => t.id !== 'culte' && t.desc);
+  const bon = auHasard(questionnables);
+  const leurres = questionnables
+    .filter(t => t.id !== bon.id)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
+  return {
+    type: 'revision',
+    traitId: bon.id,
+    choix: [bon, ...leurres].sort(() => Math.random() - 0.5).map(t => t.id),
+    choisi: null, fini: false, gagne: false,
+  };
+}
+
+function expRevisionRepondre(id) {
+  const r = state.revision;
+  const d = r && r.defi;
+  if (!d || d.type !== 'revision' || d.fini) return null;
+  d.choisi = id;
+  d.fini = true;
+  d.gagne = id === d.traitId;
+  return expCloreDefi(r);
+}
+
+/* La sortie commune des deux haltes : on paie si c'est gagné, et on rend la
+   carte au joueur dans tous les cas. */
+function expCloreDefi(r) {
+  const d = r.defi;
+  const bilan = { defiFini: true, gagne: d.gagne, type: d.type, jetons: 0, nombre: null };
+  if (d.gagne) {
+    bilan.jetons = expPrimeDefi(r.position.couche);
+    expEncaisser(r, bilan.jetons);
+    /* Promis, pas acquis : comme tout le reste, cela n'entre dans la partie
+       qu'au camp. */
+    bilan.nombre = drawFromTier(rollTier());
+    r.nombres.push(bilan.nombre);
+  }
+  r.defi = null;
+  return bilan;
+}
+
 /* ---------- rentrer, ou abandonner ----------
    Le camp est le seul endroit où la récolte devient réelle. Ailleurs — un
    abandon en chemin, une épreuve devant laquelle on n'a plus rien — tout ce
@@ -621,7 +817,7 @@ function expFin(r, cause) {
    C'est ce qui fait du camp une décision plutôt qu'un bouton : chaque couche
    de plus grossit la récolte, et chaque couche de plus la remet entière en
    jeu. */
-const expSurCamp = r => !!r && !!r.position && !r.epreuve && !r.fini
+const expSurCamp = r => !!r && !!r.position && !r.epreuve && !r.defi && !r.fini
   && r.carte[r.position.couche][r.position.index].type === 'checkpoint';
 
 function expRentrer() {
@@ -762,6 +958,54 @@ function expBesaceHTML(r) {
   </div>`;
 }
 
+/* ---------- les deux haltes ----------
+   Elles empruntent au Calcul rapide sa jauge et sa mise en page : un joueur qui
+   connaît le mini-jeu n'a rien de neuf à apprendre en tombant sur le nœud. */
+function expDefiHTML(r) {
+  const d = r.defi;
+  return d.type === 'calcul' ? expDefiCalculHTML(d) : expDefiRevisionHTML(d);
+}
+
+function expDefiCalculHTML(d) {
+  const perles = [];
+  for (let i = 0; i < EXP.defiCalculs; i++) {
+    const h = d.historique[i];
+    perles.push(`<i class="${!h ? (i === d.manche - 1 ? 'encours' : 'avenir')
+                              : h.juste ? 'bon' : 'rate'}"></i>`);
+  }
+  const dernier = d.historique[d.historique.length - 1];
+  return `<div class="expDefi calcZone">
+    <div class="expDefiTitre">⚡ Poste de calcul</div>
+    <p class="expDefiAide">Trois calculs d'affilée, ${CALC.duree / 1000} secondes chacun.
+      Une estimation à moins de ${Math.round(CALC.tolerance * 100)} % suffit —
+      mais <b>une seule erreur ferme la halte</b>.</p>
+
+    <div class="calcChapelet">${perles.join('')}</div>
+    <div class="calcExpr">${calcTexte(d.expr)} =</div>
+    <div class="calcBarre"><i id="expCalcJauge"></i></div>
+    <div class="calcSaisie">
+      <input type="number" id="expCalcInput" inputmode="numeric" autocomplete="off"
+             placeholder="…" aria-label="Votre réponse">
+      <button class="btn" id="expCalcValider">Valider</button>
+    </div>
+    ${dernier ? `<p class="calcRetour ${dernier.juste ? 'bon' : 'rate'}">${dernier.texte} =
+      <b>${fmt(dernier.vrai)}</b> — ${dernier.donnee === null ? 'pas de réponse'
+        : dernier.juste ? 'juste' : `${fmt(dernier.donnee)}, ${Math.round(dernier.ecart * 100)} % d'écart`}</p>` : ''}
+  </div>`;
+}
+
+function expDefiRevisionHTML(d) {
+  return `<div class="expDefi">
+    <div class="expDefiTitre">📖 Halte d'étude</div>
+    <p class="expDefiAide">Laquelle de ces définitions est celle du trait
+      <b>${TRAIT_BY_ID[d.traitId].emoji} ${TRAIT_BY_ID[d.traitId].label}</b> ?</p>
+    <div class="expChoix">
+      ${d.choix.map(id => `<button class="expChoixItem" data-trait="${id}">${
+        defMasquee(TRAIT_BY_ID[id])}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
 /* ---------- le dépôt ----------
    La case qui juge. Vide, elle attend ; occupée, elle est rouge — un nombre qui
    convenait n'y resterait pas, l'épreuve serait déjà levée. */
@@ -790,7 +1034,7 @@ function expEtabliHTML(r) {
                 title="${j ? 'Cliquez pour retirer' : 'Déposez un nombre'}">${j ? fmt(j.val) : ''}</span>`;
     };
     const opCell = `<span class="gCell op ${l.op ? 'pose' : 'trou'}${op && EXP_BASE.includes(op.cle) ? ' base' : ''}" data-ligne="${i}" data-emp="op"
-                      title="${l.op ? 'Cliquez pour retirer' : 'Déposez un opérateur'}">${op ? op.nom : ''}</span>`;
+                      title="Cliquez pour faire défiler + − × ÷ ‖, ou déposez un spécial">${op ? op.nom : ''}</span>`;
 
     /* Un opérateur spécial est unaire : la ligne n'a alors qu'une seule case.
        C'est la seconde forme de ligne, que la Forge n'avait pas. */
@@ -889,7 +1133,7 @@ function expHTML(r) {
 
     ${camp}
 
-    ${e ? `<div class="expEpreuve">
+    ${r.defi ? expDefiHTML(r) : e ? `<div class="expEpreuve">
         <span class="expEpreuveTitre">🎯 ${e.texte}</span>
         <span class="expEpreuveAide" id="expEtat">Fabriquez un nombre sur les lignes, puis déposez-le ici.</span>
         ${expDepotHTML(e)}
@@ -1010,6 +1254,97 @@ function expCablerInfobulle() {
   if (cadre) cadre.addEventListener('scroll', placer, { passive: true });
 }
 
+/* ---------- le chronomètre du poste de calcul ----------
+   Il vit hors de la sauvegarde, comme celui du mini-jeu : un décompte
+   enregistré puis rechargé trois jours plus tard ne veut rien dire. */
+let _expMinuteur = null, _expAnim = null;
+
+function expChronoArreter() {
+  clearTimeout(_expMinuteur); _expMinuteur = null;
+  cancelAnimationFrame(_expAnim); _expAnim = null;
+}
+
+function expChronoLancer() {
+  expChronoArreter();
+  const r = state.revision;
+  const d = r && r.defi;
+  if (!d || d.type !== 'calcul' || d.fini) return;
+
+  /* Les deux mêmes gardes que le mini-jeu. renderAll() rejoue tous les rendus à
+     chaque changement d'onglet : sans ce test, le décompte repartirait pendant
+     que le joueur consulte sa Collection, et il perdrait la manche sans l'avoir
+     eue à l'écran. Idem pour l'onglet du navigateur. */
+  const section = document.querySelector('#tab-minijeux');
+  if (!section || !section.classList.contains('on')) return;
+  if (document.visibilityState !== 'visible') return;
+
+  d.debut = Date.now();
+  const jauge = $('#expCalcJauge');
+  const suivre = () => {
+    const reste = Math.max(0, CALC.duree - (Date.now() - d.debut));
+    if (jauge) jauge.style.width = (100 * reste / CALC.duree) + '%';
+    if (reste > 0) _expAnim = requestAnimationFrame(suivre);
+  };
+  suivre();
+  _expMinuteur = setTimeout(() => expSoumettreCalcul(), CALC.duree);
+}
+
+/* Revenir sur la page relance la manche entière : punir une interruption qu'on
+   n'a pas choisie serait pire que la légère indulgence que cela accorde. */
+document.addEventListener('visibilitychange', () => {
+  const r = state && state.revision;
+  if (!r || r.mode !== 'expedition' || !r.defi) return;
+  if (document.visibilityState === 'visible') expChronoLancer(); else expChronoArreter();
+});
+
+/* Une seule porte de sortie pour une manche : Entrée, le bouton et le temps
+   écoulé passent tous par ici. */
+function expSoumettreCalcul() {
+  const r = state.revision;
+  if (!r || !r.defi || r.defi.type !== 'calcul' || r.defi.fini) return;
+  expChronoArreter();
+  const champ = $('#expCalcInput');
+  const saisi = champ ? champ.value.trim() : '';
+  const bilan = expCalculRepondre(saisi === '' ? null : Number(saisi));
+  save(); renderRevision(); renderWallet();
+  expAnnoncerDefi(bilan);
+}
+
+function expAnnoncerDefi(bilan) {
+  if (!bilan || !bilan.defiFini) return;
+  if (bilan.gagne) {
+    toast(`✅ Halte réussie — <b>+${fmt(bilan.jetons)}</b> 🪙 et <b>${fmt(bilan.nombre)}</b> dans la récolte.`, 'good');
+  } else {
+    toast(bilan.type === 'calcul'
+      ? '⚡ Calcul manqué — la halte se referme, vous repartez les mains vides.'
+      : '📖 Mauvaise définition — vous repartez les mains vides.', 'bad');
+  }
+}
+
+function cablerDefi() {
+  const r = state.revision;
+  const d = r && r.defi;
+  if (!d) { expChronoArreter(); return; }
+
+  if (d.type === 'calcul') {
+    const champ = $('#expCalcInput');
+    const bouton = $('#expCalcValider');
+    if (bouton) bouton.addEventListener('click', expSoumettreCalcul);
+    if (champ) {
+      champ.addEventListener('keydown', ev => { if (ev.key === 'Enter') expSoumettreCalcul(); });
+      champ.focus();
+    }
+    expChronoLancer();
+    return;
+  }
+
+  $$('#revZone .expChoixItem').forEach(el => el.addEventListener('click', () => {
+    const bilan = expRevisionRepondre(el.dataset.trait);
+    save(); renderRevision(); renderWallet();
+    expAnnoncerDefi(bilan);
+  }));
+}
+
 function cablerExpedition() {
   const b = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
   const dire = t => { const el = $('#expEtat'); if (el) el.textContent = t; };
@@ -1054,6 +1389,7 @@ function cablerExpedition() {
     const rec = expEntrer(+el.dataset.couche, +el.dataset.index);
     save(); renderRevision(); renderWallet();
     if (!rec) return;
+    if (rec.defi) return;                       // la halte parle d'elle-même à l'écran
     if (rec.epreuveLevee) toast('✅ Épreuve levée d’emblée.', 'good');
     else if (rec.nombres.length) toast(`🔢 ${rec.nombres.map(fmt).join(' · ')} dans la besace.`, 'good');
     else if (rec.operateurs.length) toast(`⚙️ ${rec.operateurs.map(o => EXP_OPERATEURS[o].nom).join(' · ')} récupéré.`, 'good');
@@ -1082,6 +1418,8 @@ function cablerExpedition() {
     el.addEventListener('dragend', () => $$('#revZone .jeton').forEach(x => x.classList.remove('drag')));
     el.addEventListener('click', () => { prendre(el); dire('Déposez-le sur une case.'); });
   });
+
+  cablerDefi();
 
   /* Le dépôt accepte les mêmes gestes que les cases de ligne : on y glisse un
      jeton, ou on le prend d'un clic puis on clique la case. */
@@ -1122,6 +1460,13 @@ function cablerExpedition() {
     el.addEventListener('dragleave', () => el.classList.remove('survol'));
     el.addEventListener('drop', ev => { ev.preventDefault(); el.classList.remove('survol'); poser(); });
     el.addEventListener('click', () => {
+      // Case d'opérateur, main vide : on fait tourner les usuels.
+      if (el.dataset.emp === 'op' && !_expPris) {
+        const res = expBasculerOp(+el.dataset.ligne);
+        save(); renderRevision(); renderWallet();
+        if (res && res.echec) toast('Plus rien à assembler : l’expédition s’arrête ici.', 'bad');
+        return;
+      }
       if (el.classList.contains('pose') && !_expPris) {
         expRetirer(+el.dataset.ligne, el.dataset.emp);
         save(); renderRevision();

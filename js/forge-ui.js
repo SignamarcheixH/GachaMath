@@ -224,6 +224,24 @@ function verifierVictoire() {
 }
 
 function cablerGuide() {
+  /* Le cycle : vide → + → − → × → ÷ → ‖ → vide. Il repasse par le vide pour
+     qu'un clic malheureux se défasse sans avoir à viser la corbeille. */
+  const basculerOp = (i, el) => {
+    const g = state.commande && state.commande.guide;
+    const l = g && g.lignes[i];
+    if (!l) return;
+    // Le guide stocke l'identifiant de l'opérateur, pas l'objet : c'est l'état
+    // dérivé qui le résout pour l'affichage.
+    const rang = l.op ? OPS_BASE.findIndex(o => o.id === l.op) : -1;
+    /* Un outil (miroir, PGCD…) n'est pas dans le cycle : on entre au début
+       plutôt que de le remplacer par un opérateur pris au hasard. */
+    const suivant = OPS_BASE[(rang + 1) % (OPS_BASE.length + 1)];
+    const r = suivant ? poserGuide(i, 'op', suivant.id) : retirerGuide(i, 'op');
+    if (r && r.error) return toast(r.error, 'bad');
+    jetonSel = opSel = null;
+    save(); renderForge(); verifierVictoire();
+  };
+
   const poser = (slot, tid, isOp) => {
     const [i, ch] = slot.split(':');
     const r = poserGuide(+i, ch, isOp ? tid : +tid);
@@ -261,11 +279,16 @@ function cablerGuide() {
     });
     el.addEventListener('click', () => {
       const [i, ch] = slot.split(':');
+      /* Une case d'opérateur fait défiler les cinq usuels d'un clic. Traverser
+         la réserve pour + puis − puis × coûtait trois allers-retours à chaque
+         essai, alors que le geste utile est d'essayer les quatre à la suite.
+         Le glissement reste là pour les outils, et pour les usuels aussi.
+
+         Un opérateur explicitement choisi dans la réserve garde la main : le
+         joueur a dit ce qu'il voulait, ce n'est plus une exploration. */
+      if (attendOp && opSel === null) return basculerOp(+i, el);
       if (el.classList.contains('pose') || el.classList.contains('perime')) return retirer();
-      if (attendOp) {
-        if (opSel === null) return toast("Choisissez d'abord un opérateur.", 'bad');
-        return poser(slot, opSel, true);
-      }
+      if (attendOp) return poser(slot, opSel, true);
       if (jetonSel === null) return toast("Choisissez d'abord un jeton.", 'bad');
       poser(slot, jetonSel, false);
     });

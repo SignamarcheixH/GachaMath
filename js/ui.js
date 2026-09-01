@@ -338,15 +338,20 @@ function renderWallet() {
   $('#pullLabel').textContent = n === 1 ? 'Tirer' : `Tirer ×${n}`;
   $('#pullCost').textContent  = `🪙 ${fmt(cout)}${remise ? ` · −${remise} %` : ''}`;
 
-  // Pastille de l'onglet : combien de tirages le portefeuille permet.
-  const possibles = tiragesPossibles();
+  // Pastille de l'onglet : combien de tirages le portefeuille permet, au tarif
+  // du paquet choisi — donc le même compte que celui du bouton.
+  const possibles = tiragesPossibles(n);
   const b = $('#bTirage');
   const txt = possibles > 9999 ? '9999+' : (possibles || '');
   if (b.textContent !== txt) {            // cinq écritures DOM par seconde suffisent à user
     b.textContent = txt;
-    b.title = `${fmt(possibles)} tirage${possibles > 1 ? 's' : ''} possible${possibles > 1 ? 's' : ''} au prix unitaire de ${fmt(prixUnitaire())} 🪙`;
+    const unitaireReel = Math.round(cout / n);
+    b.title = `${fmt(possibles)} tirage${possibles > 1 ? 's' : ''} possible${possibles > 1 ? 's' : ''}`
+            + ` au tarif du paquet ×${n} (${fmt(unitaireReel)} 🪙 pièce)`;
   }
-  b.classList.toggle('pret', possibles >= (state.paquet || 10));
+  /* La pastille s'allume exactement quand le bouton est actif : les deux
+     répondent à la même question, ils ne peuvent pas se contredire. */
+  b.classList.toggle('pret', state.coins >= cout);
 
   const unite = prixUnitaire();          // calculé une fois, pas une fois par paquet
   $$('#packSizes .pack').forEach(el => {

@@ -1590,6 +1590,26 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
 .expNoeud.operateurs { border-color: var(--r-epique); }
 .expNoeud.contrainte { border-color: var(--gold); }
 .expNoeud.tresor     { border-color: var(--r-peucommun); }
+.expNoeud.calcul     { border-color: var(--coin); }
+.expNoeud.revision   { border-color: #7ee6a4; }
+
+/* ---------- les deux haltes ----------
+   Elles empruntent au Calcul rapide sa jauge et sa mise en page ; il ne reste à
+   habiller que le cadre et la liste des définitions. */
+.expDefi {
+  border: 1px solid var(--line2); border-radius: 16px;
+  padding: 18px 18px 20px; margin-bottom: 18px; background: var(--panel);
+}
+.expDefiTitre { font-size: 16px; font-weight: 600; color: var(--coin); margin-bottom: 6px; }
+.expDefiAide { font-size: 13px; color: var(--dim); margin: 0 0 16px; line-height: 1.5; }
+.expChoix { display: flex; flex-direction: column; gap: 9px; }
+.expChoixItem {
+  text-align: left; padding: 13px 15px; border-radius: 12px;
+  border: 1px solid var(--line2); background: var(--panel2); color: var(--txt);
+  font-size: 13.5px; line-height: 1.45; cursor: pointer; transition: .13s;
+}
+.expChoixItem:hover { border-color: var(--accent); background: rgba(124,92,255,.12); }
+.expChoixItem:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
 /* Le camp est la seule sortie payante : il se voit de loin sur la piste. */
 .expNoeud.checkpoint {
   border-color: var(--coin); border-style: double; border-width: 4px;
