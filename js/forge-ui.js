@@ -27,7 +27,7 @@ function renderForge() {
       </div>
       ${gagne ? `<div class="cmdGagne">✅ Le compte est bon.</div>` : ''}
       <div class="cmdPrime">Récompense : la cible ${cartesBonus(c)
-        ? `+ <b>${cartesBonus(c)}</b> carte${cartesBonus(c) > 1 ? 's' : ''} bonus`
+        ? `+ <b>${cartesBonus(c)}</b> carte${cartesBonus(c) > 1 ? 's' : ''} bonus <span class="tiny">(au-delà du mur, comme la cible)</span>`
         : `<span class="tiny">(plus aucune carte bonus — indices épuisés)</span>`}${
         c.indices ? ` <span class="tiny">· ${c.indices} indice${c.indices > 1 ? 's' : ''} utilisé${c.indices > 1 ? 's' : ''}</span>` : ''}</div>
     </div>

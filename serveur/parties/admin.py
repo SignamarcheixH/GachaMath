@@ -104,13 +104,18 @@ class RetourAdmin(admin.ModelAdmin):
     donc du texte, pas du balisage.
     """
 
-    list_display = ("cree_le", "objet", "extrait", "qui", "traite")
-    list_filter = ("objet", "traite", "cree_le")
+    list_display = ("cree_le", "objet", "extrait", "qui", "publie", "statut", "votes", "traite")
+    list_filter = ("publie", "statut", "objet", "traite", "anonyme", "cree_le")
     search_fields = ("message", "joueur__pseudo")
+    # `publie`, `statut` et `anonyme` se modifient : ce sont les seules
+    # décisions qui vous appartiennent. Tout ce qui vient du visiteur reste en
+    # lecture seule.
     readonly_fields = ("objet", "message", "joueur", "page", "version",
-                       "agent", "empreinte", "cree_le")
+                       "agent", "empreinte", "cree_le", "votes")
+    list_editable = ("publie", "statut")
     ordering = ("-cree_le",)
-    actions = ["marquer_traite", "marquer_a_faire"]
+    actions = ["publier", "depublier", "marquer_retenu", "marquer_fait",
+               "marquer_refuse", "marquer_traite", "marquer_a_faire"]
     list_per_page = 50
 
     @admin.display(description="message")
@@ -120,7 +125,31 @@ class RetourAdmin(admin.ModelAdmin):
 
     @admin.display(description="joueur")
     def qui(self, obj):
-        return obj.joueur.pseudo if obj.joueur else "—"
+        """Le vrai pseudo, toujours. « Anonyme » ne vaut qu'entre joueurs :
+        l'auteur du jeu doit pouvoir répondre à quelqu'un."""
+        if not obj.joueur:
+            return "—"
+        return f"{obj.joueur.pseudo} (anonyme)" if obj.anonyme else obj.joueur.pseudo
+
+    @admin.action(description="Publier sur le mur des retours")
+    def publier(self, requete, lot):
+        self.message_user(requete, f"{lot.update(publie=True)} retour(s) publié(s).")
+
+    @admin.action(description="Retirer du mur des retours")
+    def depublier(self, requete, lot):
+        self.message_user(requete, f"{lot.update(publie=False)} retour(s) retiré(s).")
+
+    @admin.action(description="Statut : retenu")
+    def marquer_retenu(self, requete, lot):
+        self.message_user(requete, f"{lot.update(statut='retenu')} retour(s) retenu(s).")
+
+    @admin.action(description="Statut : fait")
+    def marquer_fait(self, requete, lot):
+        self.message_user(requete, f"{lot.update(statut='fait')} retour(s) fait(s).")
+
+    @admin.action(description="Statut : non retenu")
+    def marquer_refuse(self, requete, lot):
+        self.message_user(requete, f"{lot.update(statut='refuse')} retour(s) écarté(s).")
 
     @admin.action(description="Marquer comme traité")
     def marquer_traite(self, requete, lot):

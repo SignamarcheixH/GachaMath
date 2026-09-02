@@ -536,9 +536,12 @@ function appliquerGuide() {
 function quitterGuide() { const c = cmd(); if (c) { delete c.guide; recommencer(); } }
 
 /* ---------- clôture ----------
-   Résoudre une commande rapporte, en plus de la cible, des cartes tirées comme
-   au gacha. Chaque indice demandé en retire une : l'aide se paie en butin, pas
-   en frustration. */
+   Résoudre une commande rapporte, en plus de la cible, des cartes tirées
+   AU-DELÀ DU MUR. Elles venaient du vivier du gacha : la prime d'une commande
+   ne valait alors pas mieux que trois tirages, alors que la Forge est le seul
+   chemin vers les grands nombres. Sa prime tombe désormais de son côté.
+   Chaque indice demandé en retire une : l'aide se paie en butin, pas en
+   frustration. */
 const cartesBonus = c => Math.max(0, 1 + (c.etapesRef || 2) - (c.indices || 0));
 
 function encaisser(valeur) {
@@ -556,7 +559,7 @@ function encaisser(valeur) {
   if (exact) {                                  // la prime du compte juste
     res.indices = c.indices || 0;
     res.cartes = [];
-    for (let i = cartesBonus(c); i > 0; i--) res.cartes.push(acquire(drawFromTier(rollTier()), 'prime'));
+    for (let i = cartesBonus(c); i > 0; i--) res.cartes.push(acquire(drawForgeable(rollTier()), 'prime'));
     res.prime = Math.round(res.ev.rarity.coin * 60 + 200);
     res.primeDust = Math.round(res.ev.rarity.dust * 2 + 40);
     state.coins += res.prime;

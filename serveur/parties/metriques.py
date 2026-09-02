@@ -127,7 +127,14 @@ def incoherences(donnees: dict, m: dict) -> str:
     # Sans ce complément, un joueur honnête qui joue les mini-jeux finissait
     # signalé, donc **écarté du classement**, sans jamais l'apprendre. Un
     # contrôle de plausibilité qui punit le jeu normal est pire qu'absent.
-    voies_forge = (int(stats.get("forges") or 0)
+    # Une commande résolue ne rapporte plus un seul nombre au-delà du mur : la
+    # cible, plus ses cartes bonus, qui sont désormais tirées du même côté du
+    # mur. Le compte peut monter à six selon la longueur de la solution de
+    # référence et les indices non demandés. On prend huit : ce contrôle est
+    # là pour repérer une triche d'un clic, pas pour serrer le jeu honnête au
+    # plus juste — un plafond trop bas écarterait du classement les joueurs
+    # qui forgent beaucoup, sans qu'ils l'apprennent jamais.
+    voies_forge = (int(stats.get("forges") or 0) * 8
                    + couches                                # au plus une carte par couche
                    + int(stats.get("calculs") or 0) * 3)
     if m.get("forges", 0) > voies_forge + 10:

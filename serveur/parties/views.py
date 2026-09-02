@@ -10,7 +10,6 @@ partie sans avoir rien noté.
 import hashlib
 import json
 import re
-from datetime import timedelta
 
 from django.conf import settings
 from django.core.signing import BadSignature
@@ -19,10 +18,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
-from django.utils import timezone
 
 from .metriques import incoherences, mesurer
-from .models import Joueur, Retour, Sauvegarde
+from .models import Joueur, Retour, Sauvegarde, Voix
 
 # Mesuré, pas estimé : une sauvegarde coûte ~30 octets par nombre possédé,
 # soit 2,9 Mo pour la collection complète (0 à 99 999). L'ancienne limite de
@@ -30,10 +28,6 @@ from .models import Joueur, Retour, Sauvegarde
 # plus avancées — précisément celles qu'on ne veut surtout pas perdre.
 TAILLE_MAX = 8 * 1024 * 1024
 PSEUDO_VALIDE = re.compile(r"^[\w \-']{2,24}$", re.UNICODE)
-
-# Cadence des retours : de quoi signaler plusieurs choses d'affilée, pas de quoi
-# inonder la table. Le plafond vaut par empreinte d'envoi et par heure.
-RETOURS_PAR_HEURE = 6
 
 CLASSEMENTS = {
     "completion": ("-nombres", "nombres"),
@@ -222,9 +216,10 @@ def classement(requete):
 def _empreinte_envoyeur(requete) -> str:
     """Identifie un envoyeur pendant une heure, sans conserver son adresse.
 
-    On ne stocke pas l'IP : la salant avec la clé secrète suffit à limiter la
-    cadence, et n'expose rien qui permettrait de remonter à quelqu'un. La page
-    de confidentialité annonce cette absence — il faut qu'elle reste vraie.
+    On ne stocke pas l'IP : la salant avec la clé secrète suffit à regrouper les
+    envois d'une même source, et n'expose rien qui permettrait de remonter à
+    quelqu'un. La page de confidentialité annonce cette absence — il faut
+    qu'elle reste vraie.
     """
     avant = requete.META.get("HTTP_X_FORWARDED_FOR", "")
     ip = (avant.split(",")[0] if avant else requete.META.get("REMOTE_ADDR", "")).strip()
@@ -250,12 +245,16 @@ def retour(requete):
     if len(message) > Retour.MESSAGE_MAX:
         return JsonResponse({"erreur": "Message trop long."}, status=400)
 
+    # Pas de plafond de cadence. Il en existait un — six par heure — et il visait
+    # les automates, mais c'est un testeur qui l'a rencontré : quelqu'un qui
+    # parcourt le jeu en notant ce qu'il voit en envoie dix en dix minutes.
+    # Faire taire celui qui prend la peine d'écrire pour se prémunir de celui
+    # qui ne viendra peut-être jamais, c'est se tromper de menace.
+    #
+    # L'empreinte reste enregistrée : elle ne limite plus rien, mais elle
+    # permet de regrouper les envois d'une même source dans l'admin, et de
+    # nettoyer d'un geste si un jour quelqu'un en abuse.
     empreinte = _empreinte_envoyeur(requete)
-    depuis = timezone.now() - timedelta(hours=1)
-    if Retour.objects.filter(empreinte=empreinte, cree_le__gte=depuis).count() >= RETOURS_PAR_HEURE:
-        return JsonResponse(
-            {"erreur": "Vous avez déjà envoyé plusieurs retours récemment. Merci, et à tout à l'heure."},
-            status=429)
 
     # Le contexte vient du client : on le tronque et on n'en attend rien.
     def borne(valeur, taille):
@@ -265,9 +264,97 @@ def retour(requete):
         objet=objet,
         message=message,
         joueur=joueur_courant(requete),
+        anonyme=bool(corps.get("anonyme")),
         page=borne(corps.get("page"), 120),
         version=borne(corps.get("version"), 16),
         agent=borne(requete.META.get("HTTP_USER_AGENT"), 200),
         empreinte=empreinte,
     )
     return JsonResponse({"ok": True})
+
+
+# ------------------------------------------------------------------ mur des retours
+RETOURS_AFFICHES = 60
+
+
+def _retour_public(r, mien=False, vote=False):
+    """Ce qu'un visiteur a le droit de voir d'un retour.
+
+    Le contexte technique — page, version, navigateur, empreinte — ne sort
+    jamais d'ici : il sert à reproduire un bug, pas à décrire un joueur.
+    """
+    return {
+        "id": r.id,
+        "objet": r.objet,
+        "message": r.message,
+        "auteur": None if (r.anonyme or not r.joueur) else r.joueur.pseudo,
+        "statut": r.statut,
+        "votes": r.votes,
+        "cree_le": r.cree_le.isoformat(timespec="seconds"),
+        "mien": mien,
+        "vote": vote,
+        "publie": r.publie,
+    }
+
+
+@require_http_methods(["GET"])
+def retours(requete):
+    """Le mur public, plus les retours du visiteur lui-même.
+
+    UN AUTEUR VOIT TOUJOURS CE QU'IL A ÉCRIT, publié ou non. Sans cela,
+    quelqu'un qui vient d'envoyer trois remarques n'a aucun moyen de savoir si
+    elles sont arrivées, ni ce qu'elles sont devenues — et il les réécrit. La
+    modération a priori ne doit pas se payer d'un silence envers celui qui a
+    pris la peine d'écrire.
+    """
+    moi = joueur_courant(requete)
+
+    publies = list(Retour.objects.filter(publie=True).select_related("joueur")
+                   .order_by("-votes", "-cree_le")[:RETOURS_AFFICHES])
+
+    miens = []
+    if moi:
+        # Les siens non encore publiés, en plus — ceux qui le sont déjà sont
+        # dans la liste au-dessus, on ne les compte pas deux fois.
+        miens = list(Retour.objects.filter(joueur=moi, publie=False)
+                     .select_related("joueur").order_by("-cree_le")[:RETOURS_AFFICHES])
+
+    votes = set()
+    if moi:
+        ids = [r.id for r in publies]
+        votes = set(Voix.objects.filter(joueur=moi, retour_id__in=ids)
+                    .values_list("retour_id", flat=True))
+
+    return JsonResponse({
+        "connecte": bool(moi),
+        "publies": [_retour_public(r, mien=(moi is not None and r.joueur_id == moi.id),
+                                   vote=(r.id in votes)) for r in publies],
+        "miens": [_retour_public(r, mien=True) for r in miens],
+    })
+
+
+@require_http_methods(["POST"])
+def voter(requete, retour_id):
+    """Une voix pour, ou son retrait. Il n'existe pas de voix contre.
+
+    Le compte dénormalisé est recalculé depuis la table plutôt qu'incrémenté :
+    deux clics simultanés sur le même retour se marchaient dessus, et un
+    compteur faux sur une page publique se voit.
+    """
+    moi = joueur_courant(requete)
+    if not moi:
+        return JsonResponse(
+            {"erreur": "Choisissez un pseudo pour soutenir un retour."}, status=403)
+
+    r = Retour.objects.filter(id=retour_id, publie=True).first()
+    if not r:
+        return JsonResponse({"erreur": "Ce retour n'existe pas, ou n'est pas publié."}, status=404)
+
+    with transaction.atomic():
+        voix, cree = Voix.objects.get_or_create(retour=r, joueur=moi)
+        if not cree:
+            voix.delete()
+        r.votes = r.voix.count()
+        r.save(update_fields=["votes"])
+
+    return JsonResponse({"ok": True, "votes": r.votes, "vote": cree})

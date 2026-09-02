@@ -91,9 +91,10 @@ class Retour(models.Model):
     2. Le message est stocké tel quel et **jamais réinjecté dans le jeu**. Il
        n'apparaît que dans l'admin Django, dont les gabarits échappent le HTML
        par défaut — à condition de ne jamais le passer par format_html.
-    3. Aucune adresse IP n'est conservée. Le contrôle de cadence s'appuie sur
-       une empreinte salée par la clé secrète : elle suffit à reconnaître un
-       envoyeur pendant une heure, sans permettre de remonter à lui.
+    3. Aucune adresse IP n'est conservée. L'empreinte est salée par la clé
+       secrète : elle suffit à regrouper les envois d'une même source dans
+       l'admin, sans permettre de remonter à qui que ce soit. Elle ne limite
+       plus la cadence — voir la note dans views.retour.
     """
 
     OBJETS = [
@@ -105,6 +106,16 @@ class Retour(models.Model):
     ]
     OBJETS_VALIDES = {cle for cle, _ in OBJETS}
 
+    # Où en est ce retour. Une liste publique classée devient une promesse : si
+    # le premier de la liste reste intouché trois mois, la page se lit comme de
+    # l'abandon. Le statut est ce qui permet de répondre sans écrire.
+    STATUTS = [
+        ("recu",   "Reçu"),
+        ("retenu", "Retenu"),
+        ("fait",   "Fait"),
+        ("refuse", "Non retenu"),
+    ]
+
     MESSAGE_MAX = 2000
 
     objet = models.CharField("objet", max_length=16, choices=OBJETS)
@@ -113,6 +124,24 @@ class Retour(models.Model):
     # Facultatif : un retour anonyme reste un retour utile.
     joueur = models.ForeignKey(Joueur, null=True, blank=True, on_delete=models.SET_NULL,
                               related_name="retours", verbose_name="joueur")
+
+    # ---------- publication ----------
+    # RIEN N'EST PUBLIC PAR DÉFAUT. L'envoi est un POST ouvert, sans compte : si
+    # ce qui arrive s'affichait d'office, n'importe qui pourrait faire écrire ce
+    # qu'il veut sur le site, à tous les visiteurs et au robot d'AdSense. La
+    # publication est donc un geste explicite, pris dans l'admin.
+    publie = models.BooleanField("publié", default=False)
+    statut = models.CharField("statut", max_length=8, choices=STATUTS, default="recu")
+
+    # Le pseudo s'affiche, sauf si l'auteur a demandé l'inverse. L'admin voit
+    # toujours qui a écrit : anonyme veut dire « anonyme aux autres joueurs »,
+    # jamais « anonyme pour vous ».
+    anonyme = models.BooleanField("afficher en anonyme", default=False)
+
+    # Compte dénormalisé. La liste se trie dessus à chaque affichage ; refaire
+    # un COUNT par ligne pour une valeur qui ne bouge qu'au clic serait payer
+    # cher une exactitude que la table Voix garantit déjà.
+    votes = models.PositiveIntegerField("votes", default=0)
 
     # Contexte, utile surtout pour les rapports de bug. Fourni par le client,
     # donc tronqué et traité comme du texte quelconque.
@@ -131,3 +160,36 @@ class Retour(models.Model):
 
     def __str__(self):
         return f"{self.get_objet_display()} — {self.message[:60]}"
+
+
+class Voix(models.Model):
+    """Un joueur soutient un retour. Une voix par joueur et par retour.
+
+    POURQUOI LE JOUEUR, ET PAS L'EMPREINTE. L'empreinte salée qui identifie un
+    envoyeur est bonne pour compter des envois, mauvaise pour compter des voix :
+    un foyer, un opérateur mobile ou un VPN partagent une adresse, et comme le
+    hachage est à sens unique, un litige serait indébrouillable. Un vote ne vaut
+    que l'identité derrière lui — ici, un pseudo choisi et un cocon signé par le
+    serveur.
+
+    IL N'Y A PAS DE VOIX CONTRE. « Moi aussi » est une information ; « ton idée
+    est mauvaise » est un jugement sur un autre joueur, qui enterre ce avec quoi
+    on n'est pas d'accord plutôt que ce qui est faux. Le refus d'une idée se
+    dit par le statut du retour, posé par l'auteur du jeu.
+    """
+
+    retour = models.ForeignKey(Retour, on_delete=models.CASCADE,
+                               related_name="voix", verbose_name="retour")
+    joueur = models.ForeignKey(Joueur, on_delete=models.CASCADE,
+                               related_name="voix", verbose_name="joueur")
+    cree_le = models.DateTimeField("donnée le", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "voix"
+        verbose_name_plural = "voix"
+        constraints = [
+            models.UniqueConstraint(fields=["retour", "joueur"], name="une_voix_par_joueur"),
+        ]
+
+    def __str__(self):
+        return f"{self.joueur.pseudo} → {self.retour_id}"

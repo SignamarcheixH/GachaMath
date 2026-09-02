@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=97">
+<link rel="stylesheet" href="css/style.css?v=100">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -52,6 +52,7 @@
   <button data-tab="minijeux"><span>🎮</span>Mini-jeux</button>
   <button data-tab="classement"><span>🏆</span>Classement</button>
   <button data-tab="oracle"><span>🔮</span>Oracle</button>
+  <button data-tab="retours"><span>✉️</span>Retours</button>
 </nav>
 
 <main>
@@ -229,6 +230,16 @@
     </div>
   </section>
 
+
+  <!-- ══════════ RETOURS ══════════ -->
+  <section id="tab-retours" class="tab">
+    <h2>✉️ Le mur des retours</h2>
+    <p class="lead">Ce que les joueurs ont signalé, proposé ou corrigé. Soutenez ce qui vous
+       gêne aussi : les retours les plus portés remontent d'eux-mêmes. Chaque retour est relu
+       avant d'apparaître ici.</p>
+    <div id="retZone"></div>
+  </section>
+
 </main>
 
 <!-- Colonnes latérales : elles vivent dans les marges du contenu centré, et
@@ -261,21 +272,22 @@
 
 <div id="toasts"></div>
 
-<script src="js/config.js?v=97"></script>
-<script src="js/pub.js?v=97"></script>
-<script src="js/numerology.js?v=97"></script>
-<script src="js/data.js?v=97"></script>
-<script src="js/state.js?v=97"></script>
-<script src="js/nuage.js?v=97"></script>
-<script src="js/classement.js?v=97"></script>
-<script src="js/forge.js?v=97"></script>
-<script src="js/forge-ui.js?v=97"></script>
-<script src="js/revision.js?v=97"></script>
-<script src="js/appariement.js?v=97"></script>
-<script src="js/calcul.js?v=97"></script>
-<script src="js/expedition.js?v=97"></script>
-<script src="js/fond.js?v=97"></script>
-<script src="js/ui.js?v=97"></script>
-<script src="js/retour.js?v=97"></script>
+<script src="js/config.js?v=100"></script>
+<script src="js/pub.js?v=100"></script>
+<script src="js/numerology.js?v=100"></script>
+<script src="js/data.js?v=100"></script>
+<script src="js/state.js?v=100"></script>
+<script src="js/nuage.js?v=100"></script>
+<script src="js/classement.js?v=100"></script>
+<script src="js/forge.js?v=100"></script>
+<script src="js/forge-ui.js?v=100"></script>
+<script src="js/revision.js?v=100"></script>
+<script src="js/appariement.js?v=100"></script>
+<script src="js/calcul.js?v=100"></script>
+<script src="js/expedition.js?v=100"></script>
+<script src="js/retours.js?v=100"></script>
+<script src="js/fond.js?v=100"></script>
+<script src="js/ui.js?v=100"></script>
+<script src="js/retour.js?v=100"></script>
 </body>
 </html>

@@ -1823,3 +1823,91 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
 }
 .clJeu.zero { color: var(--dim2); opacity: .45; }
 .clTable.detail .clVal { text-align: right; }
+
+/* ============================================================
+   LE MUR DES RETOURS
+   ============================================================ */
+.retSection {
+  margin: 26px 0 4px; font-size: 15px; font-weight: 600; color: var(--txt);
+}
+.retSection .tiny { color: var(--dim2); font-weight: 400; margin-left: 4px; }
+.retAide { margin: 0 0 12px; color: var(--dim); }
+.retListe { display: flex; flex-direction: column; gap: 10px; }
+
+.retCarte {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 16px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--panel);
+}
+/* Les siens se repèrent d'un coup d'œil dans une liste où tout se ressemble. */
+.retCarte.mien { border-color: rgba(124,92,255,.5); background: rgba(124,92,255,.06); }
+
+/* ---------- la colonne de soutien ----------
+   Il n'y a pas de flèche vers le bas : « moi aussi » est une information,
+   « ton idée est mauvaise » est un jugement sur un autre joueur. */
+.retVoix {
+  flex: 0 0 auto; display: grid; place-items: center; gap: 1px;
+  width: 52px; padding: 7px 0; border-radius: 11px;
+  border: 1px solid var(--line2); background: var(--panel2);
+  color: var(--dim); cursor: pointer; transition: .13s;
+}
+.retVoix b { font-family: var(--mono); font-size: 14px; color: var(--txt); }
+.retFleche { font-size: 11px; line-height: 1; }
+.retVoix:not(:disabled):hover { border-color: var(--accent); color: var(--txt); }
+.retVoix.donne {
+  border-color: var(--accent); color: #cbb6ff; background: rgba(124,92,255,.18);
+}
+.retVoix.donne b { color: #cbb6ff; }
+.retVoix:disabled { opacity: .4; cursor: default; }
+.retVoix:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+
+.retCorps { flex: 1; min-width: 0; }
+.retTete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+.retObjet {
+  font-size: 11px; letter-spacing: .04em; padding: 2px 8px; border-radius: 99px;
+  border: 1px solid var(--line2); color: var(--dim);
+}
+.retObjet.bug { border-color: rgba(255,107,129,.5); color: #ff9aa8; }
+.retObjet.idee { border-color: rgba(255,215,106,.5); color: var(--coin); }
+.retObjet.maths { border-color: rgba(124,92,255,.5); color: #cbb6ff; }
+
+.retStatut {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line2); color: var(--dim2);
+}
+.retStatut.retenu { border-color: rgba(255,176,46,.5); color: var(--gold); }
+.retStatut.fait { border-color: var(--r-peucommun); color: #7ee6a4; }
+.retStatut.refuse { border-color: var(--line2); color: var(--dim2); text-decoration: line-through; }
+.retMien {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #cbb6ff;
+}
+
+/* Un message vient d'un visiteur : il peut ne contenir aucune espace. Sans
+   `overflow-wrap`, une seule ligne de deux mille caractères ferait déborder la
+   page entière. */
+.retMessage {
+  margin: 0 0 8px; font-size: 13.5px; line-height: 1.55; color: var(--txt);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.retPied {
+  display: flex; gap: 10px; justify-content: space-between;
+  font-size: 11.5px; color: var(--dim2);
+}
+.retPied span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* La case « anonyme » du panneau d'envoi.
+   C'est un <label>, donc elle héritait des majuscules et de l'interlettrage des
+   étiquettes de champ : elle se lisait comme un titre de section, pas comme une
+   case à cocher. On remet une casse et une graisse de phrase. */
+.retourForm label.retourCase {
+  display: flex; gap: 9px; align-items: flex-start; margin: 6px 0 2px;
+  font-size: 12.5px; line-height: 1.45; cursor: pointer;
+  text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--dim);
+}
+.retourCase input { margin-top: 2px; accent-color: var(--accent); }
+.retourCase i { font-style: normal; color: var(--dim2); }
+
+@media (max-width: 560px) {
+  .retCarte { gap: 10px; padding: 12px 12px; }
+  .retVoix { width: 44px; }
+}

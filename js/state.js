@@ -182,6 +182,38 @@ function drawFromTier(key) {
   return arr[(Math.random() * arr.length) | 0];
 }
 
+/* ---------- tirer AU-DELÀ DU MUR ----------
+   Le territoire du gacha s'arrête à 9 999 ; au-delà, seule la Forge donne.
+   Ses primes doivent donc tomber de son côté du mur, sinon résoudre une
+   commande ne rapporterait que ce qu'un tirage donne déjà.
+
+   Pourquoi un échantillonnage, et pas un vivier comme POOL. Les 90 000
+   nombres au-delà du mur coûtent 3,5 secondes à évaluer : les précalculer
+   bloquerait le chargement de la page pour une prime occasionnelle.
+
+   Pourquoi le palier n'est pas garanti. La rareté est CALCULÉE, et les grands
+   nombres portent moins de traits. Mesuré sur 20 000 tirages entre 10 000 et
+   99 999 : commun 58 %, peu commun 40 %, rare 1,8 %, épique 0,08 %,
+   légendaire 0,005 %, mythique introuvable. Exiger un mythique là-haut, ce
+   serait attendre un nombre qui n'existe peut-être pas — la boucle ne
+   finirait jamais. On tire donc un budget d'essais, on rend le premier qui
+   atteint le palier demandé, et à défaut le plus rare rencontré. Le hasard
+   est honoré quand les mathématiques le permettent, et jamais forcé. */
+const FORGE_ESSAIS = 240;      // ~9 ms au pire, et 99 % de chances d'un rare
+
+function drawForgeable(key) {
+  const vise = RARITY_BY_KEY[key].idx;
+  const bas = POOL_MAX + 1, etendue = FORGE_MAX - bas + 1;
+  let meilleur = null, meilleurIdx = -1;
+  for (let essai = 0; essai < FORGE_ESSAIS; essai++) {
+    const n = bas + ((Math.random() * etendue) | 0);
+    const idx = evaluate(n).rarity.idx;
+    if (idx >= vise) return n;
+    if (idx > meilleurIdx) { meilleurIdx = idx; meilleur = n; }
+  }
+  return meilleur;
+}
+
 /* ---------- bonus des collections ---------- */
 function bonuses() {
   const b = { coinMult: 0, dustMult: 0, forgeDiscount: 0, luck: 0, coinFlat: 0 };

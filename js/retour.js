@@ -11,8 +11,7 @@
    du script est donc affiché comme du script, pas exécuté.
 
    Le serveur ne fait pas davantage confiance : l'objet est vérifié contre une
-   liste fermée, la longueur est bornée, et la cadence est limitée. Voir
-   parties/views.py.
+   liste fermée et la longueur est bornée. Voir parties/views.py.
    ============================================================ */
 
 const RETOUR = {
@@ -64,6 +63,12 @@ const RETOUR = {
                 placeholder="Décrivez ce que vous avez vu, ou ce que vous imaginez."></textarea>
       <div class="retourCompteur"><span id="retourReste">${RETOUR.messageMax}</span> caractères restants</div>
 
+      <label class="retourCase">
+        <input type="checkbox" id="retourAnonyme">
+        <span>Signer « Anonyme » si ce retour est publié
+          <i>— votre pseudo reste connu de l'auteur du jeu</i></span>
+      </label>
+
       <p class="retourEtat" id="retourEtat" role="status"></p>
 
       <div class="retourActions">
@@ -71,7 +76,9 @@ const RETOUR = {
         <button type="button" class="btn ghost retourFermer">Annuler</button>
       </div>
       <p class="tiny retourNote">Votre pseudo est joint s'il en existe un, ainsi que la page
-         d'où vous écrivez. Aucune adresse ni aucun contenu de votre partie n'est transmis.</p>
+         d'où vous écrivez. Aucune adresse ni aucun contenu de votre partie n'est transmis.
+         Les retours retenus sont publiés sur le <b>mur des retours</b> ; les vôtres vous y
+         sont visibles dès l'envoi.</p>
     </form>`;
 
   const $$$ = sel => panneau.querySelector(sel);
@@ -81,6 +88,7 @@ const RETOUR = {
   const reste = $$$('#retourReste');
   const etat = $$$('#retourEtat');
   const envoyer = $$$('#retourEnvoyer');
+  const champAnonyme = $$$('#retourAnonyme');
 
   /* ---------- comportement ---------- */
   function majAide() {
@@ -142,6 +150,7 @@ const RETOUR = {
         body: JSON.stringify({
           objet: champObjet.value,
           message,
+          anonyme: champAnonyme.checked,
           page: location.pathname + location.hash,
           version: (document.querySelector('script[src*="?v="]') || {}).src?.split('?v=')[1] || '',
         }),

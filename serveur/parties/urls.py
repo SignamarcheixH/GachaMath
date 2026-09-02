@@ -10,4 +10,6 @@ urlpatterns = [
     path("partie", views.partie),
     path("classement", views.classement),
     path("retour", views.retour),
+    path("retours", views.retours),
+    path("retours/<int:retour_id>/voix", views.voter),
 ]

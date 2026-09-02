@@ -198,6 +198,82 @@ systemctl start gachamath
 
 ---
 
+## Servir les fichiers par nginx
+
+À faire **avant toute promotion** : c'est ce qui décide si le site tient un
+pic de trafic, et c'est aussi ce qui ferme une faille.
+
+Sans cela, nginx transmet tout à Django, CSS et JavaScript compris. Un
+chargement de page coûte 14 requêtes ; gunicorn n'en traite que trois à la
+fois, et un navigateur en ouvre six en parallèle. **Un seul visiteur sature
+déjà la capacité.** Servis par nginx, ces fichiers ne touchent plus
+l'application.
+
+Et surtout, WhiteNoise servait la racine du dépôt sans distinguer le public
+du privé : `/.env` et `/serveur/db.sqlite3` étaient téléchargeables — la clé
+de signature et l'intégralité des parties. Un dossier qui contient des
+secrets ne se sécurise pas par une liste d'exclusions : il y aura toujours un
+oubli. On énumère ce qui est public, et on refuse le reste.
+
+Certbot ayant réécrit votre fichier nginx pour y placer le TLS, on ne le
+remplace pas : on ajoute **une ligne** qui inclut le reste.
+
+```bash
+cd /srv/gachamath && git pull
+mkdir -p /etc/nginx/snippets
+cp deploiement/nginx-statique.conf /etc/nginx/snippets/gachamath-statique.conf
+```
+
+Ouvrez ensuite `/etc/nginx/sites-available/gachamath`, trouvez le bloc
+`server` qui contient `listen 443 ssl`, et ajoutez à l'intérieur :
+
+```
+include snippets/gachamath-statique.conf;
+```
+
+Si vous aviez posé le blocage d'urgence, retirez-en l'inclusion : la nouvelle
+configuration le remplace, en plus complet.
+
+nginx tourne sous `www-data` et doit pouvoir traverser le dossier :
+
+```bash
+chmod 755 /srv/gachamath
+```
+
+Le HSTS est désormais envoyé par nginx, qui termine le TLS. Mettez
+`DJANGO_HSTS=0` dans `.env` pour qu'il n'y ait **qu'un seul endroit** où
+changer la durée le jour venu — deux sources finissent toujours par diverger.
+
+```bash
+nginx -t && systemctl reload nginx && systemctl restart gachamath
+```
+
+### Vérifier
+
+```bash
+curl -s -o /dev/null -w '%{http_code}
+' https://gachamath.fr/.env
+curl -s -o /dev/null -w '%{http_code}
+' https://gachamath.fr/serveur/db.sqlite3
+```
+
+Les deux doivent répondre **403 ou 404**, jamais 200.
+
+```bash
+curl -sI https://gachamath.fr/js/state.js | grep -i cache-control
+```
+
+Doit afficher `max-age=31536000`. Enfin, chargez le jeu et vérifiez dans le
+journal que l'application ne voit plus passer les fichiers :
+
+```bash
+journalctl -u gachamath -f
+```
+
+Seules des lignes `/api/` doivent apparaître. Plus aucune sur `/js/`.
+
+---
+
 ## Mettre à jour le jeu
 
 ```bash

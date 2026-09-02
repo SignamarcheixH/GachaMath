@@ -87,7 +87,7 @@ let idleSpin = null;
    qu'il arrive : on gagne le bouton Retour sans créer huit pages
    vides, ce qui pénaliserait le référencement au lieu de l'aider.
    ============================================================ */
-const VUES = ['gacha', 'collection', 'forge', 'bonus', 'minijeux', 'classement', 'oracle'];
+const VUES = ['gacha', 'collection', 'forge', 'bonus', 'minijeux', 'classement', 'oracle', 'retours'];
 
 /* Les adresses des anciens onglets restent valides : un lien partagé, un
    signet ou un onglet resté ouvert doivent continuer de fonctionner. */
@@ -148,6 +148,7 @@ function ouvrirOnglet(nom, pousser = true) {
   centrerOnglet(btn);
   if (typeof majPubVue === 'function') majPubVue();
   if (nom === 'classement' && typeof ouvrirClassement === 'function') ouvrirClassement();
+  if (nom === 'retours' && typeof ouvrirRetours === 'function') ouvrirRetours();
 }
 
 function initUI() {
@@ -294,6 +295,7 @@ const SECTIONS = [
   ['défis',        () => renderDefis(),    '#defiList'],
   ['mini-jeux',    () => renderRevision(), '#revZone'],
   ['classement',   () => renderClassement(), '#clZone'],
+  ['retours',      () => renderRetours(),   '#retZone'],
 ];
 const sectionsSignalees = new Set();
 
