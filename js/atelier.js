@@ -41,7 +41,7 @@
    `false` les fait disparaître entièrement — aucun autre fichier n'est
    concerné, et rien d'autre dans le jeu n'en dépend.
    ════════════════════════════════════════════════════════════ */
-const ATELIER_TEST = true;
+const ATELIER_TEST = false;
 const ATELIER_TEST_POUSSIERE = 100000;
 
 const ATELIER = {
