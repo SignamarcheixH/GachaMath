@@ -88,8 +88,8 @@ const COLLECTIONS = [
     bonus:{ type:'dustMult', val:0.35 }, bonusLabel:'+35 % de poussière' },
 
   { id:'horloge',    nom:"L'Horloge",           emoji:'🕛', nums:[1,2,3,4,5,6,7,8,9,10,11,12],
-    desc:"Douze heures. La collection la plus facile — et pourtant.",
-    bonus:{ type:'coinFlat', val:40 }, bonusLabel:'+40 jetons/min' },
+    desc:"Douze heures. La collection la plus facile — et pourtant. Elle vous en rend quatre.",
+    bonus:{ type:'offlineHours', val:4 }, bonusLabel:"+4 h d'accumulation hors ligne" },
 
   { id:'triangles',  nom:'La Pyramide',         emoji:'🔺', nums:[1,3,6,10,15,21,28,36,45,55],
     desc:"Empilables en triangle. Gauss les additionnait de tête à sept ans.",
@@ -100,12 +100,12 @@ const COLLECTIONS = [
     bonus:{ type:'dustMult', val:0.25 }, bonusLabel:'+25 % de poussière' },
 
   { id:'repdigits',  nom:"L'Écho",              emoji:'🔁', nums:[11,22,33,44,55,66,77,88,99],
-    desc:"Le même chiffre, deux fois. Neuf petites tautologies.",
-    bonus:{ type:'coinFlat', val:25 }, bonusLabel:'+25 jetons/min' },
+    desc:"Le même chiffre, deux fois. Neuf petites tautologies — et vos doublons rapportent davantage.",
+    bonus:{ type:'copyBonus', val:0.05 }, bonusLabel:'+5 % par exemplaire en double' },
 
   { id:'millenaire', nom:'Le Millénaire',       emoji:'🏔️', nums:[1000,2000,3000,4000,5000,6000,7000,8000,9000],
     desc:"Les neuf paliers ronds. Très communs, très pénibles à réunir.",
-    bonus:{ type:'coinFlat', val:120 }, bonusLabel:'+120 jetons/min' },
+    bonus:{ type:'pullDiscount', val:0.12 }, bonusLabel:'−12 % sur le prix des tirages' },
 
   { id:'anomalies',  nom:'Les Anomalies',       emoji:'👽', nums:[70,1729,6174,2520,1260],
     desc:"Le bizarre, le taxi, le trou noir, le PPCM de un à dix, le vampire. Rien ne les relie. C'est bien le problème.",
@@ -114,6 +114,45 @@ const COLLECTIONS = [
   /* Théorème à prédicat plutôt qu'à liste : depuis que la Forge tire elle-même
      ses cibles, exiger cinq nombres nommément désignés au-delà du mur serait
      exiger une loterie sur 90 000 tirages. On compte, on n'énumère plus. */
+  /* ---------- les sept ajouts ----------
+     Chacun est un ÉNONCÉ COMPLET sur le vivier : tous les cubes sous dix
+     mille, toutes les factorielles, toutes les paires amiables. Ce n'est pas
+     une sélection de jolis nombres — c'est ce qui rend la collection
+     démontrable, et vérifiable : voir outils/verifier_theoremes.py, qui
+     échoue si une liste s'écarte de ce que les mathématiques donnent.
+
+     Ils sont rétroactifs sans rien de particulier : l'avancement se calcule
+     depuis la collection à chaque affichage, jamais depuis un compteur gardé
+     à part. Qui possède déjà les nombres peut encaisser aussitôt. */
+
+  { id:'factorielles', nom:'Les Factorielles',  emoji:'❗', nums:[1,2,6,24,120,720,5040],
+    desc:"1, puis ×2, puis ×3… Sept termes suffisent à dépasser cinq mille. La croissance la plus brutale des mathématiques élémentaires.",
+    bonus:{ type:'dustMult', val:0.20 }, bonusLabel:'+20 % de poussière' },
+
+  { id:'catalan',    nom:'Les Catalan',         emoji:'🌳', nums:[1,2,5,14,42,132,429,1430,4862],
+    desc:"Le nombre de façons de parenthéser, de trianguler, d'arboriser. Il surgit partout en combinatoire, sans prévenir.",
+    bonus:{ type:'coinMult', val:0.20 }, bonusLabel:'+20 % de jetons/min' },
+
+  { id:'pow3',       nom:'Les Puissances de Trois', emoji:'🔱', nums:[1,3,9,27,81,243,729,2187,6561],
+    desc:"L'autre colonne. Avec ces neuf poids et une balance à deux plateaux, on pèse n'importe quoi jusqu'à 9 841.",
+    bonus:{ type:'forgeDiscount', val:0.15 }, bonusLabel:'−15 % sur les aides de la Forge' },
+
+  { id:'cubes',      nom:'Les Cubes',           emoji:'🧊', nums:[1,8,27,64,125,216,343,512,729,1000,1331,1728,2197,2744,3375,4096,4913,5832,6859,8000,9261],
+    desc:"Les vingt-et-un cubes sous dix mille. Fermat a juré qu'aucun n'est somme de deux autres ; il a fallu attendre Euler, cent trente ans plus tard, pour en avoir la preuve.",
+    bonus:{ type:'dustMult', val:0.20 }, bonusLabel:'+20 % de poussière' },
+
+  { id:'lucas',      nom:'Les Lucas',           emoji:'🌗', nums:[1,2,3,4,7,11,18,29,47,76,123,199,322,521,843,1364,2207,3571,5778,9349],
+    desc:"La sœur de Fibonacci : même règle, autre départ. Les deux suites n'ont que 1, 2 et 3 en commun — ensuite, elles ne se recroisent plus jamais.",
+    bonus:{ type:'coinMult', val:0.25 }, bonusLabel:'+25 % de jetons/min' },
+
+  { id:'amiables',   nom:'Les Amis',            emoji:'🫂', nums:[220,284,1184,1210,2620,2924,5020,5564,6232,6368],
+    desc:"Cinq paires, et rien d'autre sous dix mille. Chacun est la somme des diviseurs propres de l'autre : ils ne s'additionnent qu'à deux.",
+    bonus:{ type:'copyBonus', val:0.05 }, bonusLabel:'+5 % par exemplaire en double' },
+
+  { id:'hautcomp',   nom:'Les Hautement Composés', emoji:'🧱', nums:[1,2,4,6,12,24,36,48,60,120,180,240,360,720,840,1260,1680,2520,5040,7560],
+    desc:"Chacun a strictement plus de diviseurs que tous ceux qui le précèdent. Ramanujan leur a consacré une soixantaine de pages en 1915.",
+    bonus:{ type:'pullDiscount', val:0.10 }, bonusLabel:'−10 % sur le prix des tirages' },
+
   { id:'aunmot',     nom:'Le Grand Large',      emoji:'🚧', pred:{ type:'forgeable', n:12 },
     desc:"Douze nombres au-delà de 9 999, ou le zéro. Le tirage ne les atteint pas : il faut les gagner à la Forge, une commande à la fois.",
     bonus:{ type:'coinMult', val:0.50 }, bonusLabel:'+50 % de jetons/min' },
@@ -183,5 +222,5 @@ const DEFIS = [
   { id:'d_theo5',   nom:'Corpus',               desc:"Compléter 5 collections.",                      emoji:'📜', check:s=>s.claimed.length>=5,     rw:{coins:50000, dust:4000} },
   { id:'d_rev25',   nom:'Bachotage',            desc:"25 bonnes réponses en Révision, toutes sessions confondues.",              emoji:'🎓', check:s=>(s.stats.bonnesReponses||0)>=25, rw:{coins:4000, dust:400} },
   { id:'d_rev15',   nom:'Mention Bien',          desc:"15 réussites dans un même examen.",                 emoji:'🥇', check:s=>(s.stats.meilleureSerie||0)>=15, rw:{coins:12000, dust:1000} },
-  { id:'d_theoAll', nom:'Q.E.D.',               desc:"Compléter les 14 collections.",                 emoji:'🎓', check:s=>s.claimed.length>=COLLECTIONS.length, rw:{coins:500000, dust:50000} },
+  { id:'d_theoAll', nom:'Q.E.D.',               desc:"Compléter tous les théorèmes.",                 emoji:'🎓', check:s=>s.claimed.length>=COLLECTIONS.length, rw:{coins:500000, dust:50000} },
 ];

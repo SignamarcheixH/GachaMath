@@ -87,7 +87,7 @@ let idleSpin = null;
    qu'il arrive : on gagne le bouton Retour sans créer huit pages
    vides, ce qui pénaliserait le référencement au lieu de l'aider.
    ============================================================ */
-const VUES = ['gacha', 'collection', 'forge', 'bonus', 'minijeux', 'classement', 'oracle', 'retours'];
+const VUES = ['hub', 'gacha', 'collection', 'forge', 'atelier', 'bonus', 'minijeux', 'classement', 'oracle', 'retours'];
 
 /* Les adresses des anciens onglets restent valides : un lien partagé, un
    signet ou un onglet resté ouvert doivent continuer de fonctionner. */
@@ -291,11 +291,14 @@ const SECTIONS = [
   ['tirage',       () => renderPity(),     null],
   ['collection',   () => renderCollection(), '#colGrid'],
   ['forge',        () => renderForge(),    '#forgeZone'],
+  ['atelier',      () => renderAtelier(),  '#atZone'],
   ['théorèmes',    () => renderTheoremes(), '#theoList'],
   ['défis',        () => renderDefis(),    '#defiList'],
   ['mini-jeux',    () => renderRevision(), '#revZone'],
   ['classement',   () => renderClassement(), '#clZone'],
   ['retours',      () => renderRetours(),   '#retZone'],
+  ['carte',        () => renderHub(),       '#hubZone'],
+  ['bannières',    () => poserBannieresDeLieu(), null],
 ];
 const sectionsSignalees = new Set();
 
@@ -355,11 +358,11 @@ function renderWallet() {
      répondent à la même question, ils ne peuvent pas se contredire. */
   b.classList.toggle('pret', state.coins >= cout);
 
-  const unite = prixUnitaire();          // calculé une fois, pas une fois par paquet
   $$('#packSizes .pack').forEach(el => {
     const k = +el.dataset.pack;
     el.classList.toggle('on', k === n);
-    el.classList.toggle('cher', state.coins < Math.round(unite * k * remisePour(k)));
+    // Le même prix que celui du bouton, remise des théorèmes comprise.
+    el.classList.toggle('cher', state.coins < pullCost(k));
   });
 }
 
@@ -588,37 +591,59 @@ function renderTheoremes() {
   const b = bonuses();
   const sum = [];
   if (b.coinMult)      sum.push(`+${Math.round(b.coinMult * 100)} % jetons/min`);
-  if (b.coinFlat)      sum.push(`+${b.coinFlat} jetons/min`);
   if (b.dustMult)      sum.push(`+${Math.round(b.dustMult * 100)} % poussière`);
+  if (b.pullDiscount)  sum.push(`−${Math.round(remiseTheoremes() * 100)} % sur le prix des tirages`);
+  if (b.copyBonus)     sum.push(`+${Math.round(b.copyBonus * 100)} % par exemplaire en double`);
+  if (b.offlineHours)  sum.push(`+${b.offlineHours} h d'accumulation hors ligne`);
   if (b.forgeDiscount) sum.push(`−${Math.round(b.forgeDiscount * 100)} % sur les aides de la Forge`);
   if (b.luck)          sum.push(`Relance des tirages Communs`);
   $('#bonusSummary').innerHTML = sum.length
     ? sum.map(s => `<div>${s}</div>`).join('')
     : `<div style="border-color:var(--line);background:var(--panel);color:var(--dim)">Aucun bonus actif — démontrez un théorème.</div>`;
 
+  /* Une ligne par théorème, sur le modèle de l'Atelier : à vingt et un
+     théorèmes, une grille de cartes obligeait à balayer en deux dimensions
+     pour répondre à la seule question qui compte — lesquels sont à portée.
+     Empilés, ils se comparent d'un seul coup d'œil, l'avancement dans la même
+     colonne pour tous. */
   $('#theoList').innerHTML = COLLECTIONS.map(c => {
     const p = collectionProgress(c);
     const claimed = state.claimed.includes(c.id);
     const cls = claimed ? 'done' : (p.done ? 'ready' : '');
-    return `<div class="theo ${cls}">
-      <div class="theoHead">
-        <span style="font-size:20px">${c.emoji}</span>
-        <h3>${c.nom}</h3>
-        <span class="cnt">${p.have}/${p.total}</span>
+    const manque = p.total - p.have;
+    return `<article class="theoLigne ${cls}">
+      <div class="theoCorps">
+        <span class="theoEmoji" aria-hidden="true">${c.emoji}</span>
+
+        <div class="theoIdent">
+          <h3>${c.nom}</h3>
+          <p class="theoDesc">${c.desc}</p>
+          <span class="theoBonus">🎁 ${c.bonusLabel}</span>
+        </div>
+
+        <div class="theoAvance">
+          <b>${p.have}<i>/${p.total}</i></b>
+          <div class="bar${p.done ? ' leg' : ''}">
+            <i style="width:${Math.round(p.have / p.total * 100)}%"></i>
+          </div>
+          <span>${claimed ? 'démontré' : manque ? `il en manque ${fmt(manque)}` : 'au complet'}</span>
+        </div>
+
+        <div class="theoAction">
+          ${claimed
+            ? `<span class="theoFait">✅ Démontré</span>`
+            : p.done
+              ? `<button class="btn sm" data-claim="${c.id}">📐 Démontrer</button>`
+              : `<span class="theoAttente">à compléter</span>`}
+        </div>
       </div>
-      <p class="tiny">${c.desc}</p>
-      <div class="theoBonus">🎁 ${c.bonusLabel}</div>
+
       <div class="theoNums">${(c.nums || []).map(n => {
         const ev = evaluate(n);
         const have = !!state.owned[n];
         return `<span class="${have ? 'have' : ''}" data-n="${n}" style="${rc(ev.rarity.key)}">${fmt(n)}</span>`;
       }).join('')}</div>
-      ${claimed
-        ? `<div class="theoBonus" style="margin-top:12px">✅ Démontré</div>`
-        : p.done
-          ? `<button class="btn sm" style="margin-top:12px" data-claim="${c.id}">📐 Démontrer</button>`
-          : ''}
-    </div>`;
+    </article>`;
   }).join('');
 
   $('#theoList').querySelectorAll('[data-claim]').forEach(btn => btn.addEventListener('click', () => {

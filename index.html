@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=100">
+<link rel="stylesheet" href="css/style.css?v=147">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -45,9 +45,11 @@
 </header>
 
 <nav class="tabs" id="tabs">
+  <button data-tab="hub"><span>🗺️</span>Carte</button>
   <button data-tab="gacha"      class="on"><span>🎰</span>Tirage<i class="badge" id="bTirage"></i></button>
   <button data-tab="collection"><span>🗃️</span>Collection<i class="badge" id="bCollection"></i></button>
   <button data-tab="forge"><span>⚒️</span>Forge</button>
+  <button data-tab="atelier"><span>🛠️</span>Atelier</button>
   <button data-tab="bonus"><span>🎁</span>Bonus<i class="badge alert" id="bBonus"></i></button>
   <button data-tab="minijeux"><span>🎮</span>Mini-jeux</button>
   <button data-tab="classement"><span>🏆</span>Classement</button>
@@ -57,8 +59,23 @@
 
 <main>
 
+  <!-- ══════════ CARTE ══════════ -->
+  <section id="tab-hub" class="tab">
+    <h2>🗺️ La carte</h2>
+    <p class="lead">Le tirage règne de <b>1 à 9 999</b>. Au-delà se dresse le mur, et il n'a que
+       deux portes : la <b>Forge</b>, qui fabrique ce que le hasard ne donne pas, et
+       l'<b>Expédition</b>, qui va le chercher au loin.</p>
+    <div id="hubZone"></div>
+  </section>
+
   <!-- ══════════ TIRAGE ══════════ -->
   <section id="tab-gacha" class="tab on">
+    <!-- La vue du lieu, reprise de la carte. Elle ouvre l'onglet, très loin de
+         l'emplacement publicitaire posé plus bas : une image collée à une
+         annonce se prend pour l'annonce, et le clic qui suit est un clic
+         invalide. Voir .lieuBanniere dans la feuille de style. -->
+    <div class="lieuBanniere" data-lieu="vivier"></div>
+
     <div class="pullStage">
       <div class="machine">
         <div class="machineGlow"></div>
@@ -127,6 +144,8 @@
 
   <!-- ══════════ FORGE ══════════ -->
   <section id="tab-forge" class="tab">
+    <div class="lieuBanniere" data-lieu="forge"></div>
+
     <div class="forgeIntro">
       <h2>⚒️ La Forge — Le Compte est Bon</h2>
       <p>Le tirage règne sur <b>1 à 9 999</b> : c'est le domaine de la chance. La Forge règne sur le reste — <b>0</b>, et <b>10 000 à 99 999</b> : c'est le domaine de l'adresse. Ici vous ne choisissez pas ce que vous fabriquez. La Forge pioche six nombres dans votre collection, annonce une cible, et vous laisse chercher.</p>
@@ -170,6 +189,9 @@
 
   <!-- ══════════ MINI-JEUX ══════════ -->
   <section id="tab-minijeux" class="tab">
+    <!-- Deux lieux partagent cet onglet : la bannière suit l'exercice choisi. -->
+    <div class="lieuBanniere" data-lieu="academie" data-lieu-variante="minijeux"></div>
+
     <div class="forgeIntro">
       <h2>🎮 Mini-jeux</h2>
       <p>Quatre exercices courts. Les deux premiers apprennent à reconnaître les
@@ -231,12 +253,23 @@
   </section>
 
 
+  <!-- ══════════ ATELIER ══════════ -->
+  <section id="tab-atelier" class="tab">
+    <h2>🛠️ L'Atelier</h2>
+    <p class="lead">Dix instruments, de l'abaque sumérien à l'arithmomètre. Chacun ne sait faire
+       qu'une opération, et ne travaille que les nombres de votre herbier qui s'y prêtent :
+       le crible vit sur vos premiers, la règle à calcul sur vos puissances de deux.
+       Ils se paient en <b>poussière</b>, et ils en produisent.</p>
+    <div id="atZone"></div>
+  </section>
+
   <!-- ══════════ RETOURS ══════════ -->
   <section id="tab-retours" class="tab">
-    <h2>✉️ Le mur des retours</h2>
-    <p class="lead">Ce que les joueurs ont signalé, proposé ou corrigé. Soutenez ce qui vous
-       gêne aussi : les retours les plus portés remontent d'eux-mêmes. Chaque retour est relu
-       avant d'apparaître ici.</p>
+    <h2>✉️ La Marge</h2>
+    <p class="lead">« Cette marge est trop étroite pour la contenir » — écrivez quand même.
+       Ce que les joueurs ont signalé, proposé ou corrigé. Soutenez ce qui vous gêne aussi :
+       les retours les plus portés remontent d'eux-mêmes. Chaque retour est relu avant
+       d'apparaître ici.</p>
     <div id="retZone"></div>
   </section>
 
@@ -272,22 +305,24 @@
 
 <div id="toasts"></div>
 
-<script src="js/config.js?v=100"></script>
-<script src="js/pub.js?v=100"></script>
-<script src="js/numerology.js?v=100"></script>
-<script src="js/data.js?v=100"></script>
-<script src="js/state.js?v=100"></script>
-<script src="js/nuage.js?v=100"></script>
-<script src="js/classement.js?v=100"></script>
-<script src="js/forge.js?v=100"></script>
-<script src="js/forge-ui.js?v=100"></script>
-<script src="js/revision.js?v=100"></script>
-<script src="js/appariement.js?v=100"></script>
-<script src="js/calcul.js?v=100"></script>
-<script src="js/expedition.js?v=100"></script>
-<script src="js/retours.js?v=100"></script>
-<script src="js/fond.js?v=100"></script>
-<script src="js/ui.js?v=100"></script>
-<script src="js/retour.js?v=100"></script>
+<script src="js/config.js?v=147"></script>
+<script src="js/pub.js?v=147"></script>
+<script src="js/numerology.js?v=147"></script>
+<script src="js/data.js?v=147"></script>
+<script src="js/state.js?v=147"></script>
+<script src="js/nuage.js?v=147"></script>
+<script src="js/classement.js?v=147"></script>
+<script src="js/forge.js?v=147"></script>
+<script src="js/forge-ui.js?v=147"></script>
+<script src="js/revision.js?v=147"></script>
+<script src="js/appariement.js?v=147"></script>
+<script src="js/calcul.js?v=147"></script>
+<script src="js/expedition.js?v=147"></script>
+<script src="js/retours.js?v=147"></script>
+<script src="js/atelier.js?v=147"></script>
+<script src="js/hub.js?v=147"></script>
+<script src="js/fond.js?v=147"></script>
+<script src="js/ui.js?v=147"></script>
+<script src="js/retour.js?v=147"></script>
 </body>
 </html>

@@ -289,6 +289,9 @@ function cablerMenuMiniJeux() {
     if (typeof calcArreterChrono === 'function') calcArreterChrono();
     state.revision = null;
     save(); renderRevision();
+    /* L'Expédition et l'Académie partagent l'onglet : la vue du lieu suit
+       l'exercice qu'on vient de choisir. */
+    if (typeof poserBannieresDeLieu === 'function') poserBannieresDeLieu();
   });
 }
 

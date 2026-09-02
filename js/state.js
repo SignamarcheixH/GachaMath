@@ -6,6 +6,10 @@ const SAVE_KEY = 'gachanombres.save.v1';
 const POOL_MAX = 9999;        // plafond du tirage
 const FORGE_MAX = 99999;      // plafond de la forge
 const OFFLINE_CAP_H = 8;
+/* Ce que rapporte chaque exemplaire au-delà du premier. Un théorème peut
+   l'augmenter : c'est un bonus qui grandit avec la collection, donc qui vaut
+   autant tard que tôt. */
+const COPIE_RENDEMENT = 0.15;
 
 /* Inflation numérique : chaque nombre déjà possédé renchérit les suivants.
    Sans ça le revenu passif dépasse vite le coût des tirages et les jetons
@@ -17,7 +21,13 @@ const prixUnitaire = () => BASE_PULL + 2 * uniqueCount(state);
 const REMISES = [[100, 0.80], [50, 0.85], [25, 0.88], [10, 0.90]];
 const PAQUETS = [1, 10, 25, 50, 100];
 const remisePour = count => (REMISES.find(([n]) => count >= n) || [0, 1])[1];
-const pullCost = count => Math.round(prixUnitaire() * count * remisePour(count));
+
+/* La remise des théorèmes s'applique par-dessus celle du paquet. Bornée à
+   deux tiers : un prix qui tomberait à zéro ferait disparaître la seule
+   dépense du jeu. */
+const remiseTheoremes = () => Math.min(0.66, bonuses().pullDiscount);
+const pullCost = count =>
+  Math.round(prixUnitaire() * count * remisePour(count) * (1 - remiseTheoremes()));
 
 /* Combien de tirages le portefeuille permet, AU TARIF QUE LE JOUEUR VA PAYER.
    Compter au prix unitaire plein était faux dès qu'un paquet remisé était
@@ -216,7 +226,24 @@ function drawForgeable(key) {
 
 /* ---------- bonus des collections ---------- */
 function bonuses() {
-  const b = { coinMult: 0, dustMult: 0, forgeDiscount: 0, luck: 0, coinFlat: 0 };
+  /* Aucun bonus n'est un montant fixe.
+
+     Il y en avait trois — « +40 jetons/min », « +120 jetons/min » — et ils
+     étaient déséquilibrés des deux côtés à la fois : +120 sur un revenu
+     débutant de 50/min, c'est le multiplier par trois ; sur un revenu mûr de
+     7 000/min, c'est 1,7 %, soit une récompense qui insulte l'effort qu'elle
+     paie. Un bonus doit valoir la même chose à toute heure de la partie : il
+     est donc toujours proportionnel à quelque chose qui grandit avec le
+     joueur. */
+  const b = {
+    coinMult: 0,        // % du revenu passif
+    dustMult: 0,        // % de poussière à l'acquisition
+    forgeDiscount: 0,   // % sur les aides de la Forge
+    luck: 0,            // relance des tirages Communs
+    pullDiscount: 0,    // % sur le prix des tirages — suit l'inflation du vivier
+    copyBonus: 0,       // rendement de chaque exemplaire au-delà du premier
+    offlineHours: 0,    // heures d'accumulation hors ligne en plus
+  };
   for (const id of state.claimed) {
     const c = COLLECTIONS.find(x => x.id === id);
     if (c) b[c.bonus.type] += c.bonus.val;
@@ -238,19 +265,25 @@ function collectionProgress(c) {
    l'on invalide au moindre changement de collection ou de bonus. Le cache
    retient aussi l'objet `state` : le remplacer d'un bloc suffit à le périmer. */
 let _revenuCache = null, _revenuEtat = null;
-const invalideRevenu = () => { _revenuCache = null; _uniqCache = null; };
+const invalideRevenu = () => {
+  _revenuCache = null; _uniqCache = null;
+  /* Le gisement de chaque machine se compte sur la collection : il périme
+     exactement quand elle bouge. */
+  if (typeof invalideGisement === 'function') invalideGisement();
+};
 
 function coinsPerMinute() {
   if (_revenuCache !== null && _revenuEtat === state) return _revenuCache;
   const b = bonuses();
+  const parCopie = COPIE_RENDEMENT + b.copyBonus;
   let base = 0;
   for (const [k, v] of Object.entries(state.owned)) {
     const r = evaluate(+k).rarity;
     const copies = Math.min(v.copies, 25);
-    base += r.coin * (1 + 0.15 * (copies - 1));
+    base += r.coin * (1 + parCopie * (copies - 1));
   }
   _revenuEtat = state;
-  return _revenuCache = Math.floor((base + b.coinFlat) * (1 + b.coinMult));
+  return _revenuCache = Math.floor(base * (1 + b.coinMult));
 }
 
 function tick(now = Date.now()) {
@@ -259,12 +292,21 @@ function tick(now = Date.now()) {
   const minutes = elapsedMs / 60000;
   const gain = coinsPerMinute() * minutes;
   if (gain > 0) { state.coins += gain; state.stats.coinsEarned += gain; }
+
+  /* L'atelier tourne au même rythme que le revenu passif, plafond hors ligne
+     compris : une machine qui aurait travaillé trois jours sans témoin ne
+     voudrait rien dire de plus qu'une qui a travaillé huit heures. */
+  if (typeof poussiereParMinute === 'function') {
+    const p = poussiereParMinute() * minutes;
+    if (p > 0) { state.dust += p; state.stats.dustEarned += p; }
+  }
   return gain;
 }
 
 function catchUpOffline() {
   const now = Date.now();
-  const elapsed = Math.min(now - state.lastTick, OFFLINE_CAP_H * 3600 * 1000);
+  const plafond = (OFFLINE_CAP_H + bonuses().offlineHours) * 3600 * 1000;
+  const elapsed = Math.min(now - state.lastTick, plafond);
   const gain = Math.floor(coinsPerMinute() * (elapsed / 60000));
   state.lastTick = now;
   if (gain > 0) { state.coins += gain; state.stats.coinsEarned += gain; }

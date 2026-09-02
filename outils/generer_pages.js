@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RACINE = path.join(__dirname, '..');
-const V = 100;                                   // version des assets, cf. index.html
+const V = 147;                                   // version des assets, cf. index.html
 
 const source = ['js/numerology.js', 'js/data.js']
   .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8'))

@@ -77,8 +77,8 @@ const RETOUR = {
       </div>
       <p class="tiny retourNote">Votre pseudo est joint s'il en existe un, ainsi que la page
          d'où vous écrivez. Aucune adresse ni aucun contenu de votre partie n'est transmis.
-         Les retours retenus sont publiés sur le <b>mur des retours</b> ; les vôtres vous y
-         sont visibles dès l'envoi.</p>
+         Les retours retenus sont publiés dans <b>La Marge</b> ; les vôtres vous y sont
+         visibles dès l'envoi.</p>
     </form>`;
 
   const $$$ = sel => panneau.querySelector(sel);

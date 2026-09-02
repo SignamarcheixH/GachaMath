@@ -1,5 +1,11 @@
 /* ============================================================
-   LE MUR DES RETOURS
+   LA MARGE — LE MUR DES RETOURS DES JOUEURS
+
+   Le nom vient de la note marginale la plus célèbre de l'histoire des
+   mathématiques. Il évite surtout une collision : dans ce jeu, « le mur » est
+   déjà 10 000, et le mot revient partout — descriptions de théorèmes,
+   commentaires du code, écran de la Forge. Deux murs différents dans le même
+   univers, c'est une confusion à payer à chaque phrase écrite.
 
    Ce que les joueurs ont écrit, et ce que les autres en pensent. Une seule
    voix par retour et par joueur, et il n'existe pas de voix contre : « moi
@@ -75,7 +81,7 @@ function renderRetours() {
   if (_retours.erreur) {
     zone.innerHTML = `<div class="forgeAccueil">
       <div class="forgeAccueilArt">⌁</div><h3>Hors ligne</h3>
-      <p>Cette version du jeu tourne sans serveur : il n'y a pas de mur des retours.
+      <p>Cette version du jeu tourne sans serveur : il n'y a pas de Marge.
          Le bouton ✉️ reste utilisable dès que la connexion revient.</p></div>`;
     return;
   }

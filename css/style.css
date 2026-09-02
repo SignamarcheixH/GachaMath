@@ -409,19 +409,58 @@ select option { background: var(--bg2); }
   padding: 6px 13px; border-radius: 10px; font-size: 13px;
   border: 1px solid rgba(78,201,122,.35); background: rgba(78,201,122,.12); color: #7ee6a4;
 }
-.theoList { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
-.theo {
-  padding: 16px; border-radius: 16px;
-  border: 1px solid var(--line); background: var(--panel);
-  transition: border-color .15s;
+/* Une ligne par théorème, comme à l'Atelier. Vingt et une cartes en grille se
+   lisaient en deux dimensions ; empilées, les avancements s'alignent dans la
+   même colonne et se comparent d'un seul regard. */
+.theoList { display: flex; flex-direction: column; gap: 10px; }
+
+.theoLigne {
+  border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+  transition: border-color .15s, background .15s;
 }
-.theo.done { border-color: rgba(255,176,46,.5); background: linear-gradient(150deg, rgba(255,176,46,.12), rgba(255,255,255,.02)); }
-.theo.ready { border-color: var(--r-mythique); box-shadow: 0 0 0 1px var(--r-mythique), 0 8px 30px -18px var(--r-mythique); }
-.theoHead { display: flex; align-items: baseline; gap: 9px; margin-bottom: 4px; }
-.theoHead h3 { margin: 0; flex: 1; }
-.theoHead .cnt { font-family: var(--mono); font-size: 13px; color: var(--dim); }
-.theoBonus { font-size: 12.5px; color: #7ee6a4; margin: 8px 0; font-weight: 600; }
-.theoNums { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.theoLigne.done {
+  border-color: rgba(255,176,46,.5);
+  background: linear-gradient(150deg, rgba(255,176,46,.1), rgba(255,255,255,.02));
+}
+.theoLigne.ready {
+  border-color: var(--r-mythique);
+  box-shadow: 0 0 0 1px var(--r-mythique), 0 8px 30px -18px var(--r-mythique);
+}
+
+.theoCorps {
+  display: grid; align-items: center; gap: 14px;
+  grid-template-columns: 36px minmax(0, 1fr) 150px max-content;
+  padding: 13px 16px;
+}
+.theoEmoji { font-size: 26px; line-height: 1; }
+
+.theoIdent { min-width: 0; }
+.theoIdent h3 { margin: 0; font-size: 14.5px; font-weight: 600; }
+.theoDesc { margin: 2px 0 0; font-size: 11.5px; color: var(--dim); line-height: 1.35; }
+.theoBonus {
+  display: block; margin-top: 4px;
+  font-size: 12px; font-weight: 600; color: #7ee6a4;
+}
+
+/* L'avancement occupe une largeur fixe : c'est ce qui permet de comparer deux
+   lignes sans les lire — les barres sont dans le même axe. */
+.theoAvance { display: flex; flex-direction: column; gap: 4px; }
+.theoAvance b { font-family: var(--mono); font-size: 15px; line-height: 1; }
+.theoAvance b i { font-style: normal; font-size: 11px; color: var(--dim2); }
+.theoAvance span { font-size: 10px; color: var(--dim2); }
+.theoLigne.done .theoAvance b { color: var(--gold); }
+
+.theoAction { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.theoAction .btn { white-space: nowrap; }
+.theoFait { font-size: 12px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+.theoAttente { font-size: 11px; color: var(--dim2); white-space: nowrap; }
+
+/* Les nombres sur leur propre rangée : à vingt et un jetons, les faire tenir
+   dans la colonne du nom rétrécissait tout le reste. */
+.theoNums {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 0 16px 13px;
+}
 .theoNums span {
   font-family: var(--mono); font-size: 12px; font-weight: 700;
   padding: 3px 8px; border-radius: 7px; cursor: pointer;
@@ -429,6 +468,33 @@ select option { background: var(--bg2); }
 }
 .theoNums span.have { border-color: var(--rc); color: #fff; background: color-mix(in srgb, var(--rc) 22%, transparent); }
 .theoNums span.have:hover { background: color-mix(in srgb, var(--rc) 40%, transparent); }
+
+@media (max-width: 860px) {
+  /* L'avancement passe sous le nom. Les cases sont placées une par une : sans
+     ça, `.theoAvance` prenait toute la rangée et le placement automatique
+     renvoyait l'action sur une troisième rangée, dans la colonne de l'emoji. */
+  .theoCorps { grid-template-columns: 36px minmax(0, 1fr) max-content; }
+  .theoEmoji  { grid-row: 1; grid-column: 1; }
+  .theoIdent  { grid-row: 1; grid-column: 2; }
+  .theoAction { grid-row: 1; grid-column: 3; }
+  .theoAvance {
+    grid-row: 2; grid-column: 1 / -1;
+    flex-direction: row; align-items: center; gap: 10px;
+  }
+  .theoAvance .bar { flex: 1; }
+}
+@media (max-width: 560px) {
+  .theoCorps { grid-template-columns: 36px minmax(0, 1fr); gap: 10px; padding: 12px 13px; }
+  .theoEmoji  { grid-row: 1; grid-column: 1; }
+  .theoIdent  { grid-row: 1; grid-column: 2; }
+  .theoAvance { grid-row: 2; grid-column: 1 / -1; }
+  .theoAction {
+    grid-row: 3; grid-column: 1 / -1;
+    flex-direction: row; align-items: center; gap: 10px;
+  }
+  .theoAction .btn { flex: 1; }
+  .theoNums { padding: 0 13px 12px; }
+}
 
 /* ══════════ DÉFIS ══════════ */
 .defiList { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 11px; margin-bottom: 26px; }
@@ -1910,4 +1976,931 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
 @media (max-width: 560px) {
   .retCarte { gap: 10px; padding: 12px 12px; }
   .retVoix { width: 44px; }
+}
+
+/* ============================================================
+   LE HUB — LE PLAN DE LA CITÉ
+
+   Même montage que la carte de l'Expédition : un SVG pour le terrain, de vrais
+   boutons HTML par-dessus dans le même repère en pourcentages. Les bâtiments
+   restent donc du texte, focalisable au clavier.
+   ============================================================ */
+.villeCadre {
+  border: 1px solid var(--line); border-radius: 18px; padding: 10px;
+  background:
+    radial-gradient(90% 40% at 50% 0%, rgba(255,215,106,.07), transparent 60%),
+    radial-gradient(110% 70% at 50% 100%, rgba(124,92,255,.11), transparent 65%),
+    var(--panel);
+}
+/* Trois quarts de hauteur pour deux colonnes : c'est ce qui tient sur un
+   téléphone de 340 px sans rien cacher ni rien faire défiler. */
+/* Le plafond de hauteur passait avant le rapport de forme : il écrasait le plan
+   et tassait les rangs les uns sur les autres. C'est la hauteur qui commande. */
+.villePlan { position: relative; width: 100%; aspect-ratio: 4 / 5; min-height: 880px; }
+/* Le plan large : la ville entière tient sous les yeux, sans défiler. Le
+   plancher de hauteur évite qu'entre 900 et 1 000 px le plan se tasse au point
+   que les légendes se rejoignent. Les emprises y sont plus étroites : la rue
+   basse compte cinq bâtiments depuis que l'Atelier est arrivé. */
+.villePlan.large { aspect-ratio: 16 / 11; min-height: 660px; }
+.villePlan.large .villeLieu { width: 19%; max-width: 150px; }
+.villePlan.large .villeMur { top: 28%; }
+
+.villeRoutes { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Sans `non-scaling-stroke`, l'épaisseur du trait se déformerait avec le plan —
+   les rues seraient larges en bas et fines sur les côtés. */
+.villeRue {
+  fill: none; stroke: var(--line2); stroke-width: 7; stroke-linecap: round;
+  stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: .28;
+}
+.villeRiviere {
+  fill: none; stroke: #3d6ea8; stroke-width: 9; stroke-linecap: round;
+  vector-effect: non-scaling-stroke; opacity: .32;
+}
+/* La place, en HTML : ronde à toutes les formes de plan. */
+.villePlace {
+  position: absolute; transform: translate(-50%, -50%);
+  width: 96px; height: 96px; border-radius: 50%;
+  border: 1px dashed var(--line2); background: rgba(124,92,255,.06);
+  pointer-events: none;
+}
+.villePlace::after {
+  content: ''; position: absolute; inset: 44px; border-radius: 50%;
+  background: var(--line2); opacity: .7;
+}
+
+/* ---------- le rempart ---------- */
+.villeMur {
+  position: absolute; left: 0; right: 0; top: 22%; height: 14px;
+  transform: translateY(-50%);
+  background:
+    repeating-linear-gradient(90deg, var(--line2) 0 13px, transparent 13px 21px)
+      0 0 / auto 6px no-repeat,
+    linear-gradient(var(--line2), var(--line2)) 0 6px / 100% 3px no-repeat;
+  opacity: .8;
+}
+.villeMur span {
+  position: absolute; right: 6px; top: -7px; white-space: nowrap;
+  padding: 1px 8px; border-radius: 3px; background: #12131c;
+  font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--coin);
+}
+
+/* ---------- un bâtiment ---------- */
+/* Un lieu est un SYMBOLE LÉGENDÉ, pas une carte. Des cartes bordées alignées
+   donnaient un organigramme ; sur un plan, on dessine l'emprise du bâtiment et
+   on écrit son nom dessous. */
+.villeLieu {
+  position: absolute; transform: translate(-50%, -50%);
+  width: 30%; max-width: 178px; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-align: center; text-decoration: none; font: inherit; color: var(--txt);
+  border: 0; background: none; cursor: pointer;
+}
+.villeLieu:focus-visible { outline: none; }
+
+/* L'emprise : le carré du bâtiment sur le plan. */
+.villeIcone {
+  width: 56px; height: 56px; padding: 9px; box-sizing: border-box; flex: none;
+  fill: none; stroke: var(--dim); stroke-width: 1.4;
+  stroke-linejoin: round; stroke-linecap: round;
+  border: 1px solid var(--line2); border-radius: 13px;
+  background: rgba(16,18,29,.94);
+  transition: transform .13s, border-color .13s, background .13s,
+              box-shadow .13s, stroke .13s;
+}
+.villeLieu:hover .villeIcone {
+  transform: translateY(-3px) scale(1.06); stroke: #cbb6ff;
+  border-color: var(--accent); background: rgba(30,25,58,.96);
+  box-shadow: 0 12px 26px -12px var(--accent);
+}
+.villeLieu:focus-visible .villeIcone { outline: 2px solid var(--coin); outline-offset: 3px; }
+
+/* La légende se lit sur le plan : un fond mince l'empêche de se perdre dans
+   les rues qui passent dessous. */
+.villeNom {
+  font-size: 13px; font-weight: 600; line-height: 1.2;
+  padding: 1px 7px; border-radius: 6px; background: rgba(12,13,20,.82);
+}
+.villeDesc { font-size: 10.5px; color: var(--dim); line-height: 1.3; max-width: 160px; }
+.villeJauge {
+  font-family: var(--mono); font-size: 10px; color: var(--dim2);
+  padding: 0 5px; border-radius: 5px; background: rgba(12,13,20,.72);
+}
+
+/* ---------- les lieux qui ont leur vue ----------
+   Une vignette n'est pas un pictogramme : elle est large, elle a besoin de son
+   format. L'emprise devient donc un rectangle, et le nom se lit dessous comme
+   pour les autres — un plan reste un plan. */
+.villeLieu.vue { width: 44%; max-width: 210px; }
+.villePlan.large .villeLieu.vue { width: 22%; max-width: 190px; }
+.villeVue {
+  display: block; width: 100%; height: auto; aspect-ratio: 450 / 254;
+  object-fit: cover; border-radius: 12px;
+  border: 1px solid var(--line2); background: var(--bg2);
+  transition: transform .13s, border-color .13s, box-shadow .13s, filter .13s;
+  /* Assombrie au repos : la carte doit rester lisible, et c'est le survol qui
+     révèle le lieu. */
+  filter: saturate(.75) brightness(.72);
+}
+.villeLieu:hover .villeVue {
+  transform: translateY(-3px) scale(1.04); filter: none;
+  border-color: var(--accent); box-shadow: 0 12px 26px -12px var(--accent);
+}
+
+/* ---------- la vue s'ouvre au survol ----------
+    Sur le plan, une vignette fait 190 px : on distingue une forge d'un vivier,
+   pas ce qu'il y a dedans. Au survol elle s'ouvre en grand — les fichiers font
+   900 px de large, on reste donc en deçà, et l'image ouverte est nette.
+
+   Le point de fuite vient du plan (`--fuite`, posé par hub.js) : une vignette
+   de bord grandit vers l'intérieur de la ville, jamais par-dessus le cadre.
+   Réservé au vrai survol : au doigt, l'agrandissement resterait collé après le
+   tap, et le tap sert à entrer dans le lieu. */
+@media (hover: hover) and (pointer: fine) {
+  .villeLieu.vue { z-index: 1; }
+  .villeLieu.vue:hover, .villeLieu.vue:focus-visible { z-index: 5; }
+  .villeLieu.vue:hover .villeVue, .villeLieu.vue:focus-visible .villeVue {
+    transform: scale(2.6); transform-origin: var(--fuite, center) center;
+    filter: none; border-color: var(--accent);
+    box-shadow: 0 22px 50px -14px rgba(0,0,0,.85), 0 0 0 1px var(--accent);
+  }
+  .villeLieu.vue.porte:hover .villeVue, .villeLieu.vue.porte:focus-visible .villeVue {
+    border-color: var(--coin);
+    box-shadow: 0 22px 50px -14px rgba(0,0,0,.85), 0 0 0 1px var(--coin);
+  }
+  /* Le nom passe au-dessus de l'image ouverte : sans cela, la vignette d'à
+     côté recouvrait la légende du lieu qu'on est en train de regarder. */
+  .villeLieu.vue:hover .villeNom, .villeLieu.vue:focus-visible .villeNom {
+    position: relative; z-index: 1; background: rgba(12,13,20,.95);
+  }
+  /* Un lieu fermé ne s'ouvre pas : il n'y a rien à aller voir. */
+  .villeLieu.vue.ferme:hover .villeVue { transform: none; filter: saturate(0) brightness(.5); }
+}
+.villeLieu:focus-visible .villeVue { outline: 2px solid var(--coin); outline-offset: 3px; }
+.villeLieu.porte .villeVue { border-color: rgba(255,215,106,.55); }
+.villeLieu.porte:hover .villeVue {
+  border-color: var(--coin); box-shadow: 0 12px 26px -12px var(--coin);
+}
+.villeLieu.ferme .villeVue { filter: saturate(0) brightness(.5); }
+
+/* Les deux portes sont bâties SUR le rempart : elles s'en distinguent, et ce
+   sont les seuls bâtiments un peu plus grands que les autres. */
+.villeLieu.porte .villeIcone {
+  width: 66px; height: 66px; stroke: var(--coin);
+  border-color: rgba(255,215,106,.55);
+  background: linear-gradient(165deg, rgba(48,39,17,.97), rgba(16,18,29,.97));
+}
+.villeLieu.porte:hover .villeIcone {
+  border-color: var(--coin); box-shadow: 0 12px 26px -12px var(--coin); stroke: var(--coin);
+}
+.villeLieu.porte .villeJauge { color: var(--coin); }
+
+/* Au-delà du mur : rien n'est acquis, tout est à aller chercher. */
+.villeLieu.loin .villeIcone {
+  border-style: dashed; border-color: rgba(255,176,46,.42); stroke: var(--gold);
+  background: rgba(28,22,10,.9);
+}
+
+/* Prêt pour les Actes : un lieu pas encore ouvert reste visible, en sourdine,
+   pour qu'on sache qu'il existe et qu'il se mérite. */
+.villeLieu.ferme { opacity: .32; cursor: default; }
+.villeLieu.ferme:hover .villeIcone {
+  transform: none; border-color: var(--line2);
+  background: rgba(16,18,29,.94); box-shadow: none; stroke: var(--dim);
+}
+
+.villeLegende { margin: 10px 2px 0; color: var(--dim2); text-align: center; }
+
+@media (max-width: 560px) {
+  .villeCadre { padding: 6px; }
+  /* Sur un plan étroit, il n'y a plus un pouce de rempart libre : les deux
+     portes en occupent toute la largeur, et l'étiquette se faisait couper d'un
+     côté ou de l'autre. Elle disparaît, et la légende sous le plan porte le
+     chiffre à sa place — une étiquette tronquée est pire qu'aucune. */
+  .villeMur span { display: none; }
+  .villePlace { width: 74px; height: 74px; }
+  .villePlace::after { inset: 34px; }
+  .villePlan { aspect-ratio: 2 / 3; }
+  .villeLieu { width: 42%; }
+  .villeLieu.vue { width: 46%; }
+  .villeIcone { width: 44px; height: 44px; padding: 7px; }
+  .villeLieu.porte .villeIcone { width: 52px; height: 52px; }
+  .villeNom { font-size: 11.5px; }
+  /* La description saute : sur un téléphone, le nom et le compteur suffisent à
+     savoir où l'on met les pieds, et le reste encombrerait le plan. */
+  .villeDesc { display: none; }
+  .villeJauge { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .villeIcone, .villeLieu:hover .villeIcone { transition: none; transform: none; }
+  /* L'agrandissement reste — c'est ce qui donne à voir l'image — mais il est
+     instantané : c'est le glissement qui gêne, pas la taille. */
+  .villeVue { transition: none; }
+}
+
+/* ============================================================
+   L'ATELIER
+   ============================================================ */
+.atEntete {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  padding: 16px 18px; margin-bottom: 16px;
+  border: 1px solid var(--line); border-radius: 16px;
+  background:
+    radial-gradient(90% 120% at 0% 0%, rgba(124,92,255,.12), transparent 60%),
+    var(--panel);
+}
+.atSomme { display: flex; align-items: baseline; gap: 8px; }
+.atSomme span {
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim2);
+}
+.atSomme b {
+  font-family: var(--mono); font-size: 30px; color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+.atSomme i { font-style: normal; font-size: 13px; color: var(--dim); }
+.btn.atClic { flex: none; }
+.atNote { flex: 1 1 240px; margin: 0; color: var(--dim); line-height: 1.5; }
+
+/* ---------- une machine par ligne ----------
+   Dix instruments en cartes obligeaient à balayer une grille pour comparer
+   deux rendements. En lignes, les trois chiffres tombent dans la même colonne
+   d'une machine à l'autre, et la comparaison se fait à l'œil. */
+.atListe { display: flex; flex-direction: column; gap: 9px; }
+
+.atLigne {
+  border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+  transition: border-color .13s, background .13s;
+}
+.atLigne.batie { border-color: rgba(124,92,255,.42); background: rgba(124,92,255,.06); }
+.atLigne.enCours { border-color: var(--coin); background: rgba(255,215,106,.07); }
+
+.atCorps {
+  display: grid; align-items: center; gap: 14px;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  padding: 13px 16px;
+}
+.atEmoji { font-size: 26px; line-height: 1; }
+
+.atIdent { min-width: 0; }
+.atIdent h3 { margin: 0; font-size: 14.5px; font-weight: 600; }
+.atNiveau {
+  font-family: var(--mono); font-size: 10.5px; color: #cbb6ff; font-weight: 400;
+  padding: 1px 7px; border-radius: 99px; border: 1px solid rgba(124,92,255,.5);
+}
+.atEpoque { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); }
+.atDesc { margin: 3px 0 0; font-size: 12px; color: var(--dim); line-height: 1.4; }
+
+/* ---------- le calcul, écrit en clair ----------
+   « tant par nombre × tant de nombres = tant » : la formule est affichée telle
+   qu'elle est calculée, pour qu'on voie d'où vient le total et ce qui le fera
+   monter — un niveau de plus, ou un herbier plus fourni. */
+.atCalcul {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 12px; border-radius: 11px; background: rgba(0,0,0,.24);
+}
+.atFacteur { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
+.atFacteur b {
+  font-family: var(--mono); font-size: 15px; color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+.atFacteur i { font-style: normal; font-size: 9.5px; color: var(--dim2); white-space: nowrap; }
+.atFacteur.produit b { color: #cbb6ff; font-size: 17px; }
+.atLigne.aBatir .atFacteur.produit b { color: var(--dim); }
+.atFois { font-family: var(--mono); font-size: 13px; color: var(--dim2); }
+
+/* Le libellé ne se plie jamais : « Mettre en service » sur trois lignes rendait
+   la colonne illisible entre 560 et 860 px. */
+.atAction { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.atAction .btn { white-space: nowrap; }
+.atPrix { font-family: var(--mono); font-size: 11px; color: var(--dim2); text-align: center; }
+
+/* ⚠ AIDE DE TEST. Délibérément voyante : un outil de test discret finit en
+   production. Elle disparaît avec le drapeau ATELIER_TEST. */
+.atTest {
+  margin-top: 2px; padding: 2px 6px; border-radius: 6px; cursor: pointer;
+  border: 1px dashed #ff6b81; background: rgba(255,107,129,.12); color: #ff9aa8;
+  font-family: var(--mono); font-size: 9.5px;
+}
+.atTest:hover { background: rgba(255,107,129,.26); }
+/* Une porte se voit venir : le rang de la prochaine révision est annoncé dès
+   qu'on sort de la précédente. */
+.atProchain { color: rgba(255,215,106,.6); }
+.atPorte { color: var(--coin); font-weight: 400; }
+.btn.porte {
+  border-color: var(--coin); color: #2a1f06;
+  background: linear-gradient(160deg, #f2cd6b, #d9a441);
+}
+.btn.porte:hover:not(:disabled) { background: linear-gradient(160deg, #ffdd85, #e8b552); }
+
+/* ---------- la reproduction sur l'établi ---------- */
+.atEssai {
+  border-top: 1px dashed rgba(255,215,106,.35);
+  padding: 14px 16px 15px; display: flex; flex-direction: column; gap: 9px;
+}
+.atEssaiTete { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.atEssaiTitre { font-size: 12.5px; color: var(--coin); }
+.atEssaiRang { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.atEssaiAide { margin: 0; font-size: 12px; color: var(--dim); }
+.atEssaiCalcul {
+  font-family: var(--mono); font-size: clamp(20px, 4vw, 28px); color: var(--txt);
+  letter-spacing: .02em; padding: 6px 0;
+}
+.atEssaiEgal { color: var(--dim2); }
+.atEssaiNote { margin: 0; color: var(--dim2); }
+/* La saisie du Calcul rapide est centrée, parce que là-bas tout l'écran l'est.
+   Ici le panneau est aligné à gauche : la garder centrée la détachait du reste.
+   Elle se replie aussi — à 340 px, « Renoncer » sortait du cadre et se faisait
+   couper. */
+.atEssai .calcSaisie { justify-content: flex-start; flex-wrap: wrap; }
+.atEssai .calcSaisie input { flex: 1 1 120px; min-width: 0; }
+
+@media (max-width: 860px) {
+  /* Les trois chiffres passent sous le nom : à cette largeur, une ligne à
+     quatre colonnes coupait les libellés en deux.
+
+     Les cases sont placées une par une. Sans ça, `.atCalcul` prenait toute la
+     rangée et le placement automatique renvoyait le bouton sur une TROISIÈME
+     rangée, dans la colonne de l'emoji — trente-quatre pixels de large. */
+  /* Trente-six pixels, pas trente-quatre : certains emoji débordent de deux. */
+  .atCorps { grid-template-columns: 36px minmax(0, 1fr) max-content; }
+  .atEmoji  { grid-row: 1; grid-column: 1; }
+  .atIdent  { grid-row: 1; grid-column: 2; }
+  .atAction { grid-row: 1; grid-column: 3; }
+  .atCalcul { grid-row: 2; grid-column: 1 / -1; justify-content: space-between; }
+}
+@media (max-width: 560px) {
+  /* Un emoji ne tient pas toujours dans le carré qu'on lui donne : trente
+     pixels débordaient de six. */
+  .atCorps { grid-template-columns: 36px minmax(0, 1fr); gap: 10px; padding: 12px 13px; }
+  .atEmoji  { grid-row: 1; grid-column: 1; }
+  .atIdent  { grid-row: 1; grid-column: 2; }
+  .atCalcul { grid-row: 2; grid-column: 1 / -1; }
+  .atAction {
+    grid-row: 3; grid-column: 1 / -1;
+    flex-direction: row; align-items: center; gap: 10px;
+  }
+  .atAction .btn { flex: 1; }
+  /* « 0 traités · 90 000 existants » est le plus long libellé du lot : il
+     débordait de cinq pixels sur un écran de 375. */
+  .atCalcul { gap: 5px; padding: 7px 8px; }
+  .atFacteur b { font-size: 13.5px; }
+  .atFacteur i { font-size: 8.5px; }
+  .atEntete { padding: 13px 14px; gap: 12px; }
+  .atSomme b { font-size: 25px; }
+}
+
+/* ============================================================
+   LE SOROBAN
+
+   Les perles sont de vrais boutons : on les pousse au doigt comme à la souris,
+   et le clavier les atteint. Leur position est calculée en CSS à partir du
+   rang — active, une perle vient contre la barre ; au repos, elle retombe au
+   bout de sa tige.
+   ============================================================ */
+.abaque { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+.abCadre {
+  position: relative; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid rgba(255,215,106,.35);
+  background: linear-gradient(170deg, rgba(46,36,20,.85), rgba(16,18,29,.92));
+}
+.abTiges { display: flex; gap: 6px; }
+.abTige { display: flex; flex-direction: column; align-items: center; }
+
+/* La baguette de bois, derrière les perles. */
+.abBaguette {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
+  transform: translateX(-50%); border-radius: 2px;
+  background: rgba(255,215,106,.28);
+}
+.abCiel, .abTerre { position: relative; width: 46px; }
+.abCiel { height: 58px; }
+/* Quatre perles de 25 px dans une tige de 112 ne laissaient que dix pixels
+   entre « poussée » et « au repos » : on ne voyait pas la différence. La tige
+   s'allonge pour que le vide sous la barre se lise d'un coup d'œil. */
+.abTerre { height: 132px; }
+
+.abPerle {
+  position: absolute; left: 50%; width: 40px; height: 22px; padding: 0;
+  transform: translateX(-50%); border-radius: 50% / 60%;
+  border: 1px solid rgba(255,215,106,.45); cursor: pointer;
+  background: linear-gradient(165deg, #6b4a2a, #3a2716);
+  box-shadow: inset 0 1px 0 rgba(255,215,106,.35), 0 2px 5px rgba(0,0,0,.5);
+  transition: top .12s ease, background .12s, border-color .12s;
+}
+.abPerle:hover { border-color: var(--coin); }
+.abPerle:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.abPerle.active {
+  background: linear-gradient(165deg, #d9a441, #8a5f1d);
+  border-color: var(--coin);
+}
+
+/* Ciel : au repos en haut de la tige, active elle descend contre la barre. */
+.abCiel .abPerle { top: 2px; }
+.abCiel .abPerle.active { top: 32px; }
+
+/* Terre : les perles actives montent se coller à la barre, dans l'ordre ;
+   les autres restent en bas. Une perle isolée ne bouge jamais seule. */
+.abTerre .abPerle { top: calc(132px - (4 - var(--k)) * 25px); }
+.abTerre .abPerle.active { top: calc(var(--k) * 25px + 2px); }
+
+/* La barre. Elle sépare le ciel de la terre, et c'est elle qui décide de ce
+   qui compte. */
+.abBarre {
+  position: absolute; left: 8px; right: 8px; top: 70px; height: 7px;
+  border-radius: 3px; background: linear-gradient(#c9962f, #6d4d13);
+  box-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+.abRang {
+  margin-top: 5px; font-family: var(--mono); font-size: 9.5px; color: var(--dim2);
+}
+
+.abLecture { display: flex; align-items: baseline; gap: 9px; }
+.abLecture span {
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim2);
+}
+.abLecture b {
+  font-family: var(--mono); font-size: 26px; color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+/* Aucun indice : la lecture ne verdit qu'une fois le compte juste posé, et le
+   joueur l'apprend en validant, pas avant. */
+.abLecture b.juste { color: var(--txt); }
+
+@media (max-width: 560px) {
+  .abCadre { padding: 10px; }
+  .abTiges { gap: 3px; }
+  .abCiel, .abTerre { width: 40px; }
+  .abPerle { width: 34px; }
+  .abLecture b { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .abPerle { transition: none; } }
+
+/* ============================================================
+   LE QUIPU
+
+   Un cordon principal horizontal, et sous lui un rang par puissance de dix —
+   le plus haut d'abord, les unités en bas. Trois sortes de nœuds, et elles ne
+   sont pas décoratives : simples aux rangs supérieurs, long à tours pour les
+   unités, en huit pour un seul.
+   ============================================================ */
+.quipu { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+.quCadre {
+  padding: 0 16px 14px; border-radius: 14px;
+  border: 1px solid rgba(255,215,106,.3);
+  background: linear-gradient(170deg, rgba(42,34,24,.85), rgba(16,18,29,.92));
+}
+/* Le cordon principal, dont tout le reste pend. */
+.quPrincipal {
+  height: 9px; margin: 0 -6px 4px; border-radius: 5px;
+  background: linear-gradient(#b98a4e, #6d4d28);
+  box-shadow: 0 2px 5px rgba(0,0,0,.5);
+}
+.quRangs { display: flex; flex-direction: column; }
+
+.quRang { display: grid; grid-template-columns: 54px 46px 22px; align-items: start; gap: 10px; }
+.quPoids {
+  font-family: var(--mono); font-size: 10px; color: var(--dim2);
+  text-align: right; padding-top: 8px;
+}
+.quChiffre {
+  font-family: var(--mono); font-size: 15px; color: var(--txt); padding-top: 5px;
+}
+
+/* Le cordon d'un rang : une hauteur fixe, les nœuds posés dessus. */
+.quCordon { position: relative; height: 108px; width: 46px; }
+.quFil {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
+  transform: translateX(-50%); border-radius: 2px;
+  background: linear-gradient(rgba(185,138,78,.75), rgba(109,77,40,.55));
+}
+
+/* ---------- les nœuds ---------- */
+.quNoeud {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: 26px; height: 13px; padding: 0; border-radius: 50% / 60%;
+  border: 1px solid rgba(255,215,106,.5); cursor: pointer;
+  background: linear-gradient(165deg, #c68f45, #7d5622);
+  box-shadow: 0 1px 3px rgba(0,0,0,.5);
+  transition: transform .1s, border-color .1s;
+}
+.quNoeud:hover { transform: translateX(-50%) scale(1.15); border-color: var(--coin); }
+.quNoeud:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+
+/* Le nœud long des unités : plus large et strié, on en compte les tours. */
+.quNoeud.long {
+  width: 32px; height: 15px; border-radius: 7px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 2px, transparent 2px 6px),
+    linear-gradient(165deg, #d0a052, #7d5622);
+}
+/* Un seul tour ne tiendrait pas : c'est un nœud en huit. */
+.quNoeud.huit {
+  width: 30px; height: 18px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 28%, transparent 3.5px, #c68f45 4px, #7d5622 100%),
+    radial-gradient(circle at 50% 72%, transparent 3.5px, #c68f45 4px, #7d5622 100%);
+}
+
+/* Nouer : la place libre sous le dernier nœud. Le zéro s'y écrit, parce qu'un
+   rang sans nœud vaut zéro — et que c'est la seule façon de l'écrire sur une
+   corde. */
+.quNouer {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: 40px; bottom: 0; padding: 0;
+  border: 1px dashed transparent; border-radius: 9px; cursor: pointer;
+  background: none; color: var(--dim2);
+  font-family: var(--mono); font-size: 13px; line-height: 1;
+}
+.quNouer:hover { border-color: rgba(255,215,106,.45); background: rgba(255,215,106,.07); }
+.quNouer:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+
+@media (max-width: 560px) {
+  .quCadre { padding: 0 10px 12px; }
+  .quRang { grid-template-columns: 46px 40px 20px; gap: 7px; }
+  .quCordon { height: 96px; width: 40px; }
+  .quPoids { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { .quNoeud { transition: none; } }
+
+/* ============================================================
+   LE CRIBLE
+
+   Une table de nombres, et le tamis qu'on y passe. Trois états seulement :
+   intact, couronné, barré — et c'est tout ce que l'algorithme connaît.
+   ============================================================ */
+.crible { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+.crTable {
+  display: grid; grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px; width: 100%; max-width: 420px;
+  padding: 10px; border-radius: 14px;
+  border: 1px solid rgba(124,92,255,.3);
+  background: linear-gradient(170deg, rgba(24,22,44,.85), rgba(16,18,29,.92));
+}
+
+.crCase {
+  aspect-ratio: 1; padding: 0; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--line2); background: var(--panel2); color: var(--txt);
+  font-family: var(--mono); font-size: 11.5px; line-height: 1;
+  transition: transform .1s, border-color .1s, background .1s;
+}
+.crCase:hover:not(:disabled) {
+  transform: scale(1.12); border-color: var(--accent); background: rgba(124,92,255,.2);
+}
+.crCase:focus-visible { outline: 2px solid var(--coin); outline-offset: 1px; }
+
+/* Le tamis de la passe : c'est lui qui travaille, il ne tombe pas. */
+.crCase.tamis {
+  border-color: var(--coin); color: var(--coin); font-weight: 700;
+  background: rgba(255,215,106,.2); cursor: default;
+  box-shadow: 0 0 0 2px rgba(255,215,106,.18);
+}
+/* Emporté par une passe précédente : il n'est plus en jeu. */
+.crCase.barre {
+  border-color: transparent; background: transparent;
+  color: var(--dim2); text-decoration: line-through; cursor: default; opacity: .38;
+}
+/* Barré par le joueur — et rattrapable d'un second clic. */
+.crCase.raye {
+  border-color: #ff6b81; color: #ff9aa8; background: rgba(255,107,129,.16);
+  text-decoration: line-through;
+}
+.crCase.raye:hover { background: rgba(255,107,129,.28); transform: none; }
+
+.crAppoint { font-size: 11px; color: var(--dim2); letter-spacing: 0; text-transform: none; }
+
+@media (max-width: 560px) {
+  .crTable { gap: 2px; padding: 7px; }
+  .crCase { font-size: 10px; border-radius: 5px; }
+}
+@media (prefers-reduced-motion: reduce) { .crCase { transition: none; } }
+
+/* ============================================================
+   LES BÂTONS DE NAPIER
+
+   Neuf rangées gravées, une diagonale par case, et les gouttières où l'on
+   inscrit la somme. La diagonale n'est pas un ornement : c'est elle qui dit
+   quelles demi-cases s'additionnent.
+   ============================================================ */
+/* Une seule mesure commande tout : largeur de case, espacement, colonne des
+   rangs. Les gouttières s'en déduisent — sans ça elles ne tombaient pas sous
+   les diagonales qu'elles somment, et le décalage changeait avec l'écran. */
+.napier {
+  --npCase: 40px; --npEcart: 3px; --npRang: 16px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+}
+
+.npCadre {
+  padding: 10px 12px 12px; border-radius: 14px;
+  border: 1px solid rgba(185,138,78,.4);
+  background: linear-gradient(170deg, rgba(48,38,26,.9), rgba(16,18,29,.92));
+}
+
+/* La tête de chaque réglette : le chiffre qu'elle porte. */
+.npTetes, .npRangee { display: flex; gap: var(--npEcart); align-items: center; }
+.npTetes { margin-bottom: 5px; }
+.npRang {
+  width: var(--npRang); text-align: right; flex: none;
+  font-family: var(--mono); font-size: 10px; color: var(--dim2);
+}
+.npTete {
+  width: var(--npCase); height: 26px; display: grid; place-items: center; flex: none;
+  border-radius: 6px 6px 3px 3px; background: linear-gradient(#b98a4e, #7d5622);
+  color: #2a1c08; font-family: var(--mono); font-size: 15px; font-weight: 700;
+}
+
+.npCorps { display: flex; flex-direction: column; gap: 2px; }
+.npRangee { opacity: .3; transition: opacity .13s; }
+/* La rangée du multiplicateur : c'est elle qu'on lit, les autres attendent. */
+.npRangee.lue { opacity: 1; }
+.npRangee.lue .npRang { color: var(--coin); font-weight: 700; }
+
+/* Une case, coupée par sa diagonale : dizaines en haut à gauche, unités en bas
+   à droite. Le trait est tracé au dégradé, pas dessiné — il suit la case quelle
+   que soit sa taille. */
+.npCase {
+  position: relative; width: var(--npCase); height: 30px; flex: none;
+  border: 1px solid rgba(185,138,78,.35); border-radius: 4px;
+  background:
+    linear-gradient(to top right,
+      transparent calc(50% - .6px), rgba(185,138,78,.55) calc(50% - .6px),
+      rgba(185,138,78,.55) calc(50% + .6px), transparent calc(50% + .6px)),
+    rgba(255,255,255,.03);
+  font-family: var(--mono); font-size: 11px; line-height: 1;
+}
+.npCase i { position: absolute; font-style: normal; }
+.npDix { top: 3px; left: 4px; color: var(--dim); }
+.npUn  { bottom: 3px; right: 4px; color: var(--txt); }
+.npRangee.lue .npDix { color: #e0b46a; }
+.npRangee.lue .npUn  { color: var(--txt); font-weight: 700; }
+
+/* ---------- les gouttières ----------
+   Une de plus que de réglettes, et décalées d'une demi-case : chacune tombe
+   sous la diagonale qu'elle additionne. */
+.npLecture { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+.npEtiquette {
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim2);
+}
+/* Chaque gouttière tombe sous la diagonale qu'elle somme : la rangée est donc
+   décalée d'une demi-case vers la gauche, après la colonne des rangs. */
+.npGouts {
+  display: flex; gap: var(--npEcart);
+  margin-left: calc(var(--npRang) + var(--npEcart) - (var(--npCase) + var(--npEcart)) / 2);
+}
+.npGout {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: var(--npCase); padding: 4px 0; border-radius: 8px;
+  border: 1px dashed rgba(185,138,78,.4); background: rgba(255,255,255,.03);
+}
+.npGout b {
+  font-family: var(--mono); font-size: 19px; color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+.npPas {
+  width: 26px; height: 15px; padding: 0; border: 0; border-radius: 4px;
+  background: rgba(255,255,255,.06); color: var(--dim); cursor: pointer;
+  font-size: 9px; line-height: 1; transition: background .1s, color .1s;
+}
+.npPas:hover { background: rgba(185,138,78,.35); color: var(--txt); }
+.npPas:focus-visible { outline: 2px solid var(--coin); outline-offset: 1px; }
+
+@media (max-width: 560px) {
+  .napier { --npCase: 32px; --npRang: 12px; }
+  .npCadre { padding: 8px; }
+  .npTete { height: 22px; font-size: 13px; }
+  .npCase { height: 25px; font-size: 10px; }
+  .npGout b { font-size: 16px; }
+  .npPas { width: 22px; }
+  .npRang { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { .npRangee, .npPas { transition: none; } }
+
+/* ============================================================
+   LA RÈGLE À CALCUL
+
+   Deux échelles logarithmiques, dont l'une coulisse dans une fente. Le trait
+   du curseur traverse les deux : c'est lui qui met une valeur de C en face
+   d'une valeur de D.
+   ============================================================ */
+.regle { display: flex; flex-direction: column; align-items: stretch; gap: 12px; width: 100%; max-width: 640px; }
+
+.rgCadre {
+  position: relative; padding: 8px 10px; border-radius: 12px;
+  border: 1px solid rgba(185,138,78,.4);
+  background: linear-gradient(170deg, rgba(52,42,28,.92), rgba(28,24,18,.95));
+  /* La fente coupe le coulisseau : quand le produit dépasserait dix, le nombre
+     cherché sort de la règle. C'est la limite de l'instrument, pas de l'écran. */
+  overflow: hidden;
+}
+
+.rgEchelle {
+  position: relative; display: block; width: 100%; height: 40px; padding: 0;
+  border: 0; border-radius: 5px; cursor: crosshair;
+  background: linear-gradient(#efe0c2, #d8c39a);
+}
+.rgEchelle.fixe { margin-bottom: 3px; }
+.rgFente {
+  position: relative; height: 40px; overflow: hidden; border-radius: 5px;
+  background: rgba(0,0,0,.35);
+}
+.rgEchelle.mobile {
+  position: absolute; top: 0;
+  background: linear-gradient(#f6ecd6, #e2d0ac);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.3);
+}
+
+.rgNom {
+  position: absolute; left: 4px; top: 3px;
+  font-family: var(--mono); font-size: 10px; font-weight: 700; color: #6b4a24;
+}
+/* Les graduations. Les entiers descendent plus bas et portent leur chiffre. */
+.rgTrait {
+  position: absolute; top: 0; width: 1px; height: 9px;
+  background: rgba(70,48,20,.55); transform: translateX(-.5px);
+}
+.rgTrait.majeur { height: 17px; width: 1.5px; background: #4a3010; }
+.rgChiffre {
+  position: absolute; bottom: 3px; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 10.5px; color: #4a3010;
+}
+/* Aux deux bouts de l'échelle, un chiffre centré déborde de sa moitié. */
+.rgChiffre.debut { transform: translateX(1px); }
+.rgChiffre.fin { transform: translateX(-100%) translateX(-1px); }
+
+/* Le curseur : un trait fin qui traverse les deux échelles. */
+.rgCurseur {
+  position: absolute; top: 4px; bottom: 4px; width: 0;
+  border-left: 1.5px solid #d02a45;
+  box-shadow: 0 0 0 6px rgba(208,42,69,.1);
+  pointer-events: none;
+}
+.rgCurseur::after {
+  content: ''; position: absolute; left: -7px; top: 0; bottom: 0; width: 14px;
+  border: 1px solid rgba(208,42,69,.5); border-radius: 3px;
+  background: rgba(255,255,255,.06);
+}
+
+/* ---------- les réglages ---------- */
+.rgLecture { display: flex; flex-wrap: wrap; gap: 8px; }
+.rgChamp {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 10px;
+  border: 1px solid var(--line2); background: rgba(0,0,0,.24);
+}
+.rgChamp i {
+  font-style: normal; font-size: 9.5px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--dim2);
+}
+.rgChamp b {
+  font-family: var(--mono); font-size: 16px; color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+.rgChamp b sup { font-size: 10px; }
+/* Ce que la règle affiche : la seule valeur qu'elle connaisse vraiment. */
+.rgChamp.lu { border-color: rgba(185,138,78,.5); background: rgba(185,138,78,.12); }
+.rgChamp.lu b { color: #e0b46a; }
+.rgFin { display: flex; gap: 3px; }
+.rgPas {
+  width: 22px; height: 20px; padding: 0; border: 0; border-radius: 5px;
+  background: rgba(255,255,255,.07); color: var(--dim); cursor: pointer;
+  font-size: 9px; line-height: 1; transition: background .1s, color .1s;
+}
+.rgPas:hover { background: rgba(185,138,78,.35); color: var(--txt); }
+.rgPas:focus-visible { outline: 2px solid var(--coin); outline-offset: 1px; }
+
+@media (max-width: 560px) {
+  .rgEchelle, .rgFente { height: 34px; }
+  .rgChiffre { font-size: 9px; }
+  .rgChamp { padding: 5px 8px; gap: 6px; }
+  .rgChamp b { font-size: 14px; }
+  .rgChamp i { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { .rgPas { transition: none; } }
+
+/* ============================================================
+   LA PASCALINE
+
+   Les lucarnes au-dessus, les roues en dessous, et entre les deux les
+   sautoirs — le seul élément qui compte vraiment, puisque c'est lui que
+   Pascal a mis des années à faire marcher.
+   ============================================================ */
+.pascaline { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+
+/* Neuf rangs sur un téléphone tiennent tout juste : le défilement horizontal
+   est là comme filet, jamais comme mode de lecture normal. */
+.pcCadre {
+  max-width: 100%; overflow-x: auto;
+  padding: 12px 14px; border-radius: 14px;
+  border: 1px solid rgba(185,138,78,.4);
+  background: linear-gradient(170deg, rgba(56,44,30,.92), rgba(24,20,16,.95));
+}
+.pcRangs { display: flex; gap: 6px; }
+.pcRang { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+/* Le poids du rang, en puissance de dix : « 10 000 000 » écrit en toutes
+   lettres élargissait sa colonne et faisait déborder tout le cadre. */
+.pcPoids { font-family: var(--mono); font-size: 9px; color: var(--dim2); line-height: 1; }
+.pcPoids sup { font-size: 7.5px; }
+
+/* La lucarne : le tambour vu par la fenêtre. */
+.pcLucarne {
+  width: 40px; height: 42px; display: grid; place-items: center;
+  border-radius: 5px; border: 1px solid rgba(0,0,0,.55);
+  background: linear-gradient(#20242f, #12151d);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.7);
+  font-family: var(--mono); font-size: 24px; color: #f0d9a0;
+}
+
+/* Le sautoir. Au repos, un point discret ; armé, un poids qui demande à
+   tomber — et qu'il faut faire tomber soi-même. */
+.pcSautoir {
+  width: 40px; height: 22px; padding: 0; border-radius: 5px; cursor: default;
+  border: 1px dashed rgba(185,138,78,.28); background: transparent;
+  color: var(--dim2); font-size: 12px; line-height: 1; transition: .12s;
+}
+.pcSautoir.arme {
+  cursor: pointer; border-style: solid; border-color: var(--coin);
+  background: rgba(255,215,106,.2); color: var(--coin); font-size: 15px;
+  box-shadow: 0 0 12px -2px rgba(255,215,106,.5);
+}
+.pcSautoir.arme:hover { background: rgba(255,215,106,.36); }
+.pcSautoir:disabled { cursor: default; }
+.pcSautoir:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+
+/* La roue d'entrée, où l'on pose le stylet. */
+.pcRoue {
+  width: 40px; height: 40px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 2px solid rgba(185,138,78,.5);
+  background: radial-gradient(circle at 50% 35%, #6b4a2a, #38260f);
+  color: #e5c68a; font-size: 15px; line-height: 1; transition: .12s;
+}
+.pcRoue:hover { border-color: var(--coin); }
+.pcRoue:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.pcRang.choisie .pcRoue {
+  border-color: var(--coin); background: radial-gradient(circle at 50% 35%, #9c7031, #533a16);
+}
+.pcMoyeu { pointer-events: none; }
+
+/* Le clavier des trous, sous la roue choisie. Dix trous par rang tiendraient
+   sur un bureau, pas sur un téléphone : un seul rang à la fois. */
+.pcClavier { display: flex; flex-direction: column; gap: 6px; }
+.pcConsigne { font-size: 11.5px; color: var(--dim); }
+.pcTrous { display: flex; flex-wrap: wrap; gap: 5px; }
+.pcTrou {
+  width: 34px; height: 34px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 1px solid rgba(185,138,78,.45); background: rgba(255,255,255,.05);
+  color: var(--txt); font-family: var(--mono); font-size: 14px;
+  transition: background .1s, border-color .1s;
+}
+.pcTrou:hover { background: rgba(185,138,78,.3); border-color: var(--coin); }
+.pcTrou:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+
+.pcAlerte {
+  font-size: 11px; color: #ff9aa8; letter-spacing: 0; text-transform: none;
+}
+
+/* Neuf rangs — le palier le plus haut — doivent tenir sur un écran de 375 px
+   sans que le cadre ait à défiler : 9 × 30 + 8 × 3 + 18 de marge intérieure. */
+@media (max-width: 560px) {
+  .pcCadre { padding: 9px; }
+  .pcRangs { gap: 3px; }
+  .pcLucarne { width: 30px; height: 36px; font-size: 19px; }
+  .pcSautoir, .pcRoue { width: 30px; }
+  .pcRoue { height: 30px; font-size: 12px; }
+  .pcTrou { width: 30px; height: 30px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .pcSautoir, .pcRoue, .pcTrou { transition: none; } }
+
+/* ============================================================
+   LA VUE DU LIEU EN TÊTE D'ONGLET
+
+   Un bandeau, pas une affiche : il annonce le lieu et rend la main. La hauteur
+   est plafonnée pour que le jeu reste au-dessus de la ligne de flottaison —
+   sinon l'annonce posée plus bas remonterait d'autant, ce qui revient à la
+   rapprocher des commandes. Voir poserBannieresDeLieu() dans js/hub.js.
+   ============================================================ */
+.lieuBanniere { margin: 0 0 20px; }
+.lieuBanniere:empty { display: none; }   /* image absente : pas de trou */
+
+.lieuVue {
+  /* Centrée sur la page, et JAMAIS plus large que le fichier. Les vues font
+     900 pixels de large ; le bandeau s'arrête à 720, ce qui laisse le jeu
+     au-dessus de la ligne de flottaison et garde une marge de définition : on
+     réduit toujours, et réduire n'abîme rien. Un agrandissement, si. */
+  display: block; margin: 0 auto;
+  /* Deux plafonds, et l'image se range dans les deux sans être recadrée : la
+     largeur pour la mise en page, la hauteur pour que le jeu reste au-dessus
+     de la ligne de flottaison. Sur l'onglet du tirage, un bandeau de 400 px
+     poussait la machine et ses boutons hors de l'écran d'accueil. */
+  width: auto; height: auto;
+  max-width: min(100%, 720px); max-height: 300px;
+  border-radius: 14px; border: 1px solid var(--line);
+  /* Un peu retenue : c'est une vue d'ouverture, pas le sujet de la page. */
+  filter: saturate(.9) brightness(.9);
+}
+
+@media (max-width: 560px) {
+  .lieuBanniere { margin-bottom: 16px; }
+  .lieuVue { border-radius: 12px; }
 }
