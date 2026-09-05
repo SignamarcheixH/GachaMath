@@ -31,8 +31,12 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 
+/* Le fond de base est peint sur la racine, pas sur le corps : la vue du lieu
+   se glisse ENTRE les deux, et un corps opaque l'aurait masquée. */
+html { background: var(--bg); }
+
 body {
-  background: var(--bg);
+  background: transparent;
   color: var(--txt);
   font-family: var(--sans);
   font-size: 15px;
@@ -517,17 +521,6 @@ select option { background: var(--bg2); }
 .statsPanel small { color: var(--dim2); font-size: 12px; }
 .dangerZone { text-align: center; padding-top: 10px; border-top: 1px solid var(--line); }
 
-/* ══════════ ORACLE ══════════ */
-.oracleBar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
-.oracleBar input { font-size: 22px; width: 220px; text-align: center; }
-.oracleCard {
-  padding: 22px; border-radius: 18px; margin-bottom: 26px;
-  border: 1px solid var(--rc); background: linear-gradient(150deg, color-mix(in srgb, var(--rc) 14%, transparent), rgba(255,255,255,.02));
-}
-.oracleTop { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
-.oracleTop .n { font-family: var(--mono); font-size: clamp(38px, 8vw, 60px); font-weight: 700; line-height: 1; }
-.oracleTop .rr { color: var(--rc); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; }
-.oracleMeta { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-bottom: 16px; }
 .traitList { display: flex; flex-direction: column; gap: 7px; }
 .traitRow {
   display: flex; gap: 11px; align-items: flex-start;
@@ -556,8 +549,6 @@ select option { background: var(--bg2); }
 .traitRow .pts.zero { color: var(--dim2); }
 .traitRow.culte { border-color: rgba(255,176,46,.45); background: rgba(255,176,46,.09); }
 
-.codex { margin-top: 30px; }
-.codexList { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; margin-top: 12px; }
 
 /* ══════════ RÉVÉLATION ══════════ */
 .reveal {
@@ -574,7 +565,12 @@ select option { background: var(--bg2); }
 .revealFoot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; }
 .revealFoot span { font-family: var(--mono); font-size: 13px; color: var(--dim); }
 
-.rcard { perspective: 900px; }
+/* `position: relative` pour que les anneaux d'irradiation se placent sur la
+   carte. Ils vivent sur ::before et ::after de .rcard, PAS sur .face : la face
+   est retournée en 3D et masquée de dos, un halo posé dessus disparaîtrait
+   pendant la première moitié du retournement, c'est-à-dire au moment précis où
+   l'on veut qu'il se voie. */
+.rcard { perspective: 900px; position: relative; }
 .rcard .inner {
   position: relative; width: 100%; aspect-ratio: 3/4;
   transform-style: preserve-3d; transform: rotateY(180deg);
@@ -606,24 +602,18 @@ select option { background: var(--bg2); }
   padding: 2px 7px; border-radius: 99px; background: var(--r-peucommun); color: #04210f;
 }
 .rcard .face .dup { position: absolute; top: 7px; right: 7px; font-family: var(--mono); font-size: 10px; color: var(--dustc); }
+/* Le halo s'installe au lieu de détoner. L'ancienne version projetait un
+   anneau de 26 px en 0,4 s : ça claquait, et ça ne laissait rien derrière. */
+.rcard.flip[data-r="epique"] .face,
 .rcard.flip[data-r="legendaire"] .face,
-.rcard.flip[data-r="mythique"] .face { animation: burst .7s ease-out; }
+.rcard.flip[data-r="mythique"] .face { animation: burst 1.1s ease-out both; }
 @keyframes burst {
-  0%   { box-shadow: 0 0 0 0 var(--rc); }
-  60%  { box-shadow: 0 0 0 26px transparent; }
+  0%   { box-shadow: 0 0 0 0 transparent; }
   100% { box-shadow: 0 0 34px -12px var(--rc), inset 0 0 40px -22px var(--rc); }
 }
 
-/* ══════════ MODALE ══════════ */
-.modal { position: fixed; inset: 0; z-index: 120; display: none; place-items: center; padding: 20px; background: rgba(6,7,12,.8); backdrop-filter: blur(6px); }
-.modal.on { display: grid; }
-.modalBox {
-  width: min(560px, 100%); max-height: 86vh; overflow-y: auto;
-  padding: 24px; border-radius: 20px;
-  border: 1px solid var(--rc, var(--line));
-  background: linear-gradient(160deg, color-mix(in srgb, var(--rc) 12%, #0e1019), #0b0d15);
-}
-.modalClose { float: right; }
+/* La modale du nombre : sa coque est décrite avec toutes les autres, tout en
+   bas de cette feuille — voir « LES MODALES ». */
 
 /* ══════════ TOASTS ══════════ */
 #toasts { position: fixed; right: 16px; bottom: 88px; z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
@@ -948,9 +938,19 @@ select option { background: var(--bg2); }
 .revealGrid.dense {
   grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
   gap: 6px; width: min(1100px, 94vw);
-  max-height: 62vh; overflow-y: auto; padding: 4px;
+  max-height: 62vh; padding: 4px;
+  /* Les rayons débordent des cartes du bord et ajoutaient une barre de
+     défilement latérale. On coupe donc l'axe horizontal et on laisse le
+     vertical défiler. (Le moteur résout ce `clip` en `hidden` quand l'autre
+     axe est `auto` — vérifié : la grille n'est pas défilable en x, ni à la
+     souris ni par `scrollLeft`.) */
+  overflow-x: clip; overflow-y: auto;
 }
-.revealGrid.dense .rcard .inner { aspect-ratio: 1; transition: none; }
+/* La transition RESTE, même sur cent cartes : c'est elle qui fait la
+   révélation. Elle était coupée ici, si bien que la cascade n'aurait rien
+   animé du tout. Comme les cartes se retournent l'une après l'autre, il n'y
+   en a qu'une poignée en mouvement à un instant donné. */
+.revealGrid.dense .rcard .inner { aspect-ratio: 1; }
 .revealGrid.dense .rcard .face { gap: 1px; padding: 4px; }
 .revealGrid.dense .rcard .face .n { font-size: 15px; }
 .revealGrid.dense .rcard .face .rr,
@@ -999,6 +999,13 @@ select option { background: var(--bg2); }
 .nForm { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .nForm input { flex: 1; min-width: 180px; font-size: 15px; }
 .nBtns { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 10px; }
+/* Le détail chiffré d'une décision : ce qu'on va perdre, en clair. Une modale
+   qui propose d'effacer doit dire quoi. */
+.nDetail {
+  margin: 0; padding: 10px 13px; border-radius: 10px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.28);
+  font-size: 12.5px; color: var(--dim);
+}
 .nChoix { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
 .nChoix .btn { flex: 1; min-width: 200px; flex-direction: column; gap: 3px; padding: 16px; }
 .nChoix .btn small { font-weight: 400; opacity: .85; font-size: 12px; }
@@ -1244,6 +1251,53 @@ table.cook td { color: var(--dim); }
 .chapo { font-size: 15.5px; color: var(--dim); margin-bottom: 26px; }
 .retour { margin-top: 40px; }
 .docListe { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 30px; }
+
+/* ---------- le Codex : une ligne par trait, dépliable ----------
+   Ce qui reste visible replié est ce qu'on vient chercher — le nom, l'effectif,
+   les points. La définition se déplie. Soixante-cinq définitions à plat
+   faisaient une page qu'on ne parcourait pas, on la subissait. */
+.docListe { gap: 5px; }
+details.docTrait { padding: 0; overflow: hidden; }
+details.docTrait > summary {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 10px 14px; cursor: pointer; list-style: none;
+  transition: background .12s;
+}
+details.docTrait > summary::-webkit-details-marker { display: none; }
+details.docTrait > summary:hover { background: rgba(255,255,255,.03); }
+details.docTrait > summary:focus-visible { outline: 2px solid var(--coin); outline-offset: -2px; }
+/* Le chevron dit qu'il y a quelque chose dessous, et de quel côté ça s'ouvre. */
+details.docTrait > summary::after {
+  content: '⌄'; margin-left: 2px; flex: none;
+  font-size: 13px; color: var(--dim2); transition: transform .15s;
+}
+details.docTrait[open] > summary::after { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { details.docTrait > summary::after { transition: none; } }
+
+.docEmoji { font-size: 16px; line-height: 1; flex: none; }
+.docNom { font-size: 14.5px; font-weight: 600; flex: 1; min-width: 0; }
+
+/* L'effectif : le compte en évidence, la part en second. C'est la définition
+   la plus courte qu'on puisse donner d'une rareté. */
+.docCompte {
+  display: inline-flex; align-items: baseline; gap: 6px; flex: none;
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+}
+.docCompte b { font-size: 13px; color: var(--txt); }
+.docCompte i { font-style: normal; font-size: 10.5px; color: var(--dim2); }
+
+details.docTrait .docCorps { padding: 0 14px 12px 40px; }
+details.docTrait .docCorps p { margin: 0 0 6px; font-size: 14px; }
+details.docTrait .docCorps p:last-child { margin-bottom: 0; }
+
+@media (max-width: 560px) {
+  details.docTrait > summary { flex-wrap: wrap; gap: 7px; padding: 9px 11px; }
+  /* Le nom prend toute la première ligne, le compte et les points passent
+     dessous : à 375 px, les quatre colonnes se coupaient au milieu d'un mot. */
+  .docNom { flex-basis: calc(100% - 40px); }
+  .docCompte { margin-left: 26px; }
+  details.docTrait .docCorps { padding: 0 11px 11px 26px; }
+}
 .docTrait, .docNombre, .docTheo {
   padding: 15px 18px; border-radius: 14px;
   border: 1px solid var(--line); background: var(--panel);
@@ -1996,53 +2050,19 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
    téléphone de 340 px sans rien cacher ni rien faire défiler. */
 /* Le plafond de hauteur passait avant le rapport de forme : il écrasait le plan
    et tassait les rangs les uns sur les autres. C'est la hauteur qui commande. */
-.villePlan { position: relative; width: 100%; aspect-ratio: 4 / 5; min-height: 880px; }
+/* Neuf rangs depuis que le Comptoir, le Casino et l'Observatoire y sont : la
+   hauteur suit le nombre de rangs, sinon les emprises se recouvrent. Elle est
+   calée sur l'écart entre deux rangs (11 unités du repère) multiplié par la
+   plus haute vignette. */
+.villePlan { position: relative; width: 100%; aspect-ratio: 4 / 5; min-height: 1300px; }
 /* Le plan large : la ville entière tient sous les yeux, sans défiler. Le
    plancher de hauteur évite qu'entre 900 et 1 000 px le plan se tasse au point
    que les légendes se rejoignent. Les emprises y sont plus étroites : la rue
    basse compte cinq bâtiments depuis que l'Atelier est arrivé. */
-.villePlan.large { aspect-ratio: 16 / 11; min-height: 660px; }
-.villePlan.large .villeLieu { width: 19%; max-width: 150px; }
-.villePlan.large .villeMur { top: 28%; }
+.villePlan.large { aspect-ratio: 16 / 11; min-height: 810px; }
+.villePlan.large .villeLieu { width: 18%; max-width: 150px; }
 
-.villeRoutes { position: absolute; inset: 0; width: 100%; height: 100%; }
-/* Sans `non-scaling-stroke`, l'épaisseur du trait se déformerait avec le plan —
-   les rues seraient larges en bas et fines sur les côtés. */
-.villeRue {
-  fill: none; stroke: var(--line2); stroke-width: 7; stroke-linecap: round;
-  stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: .28;
-}
-.villeRiviere {
-  fill: none; stroke: #3d6ea8; stroke-width: 9; stroke-linecap: round;
-  vector-effect: non-scaling-stroke; opacity: .32;
-}
-/* La place, en HTML : ronde à toutes les formes de plan. */
-.villePlace {
-  position: absolute; transform: translate(-50%, -50%);
-  width: 96px; height: 96px; border-radius: 50%;
-  border: 1px dashed var(--line2); background: rgba(124,92,255,.06);
-  pointer-events: none;
-}
-.villePlace::after {
-  content: ''; position: absolute; inset: 44px; border-radius: 50%;
-  background: var(--line2); opacity: .7;
-}
 
-/* ---------- le rempart ---------- */
-.villeMur {
-  position: absolute; left: 0; right: 0; top: 22%; height: 14px;
-  transform: translateY(-50%);
-  background:
-    repeating-linear-gradient(90deg, var(--line2) 0 13px, transparent 13px 21px)
-      0 0 / auto 6px no-repeat,
-    linear-gradient(var(--line2), var(--line2)) 0 6px / 100% 3px no-repeat;
-  opacity: .8;
-}
-.villeMur span {
-  position: absolute; right: 6px; top: -7px; white-space: nowrap;
-  padding: 1px 8px; border-radius: 3px; background: #12131c;
-  font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--coin);
-}
 
 /* ---------- un bâtiment ---------- */
 /* Un lieu est un SYMBOLE LÉGENDÉ, pas une carte. Des cartes bordées alignées
@@ -2050,7 +2070,7 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
    on écrit son nom dessous. */
 .villeLieu {
   position: absolute; transform: translate(-50%, -50%);
-  width: 30%; max-width: 178px; padding: 0;
+  width: 42%; max-width: 178px; padding: 0;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   text-align: center; text-decoration: none; font: inherit; color: var(--txt);
   border: 0; background: none; cursor: pointer;
@@ -2086,73 +2106,36 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
   padding: 0 5px; border-radius: 5px; background: rgba(12,13,20,.72);
 }
 
-/* ---------- les lieux qui ont leur vue ----------
-   Une vignette n'est pas un pictogramme : elle est large, elle a besoin de son
-   format. L'emprise devient donc un rectangle, et le nom se lit dessous comme
-   pour les autres — un plan reste un plan. */
-.villeLieu.vue { width: 44%; max-width: 210px; }
-.villePlan.large .villeLieu.vue { width: 22%; max-width: 190px; }
-.villeVue {
-  display: block; width: 100%; height: auto; aspect-ratio: 450 / 254;
-  object-fit: cover; border-radius: 12px;
-  border: 1px solid var(--line2); background: var(--bg2);
-  transition: transform .13s, border-color .13s, box-shadow .13s, filter .13s;
-  /* Assombrie au repos : la carte doit rester lisible, et c'est le survol qui
-     révèle le lieu. */
-  filter: saturate(.75) brightness(.72);
-}
-.villeLieu:hover .villeVue {
-  transform: translateY(-3px) scale(1.04); filter: none;
-  border-color: var(--accent); box-shadow: 0 12px 26px -12px var(--accent);
-}
+/* ---------- ce qui a été retiré ----------
+   Les lieux montraient une VIGNETTE photographique sur le plan plutôt qu'un
+   picto : emprise rectangulaire, image assombrie au repos, agrandissement au
+   survol. C'était juste tant que le plan était un schéma. Sur une
+   illustration, ces cinq images cachent le dessin qu'elles étaient censées
+   situer — le plan ne porte donc plus que des pictos, et les règles
+   correspondantes (`.villeVue`, `.villeLieu.vue`) sont supprimées.
 
-/* ---------- la vue s'ouvre au survol ----------
-    Sur le plan, une vignette fait 190 px : on distingue une forge d'un vivier,
-   pas ce qu'il y a dedans. Au survol elle s'ouvre en grand — les fichiers font
-   900 px de large, on reste donc en deçà, et l'image ouverte est nette.
-
-   Le point de fuite vient du plan (`--fuite`, posé par hub.js) : une vignette
-   de bord grandit vers l'intérieur de la ville, jamais par-dessus le cadre.
-   Réservé au vrai survol : au doigt, l'agrandissement resterait collé après le
-   tap, et le tap sert à entrer dans le lieu. */
-@media (hover: hover) and (pointer: fine) {
-  .villeLieu.vue { z-index: 1; }
-  .villeLieu.vue:hover, .villeLieu.vue:focus-visible { z-index: 5; }
-  .villeLieu.vue:hover .villeVue, .villeLieu.vue:focus-visible .villeVue {
-    transform: scale(2.6); transform-origin: var(--fuite, center) center;
-    filter: none; border-color: var(--accent);
-    box-shadow: 0 22px 50px -14px rgba(0,0,0,.85), 0 0 0 1px var(--accent);
-  }
-  .villeLieu.vue.porte:hover .villeVue, .villeLieu.vue.porte:focus-visible .villeVue {
-    border-color: var(--coin);
-    box-shadow: 0 22px 50px -14px rgba(0,0,0,.85), 0 0 0 1px var(--coin);
-  }
-  /* Le nom passe au-dessus de l'image ouverte : sans cela, la vignette d'à
-     côté recouvrait la légende du lieu qu'on est en train de regarder. */
-  .villeLieu.vue:hover .villeNom, .villeLieu.vue:focus-visible .villeNom {
-    position: relative; z-index: 1; background: rgba(12,13,20,.95);
-  }
-  /* Un lieu fermé ne s'ouvre pas : il n'y a rien à aller voir. */
-  .villeLieu.vue.ferme:hover .villeVue { transform: none; filter: saturate(0) brightness(.5); }
-}
-.villeLieu:focus-visible .villeVue { outline: 2px solid var(--coin); outline-offset: 3px; }
-.villeLieu.porte .villeVue { border-color: rgba(255,215,106,.55); }
-.villeLieu.porte:hover .villeVue {
-  border-color: var(--coin); box-shadow: 0 12px 26px -12px var(--coin);
-}
-.villeLieu.ferme .villeVue { filter: saturate(0) brightness(.5); }
+   Les images, elles, servent toujours : voir `.qrBandeau`, dans le volet d'un
+   quartier, où une vignette est grande, seule et regardée.
+   ---------------------------------------- */
 
 /* Les deux portes sont bâties SUR le rempart : elles s'en distinguent, et ce
-   sont les seuls bâtiments un peu plus grands que les autres. */
-.villeLieu.porte .villeIcone {
+   sont les seuls bâtiments un peu plus grands que les autres.
+
+   LEUR ZONE S'APPELLE « rempart » ET NON « porte », et ce n'est pas un détail
+   de goût : `.porte` est déjà la classe du panneau d'acte posé au-dessus du
+   plan, avec son fond `var(--panel)` et sa bordure claire. Les deux bâtiments
+   portaient la même classe et héritaient donc de ce fond — un carré blanc
+   translucide autour de l'Expédition et de la Forge, que personne n'avait
+   demandé et que rien ne nommait. Deux choses différentes, deux noms. */
+.villeLieu.rempart .villeIcone {
   width: 66px; height: 66px; stroke: var(--coin);
   border-color: rgba(255,215,106,.55);
   background: linear-gradient(165deg, rgba(48,39,17,.97), rgba(16,18,29,.97));
 }
-.villeLieu.porte:hover .villeIcone {
+.villeLieu.rempart:hover .villeIcone {
   border-color: var(--coin); box-shadow: 0 12px 26px -12px var(--coin); stroke: var(--coin);
 }
-.villeLieu.porte .villeJauge { color: var(--coin); }
+.villeLieu.rempart .villeJauge { color: var(--coin); }
 
 /* Au-delà du mur : rien n'est acquis, tout est à aller chercher. */
 .villeLieu.loin .villeIcone {
@@ -2168,7 +2151,6 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
   background: rgba(16,18,29,.94); box-shadow: none; stroke: var(--dim);
 }
 
-.villeLegende { margin: 10px 2px 0; color: var(--dim2); text-align: center; }
 
 @media (max-width: 560px) {
   .villeCadre { padding: 6px; }
@@ -2176,14 +2158,9 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
      portes en occupent toute la largeur, et l'étiquette se faisait couper d'un
      côté ou de l'autre. Elle disparaît, et la légende sous le plan porte le
      chiffre à sa place — une étiquette tronquée est pire qu'aucune. */
-  .villeMur span { display: none; }
-  .villePlace { width: 74px; height: 74px; }
-  .villePlace::after { inset: 34px; }
   .villePlan { aspect-ratio: 2 / 3; }
-  .villeLieu { width: 42%; }
-  .villeLieu.vue { width: 46%; }
   .villeIcone { width: 44px; height: 44px; padding: 7px; }
-  .villeLieu.porte .villeIcone { width: 52px; height: 52px; }
+  .villeLieu.rempart .villeIcone { width: 52px; height: 52px; }
   .villeNom { font-size: 11.5px; }
   /* La description saute : sur un téléphone, le nom et le compteur suffisent à
      savoir où l'on met les pieds, et le reste encombrerait le plan. */
@@ -2194,7 +2171,6 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
   .villeIcone, .villeLieu:hover .villeIcone { transition: none; transform: none; }
   /* L'agrandissement reste — c'est ce qui donne à voir l'image — mais il est
      instantané : c'est le glissement qui gêne, pas la taille. */
-  .villeVue { transition: none; }
 }
 
 /* ============================================================
@@ -2872,35 +2848,1514 @@ body.retourOuvert .retourBouton { opacity: 0; pointer-events: none; }
 }
 @media (prefers-reduced-motion: reduce) { .pcSautoir, .pcRoue, .pcTrou { transition: none; } }
 
+
 /* ============================================================
-   LA VUE DU LIEU EN TÊTE D'ONGLET
+   LA FRISE
 
-   Un bandeau, pas une affiche : il annonce le lieu et rend la main. La hauteur
-   est plafonnée pour que le jeu reste au-dessus de la ligne de flottaison —
-   sinon l'annonce posée plus bas remonterait d'autant, ce qui revient à la
-   rapprocher des commandes. Voir poserBannieresDeLieu() dans js/hub.js.
+   Une page de lecture, pas un tableau de bord : la colonne de texte reste
+   étroite, et la date tient un rail à gauche pour que l'œil descende le temps
+   sans le chercher. Le badge de piste est à droite, où l'on va quand on trie.
    ============================================================ */
-.lieuBanniere { margin: 0 0 20px; }
-.lieuBanniere:empty { display: none; }   /* image absente : pas de trou */
+.friFiltres {
+  display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px;
+  position: sticky; top: 0; z-index: 2;
+  padding: 8px 0; background: var(--bg);
+}
+.friFiltre {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel);
+  color: var(--dim); font: inherit; font-size: 12px;
+  transition: border-color .12s, color .12s, background .12s;
+}
+.friFiltre i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--dim2); }
+.friFiltre:hover { border-color: var(--accent); color: var(--txt); }
+.friFiltre.on {
+  border-color: var(--accent); color: var(--txt); background: rgba(124,92,255,.16);
+}
+.friFiltre.on i { color: var(--txt); }
+.friFiltre:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
 
-.lieuVue {
-  /* Centrée sur la page, et JAMAIS plus large que le fichier. Les vues font
-     900 pixels de large ; le bandeau s'arrête à 720, ce qui laisse le jeu
-     au-dessus de la ligne de flottaison et garde une marge de définition : on
-     réduit toujours, et réduire n'abîme rien. Un agrandissement, si. */
-  display: block; margin: 0 auto;
-  /* Deux plafonds, et l'image se range dans les deux sans être recadrée : la
-     largeur pour la mise en page, la hauteur pour que le jeu reste au-dessus
-     de la ligne de flottaison. Sur l'onglet du tirage, un bandeau de 400 px
-     poussait la machine et ses boutons hors de l'écran d'accueil. */
-  width: auto; height: auto;
-  max-width: min(100%, 720px); max-height: 300px;
-  border-radius: 14px; border: 1px solid var(--line);
-  /* Un peu retenue : c'est une vue d'ouverture, pas le sujet de la page. */
-  filter: saturate(.9) brightness(.9);
+.friListe { display: flex; flex-direction: column; gap: 8px; }
+
+/* Le nom de l'âge coupe le flux : c'est le seul repère de niveau supérieur. */
+.friAge {
+  margin: 22px 0 6px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--dim2);
+}
+.friAge:first-child { margin-top: 0; }
+
+.friLigne {
+  display: grid; align-items: start; gap: 14px;
+  grid-template-columns: 92px minmax(0, 1fr) 190px;
+  padding: 12px 15px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--panel);
+  border-left: 3px solid var(--line2);
+}
+/* La couleur du liseré dit la piste sans qu'on ait à lire le badge : on
+   descend la frise en cherchant du vert, et on trouve ce qui est jouable. */
+.friLigne.enJeu     { border-left-color: var(--gold); }
+.friLigne.procedure { border-left-color: #7ee6a4; }
+.friLigne.nombres   { border-left-color: var(--accent); }
+.friLigne.decor     { border-left-color: var(--line2); opacity: .82; }
+
+.friAn {
+  font-family: var(--mono); font-size: 12px; color: var(--coin);
+  padding-top: 2px; white-space: nowrap;
+}
+.friCorps { min-width: 0; }
+.friCorps h4 {
+  margin: 0 0 3px; font-size: 14px; font-weight: 600; line-height: 1.3;
+  text-wrap: balance;
+}
+.friQui { color: var(--accent); font-weight: 600; }
+.friQui::before { content: '· '; color: var(--dim2); font-weight: 400; }
+.friLieu { font-size: 11px; font-weight: 400; color: var(--dim2); }
+.friLieu::before { content: '· '; }
+.friTexte { margin: 0; font-size: 12.5px; color: var(--dim); line-height: 1.5; max-width: 62ch; }
+
+/* Ce qui est disputé, et ce qu'on pourrait en faire : deux registres
+   différents du texte principal, et différents entre eux. */
+.friDoute {
+  margin: 7px 0 0; padding: 6px 9px; border-radius: 7px;
+  border-left: 2px solid rgba(255,176,46,.55); background: rgba(255,176,46,.07);
+  font-size: 11.5px; color: #e0c48a; line-height: 1.45; max-width: 62ch;
+}
+.friIdee {
+  margin: 7px 0 0; padding: 6px 9px; border-radius: 7px;
+  border-left: 2px solid rgba(124,92,255,.5); background: rgba(124,92,255,.08);
+  font-size: 11.5px; color: #c3b4f5; line-height: 1.45; max-width: 62ch;
+}
+.friIdee::before { content: '→ '; color: var(--accent); }
+
+.friPiste { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.friBadge {
+  padding: 3px 8px; border-radius: 7px; white-space: nowrap;
+  font-size: 10.5px; font-weight: 600;
+  border: 1px solid var(--line2); background: rgba(0,0,0,.2); color: var(--dim);
+}
+.friBadge.enJeu     { border-color: rgba(255,176,46,.5); color: var(--gold); }
+.friBadge.procedure { border-color: rgba(126,230,164,.45); color: #7ee6a4; }
+.friBadge.nombres   { border-color: rgba(124,92,255,.5); color: #c3b4f5; }
+.friLien { font-size: 10.5px; color: var(--dim2); line-height: 1.35; }
+
+@media (max-width: 860px) {
+  /* La colonne de piste passe sous le texte : à cette largeur, trois colonnes
+     réduisaient la notice à quarante caractères par ligne. */
+  .friLigne { grid-template-columns: 78px minmax(0, 1fr); }
+  .friAn    { grid-row: 1; grid-column: 1; }
+  .friCorps { grid-row: 1; grid-column: 2; }
+  .friPiste {
+    grid-row: 2; grid-column: 2;
+    flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px;
+  }
+}
+@media (max-width: 560px) {
+  .friLigne { grid-template-columns: 1fr; gap: 6px; padding: 11px 12px; }
+  .friAn    { grid-row: 1; grid-column: 1; }
+  .friCorps { grid-row: 2; grid-column: 1; }
+  .friPiste { grid-row: 3; grid-column: 1; }
+  .friFiltre { font-size: 11px; padding: 5px 9px; }
+}
+
+/* ============================================================
+   LES SAYNÈTES — LE SEUIL ET LES QUÊTES
+
+   Une surcouche qui interrompt puis rend la main, comme la révélation des
+   tirages. Elle est sobre : c'est du texte qu'on lit, pas un effet.
+   ============================================================ */
+
+/* Seule la géométrie reste ici : bordure, fond et ombre viennent de la coque
+   commune des modales, en bas de cette feuille. */
+.qtCadre, .slCadre {
+  width: min(560px, 100%); max-height: 88vh; overflow-y: auto;
+  padding: 20px 22px;
+}
+
+.qtTete { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.qtTitre { font-size: 16px; font-weight: 600; flex: 1; }
+.qtLieu { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); }
+
+.qtScene { min-height: 128px; }
+.qtQui {
+  display: inline-block; margin-bottom: 6px;
+  font-size: 12px; font-weight: 600; color: var(--coin); letter-spacing: .03em;
+}
+.qtTexte { margin: 0; font-size: 14px; line-height: 1.62; color: var(--txt); max-width: 58ch; }
+/* Une scène de calcul se lit en colonne, chiffres alignés : c'est le moment
+   où le joueur doit pouvoir vérifier de tête. */
+.qtScene.calcul .qtTexte {
+  font-family: var(--mono); font-size: 14.5px; line-height: 1.9;
+  padding: 12px 14px; border-radius: 10px;
+  border-left: 2px solid var(--coin); background: rgba(255,215,106,.07);
+}
+
+.qtPied { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.qtPerles { display: flex; gap: 5px; flex: 1; }
+.qtPerles i {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--line2);
+}
+.qtPerles i.bon { background: var(--coin); }
+.qtPerles i.encours { background: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,255,.22); }
+
+.slActe {
+  display: block; margin-bottom: 12px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--dim2);
+}
+.slTexte { margin: 0; font-size: 15px; line-height: 1.7; max-width: 54ch; min-height: 120px; }
+.slPied { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+
+/* La bulle de quête sur un bâtiment de la Cité. */
+.villeBulle {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px;
+  display: grid; place-items: center;
+  background: var(--coin); color: #1a1206;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(12,13,20,.9), 0 0 14px -2px var(--coin);
+  animation: bulleRespire 2.4s ease-in-out infinite;
+}
+@keyframes bulleRespire { 50% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .villeBulle { animation: none; } }
+
+/* Un trait qu'on ne sait pas encore nommer. Les points sont là — la rareté
+   est acquise — mais le nom manque, et ça se voit. */
+.traitRow.inconnu {
+  border-style: dashed; border-color: rgba(255,215,106,.4);
+  background: rgba(255,215,106,.05);
+}
+.traitRow.inconnu .em { opacity: .8; }
+.traitRow.inconnu b { color: var(--coin); }
+
+/* ⚠ AIDE DE TEST. Voyante par choix : elle doit gêner tant qu'elle est là. */
+.friTest {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px; padding: 10px 13px; border-radius: 11px;
+  border: 1px dashed #ff6b81; background: rgba(255,107,129,.1);
+  font-size: 12px; color: #ff9aa8;
+}
+.friTest b { color: #ffc4cd; }
+.friTest i { flex-basis: 100%; font-size: 10.5px; color: var(--dim2); font-style: normal; }
+
+@media (max-width: 560px) {
+  .qtCadre, .slCadre { padding: 16px 15px; }
+  .qtTexte, .slTexte { font-size: 13.5px; }
+}
+
+/* Un instrument que l'époque n'a pas encore inventé : présent, éteint, daté. */
+.atLigne.scelle { opacity: .42; }
+.atLigne.scelle .atFacteur b { color: var(--dim2); }
+.atScelle {
+  font-size: 11.5px; font-weight: 600; color: var(--dim2);
+  white-space: nowrap; text-align: center;
+}
+
+/* `#tabs button { display: flex }` l'emporte sur la règle `[hidden]` du
+   navigateur : sans cette ligne, un onglet verrouillé porte bien l'attribut et
+   reste parfaitement visible. Le JavaScript disait « masqué », l'écran disait
+   le contraire. */
+#tabs button[hidden] { display: none !important; }
+
+/* ============================================================
+   LA PORTE DE L'ACTE
+
+   Une liste de courses, pas un trophée : on doit lire d'un coup d'œil ce qui
+   manque. Elle ne devient dorée que quand elle est franchissable — le reste du
+   temps elle reste sobre, sinon elle crierait en permanence.
+   ============================================================ */
+.porte {
+  margin-bottom: 16px; padding: 14px 16px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--panel);
+  transition: border-color .2s, background .2s;
+}
+.porte.prete {
+  border-color: var(--coin); background: rgba(255,215,106,.07);
+  box-shadow: 0 0 0 1px rgba(255,215,106,.25);
+}
+.porte.finie { border-style: dashed; }
+
+.porteTete { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.porteActe {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--coin);
+}
+.porteVers { font-size: 12.5px; color: var(--dim); }
+.porteVers i { font-family: var(--mono); font-style: normal; font-size: 11px; color: var(--dim2); }
+
+.porteListe { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.porteListe li { display: flex; align-items: baseline; gap: 9px; font-size: 13px; color: var(--dim); }
+.porteListe li.ok { color: var(--txt); }
+.porteCoche {
+  width: 15px; flex: none; text-align: center;
+  font-size: 12px; color: var(--dim2);
+}
+.porteListe li.ok .porteCoche { color: #7ee6a4; }
+.porteTexte { flex: 1; min-width: 0; }
+.porteListe li.ok .porteTexte { text-decoration: line-through; text-decoration-color: rgba(126,230,164,.5); }
+.porteCompte {
+  font-family: var(--mono); font-size: 11px; color: var(--dim2);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.porteListe li.ok .porteCompte { color: #7ee6a4; }
+
+.porteMot { margin: 0; font-size: 12px; color: var(--dim2); font-style: italic; }
+
+@media (max-width: 560px) {
+  .porte { padding: 12px 13px; }
+  .porteListe li { font-size: 12.5px; }
+  .porte .btn { width: 100%; }
+}
+
+/* ============================================================
+   LA VISITE GUIDÉE
+
+   Le trou n'est pas un masque : c'est un bloc dont l'ombre portée noircit
+   9 999 pixels tout autour. Le seul procédé qui marche partout, y compris sur
+   les vieux Safari, et qui ne coûte aucune couche de composition de plus.
+   ============================================================ */
+.visiteBoite { display: none; }
+/* AU-DESSUS DE LA RÉCAPITULATION, ET C'EST LA CONDITION POUR QU'ELLE SERVE.
+   La surcouche de tirage est à 100 ; la visite était à 90, donc ses trois
+   étapes sur la prise se dessinaient DERRIÈRE elle. On ne les voyait qu'après
+   avoir refermé — c'est-à-dire en pointant des cartes qui n'étaient plus là.
+   130 la met au-dessus de la récapitulation (100) et de la fenêtre d'un
+   quartier (110). */
+.visiteBoite.on {
+  display: block; position: fixed; inset: 0; z-index: 130;
+  /* LA SURCOUCHE NE CAPTE RIEN. Elle couvre toute la fenêtre : si elle prenait
+     les clics, le bouton qu'elle met en lumière serait précisément le seul
+     qu'on ne pourrait pas presser — c'est exactement ce qui arrivait. Seule la
+     bulle les reprend, plus bas. */
+  pointer-events: none;
+}
+
+.vsTrou {
+  position: fixed; border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(6,7,12,.86), 0 0 0 2px var(--coin) inset;
+  pointer-events: none;              /* l'assombrissement ne bloque rien */
+  transition: top .18s, left .18s, width .18s, height .18s;
+}
+@media (prefers-reduced-motion: reduce) { .vsTrou { transition: none; } }
+
+.vsBulle {
+  /* La bulle est le seul élément de la visite qui reçoive les clics : ses deux
+     boutons doivent marcher, le reste de l'écran appartient au jeu. */
+  pointer-events: auto;
+  position: fixed; width: min(340px, calc(100vw - 24px));
+  padding: 14px 16px; border-radius: 14px;
+  border: 1px solid rgba(185,138,78,.5);
+  background: linear-gradient(165deg, rgba(34,29,22,.99), rgba(15,16,24,.99));
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,.95);
+}
+.vsPas {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim2);
+}
+.vsTitre { margin: 4px 0 6px; font-size: 15px; font-weight: 600; }
+.vsTexte { margin: 0; font-size: 13px; line-height: 1.6; color: var(--txt); }
+.vsPied { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.vsConsigne {
+  flex: 1; font-size: 12px; font-weight: 600; color: var(--coin);
+  animation: vsRespire 1.8s ease-in-out infinite;
+}
+@keyframes vsRespire { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .vsConsigne { animation: none; } }
+.vsPied .btn { flex: none; }
+.vsPied .btn.ghost { margin-left: auto; opacity: .6; font-size: 11px; }
+
+/* ---------- la Place ---------- */
+
+.plEmoji { font-size: 15px; line-height: 1; }
+.plRole { margin: 12px 0 0; font-size: 11.5px; color: var(--dim2); font-style: italic; }
+
+/* ============================================================
+   L'ACCUEIL
+
+   La seule page du jeu qui ne demande rien. Elle recouvre tout — en-tête et
+   barre d'onglets compris : on n'entre pas dans la Cité par le menu.
+   ============================================================ */
+.accueilBoite { display: none; }
+.accueilBoite.on {
+  display: grid; place-items: center; position: fixed; inset: 0; z-index: 120;
+  padding: 24px;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(124,92,255,.16), transparent 60%),
+    radial-gradient(90% 50% at 50% 100%, rgba(255,215,106,.09), transparent 65%),
+    var(--bg);
+  overflow-y: auto;
+}
+/* Rien ne défile derrière l'accueil, et le reste du jeu ne se lit pas au
+   travers : on ne devine pas la ville avant d'y entrer. */
+body.surAccueil { overflow: hidden; }
+
+.acCadre {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  width: min(560px, 100%); text-align: center;
+}
+
+.acMarque {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font-family: var(--mono); letter-spacing: .22em; text-transform: uppercase;
+}
+.acMarque b { font-size: 14px; color: var(--txt); }
+.acMarque i { font-size: 10px; font-style: normal; color: var(--dim2); }
+
+.acTitre {
+  margin: 6px 0 0; font-size: clamp(26px, 6vw, 40px); line-height: 1.18;
+  font-weight: 700; text-wrap: balance;
+}
+.acMot {
+  margin: 0; max-width: 46ch; font-size: 14px; line-height: 1.7; color: var(--dim);
+}
+.accueilBoite .btn.big { margin-top: 10px; padding: 14px 30px; font-size: 16px; }
+.acPied { font-size: 11px; color: var(--dim2); }
+
+/* ⚠ AIDE DE TEST — la remise à neuf, dans l'en-tête. Rouge tramé : un bouton
+   qui efface tout ne doit jamais ressembler au reste de l'interface. */
+.neuf {
+  padding: 5px 9px; border-radius: 9px; cursor: pointer; align-self: center;
+  border: 1px dashed #ff6b81; background: rgba(255,107,129,.12); color: #ff9aa8;
+  font-family: var(--mono); font-size: 10px; white-space: nowrap;
+}
+.neuf:hover { background: rgba(255,107,129,.24); }
+.neuf:focus-visible { outline: 2px solid #ff6b81; outline-offset: 2px; }
+@media (max-width: 560px) { .neuf { font-size: 9px; padding: 4px 7px; } }
+
+/* ============================================================
+   LA VUE DU LIEU, EN FOND DE PAGE
+
+   Fixe, voilée, derrière tout. Voir poserFondDeLieu() dans js/hub.js pour le
+   raisonnement — l'essentiel tient en trois lignes : la lisibilité passe avant
+   l'illustration, les annonces ne flottent jamais dessus, et le fond ne défile
+   pas avec le contenu.
+   ============================================================ */
+.fondLieu {
+  /* DEUX COUCHES, DEUX RANGS EXPLICITES. La vue du lieu est au fond (-2), le
+     décor mathématique juste au-dessus (-1), le contenu par-dessus tout. Les
+     deux étaient à -1 et ne tenaient leur ordre que de leur position dans le
+     DOM — un ordre qu'un simple `appendChild` ailleurs aurait renversé, et les
+     identités seraient passées derrière l'illustration. */
+  position: fixed; inset: 0; z-index: -2;
+  background-position: center; background-size: cover; background-repeat: no-repeat;
+  opacity: 0; transition: opacity .35s ease;
+  pointer-events: none;
+  /* On assombrit l'image plutôt que d'épaissir le voile : un voile délave
+     l'illustration vers la couleur de fond, l'assombrissement en garde les
+     formes.
+
+     LE RÉGLAGE EST MESURÉ, pas choisi à l'œil. Le texte le plus pâle du jeu
+     (--dim2) vaut 4,1 de contraste sur fond plein — déjà sous le seuil WCAG de
+     4,5, c'est une couleur d'étiquette. Avec l'illustration dessous il tombe à
+     3,1 dans le PIRE cas, c'est-à-dire s'il se pose exactement sur le pixel le
+     plus clair de l'image ; en cas moyen il reste à 4,0, inchangé. Descendre le
+     voile plus bas ferait passer ce pire cas sous 3,0, et là on ne lit plus. */
+  filter: brightness(.85) saturate(.95);
+}
+/* L'opacité vient du curseur — un seul réglage pour tout le jeu, rangé dans
+   localStorage. La moitié par défaut : voir poserCurseurFond() dans js/hub.js
+   pour la mesure de lisibilité qui fixe ce point. */
+.fondLieu.on { opacity: var(--fond-op, .5); }
+@media (prefers-reduced-motion: reduce) { .fondLieu { transition: none; } }
+
+/* LE VOILE. C'est lui qui rend le texte lisible, et il est épais par choix :
+   une illustration qu'on devine vaut mieux qu'un paragraphe qu'on déchiffre.
+   Il s'ouvre légèrement vers le bas, là où le contenu est plus dense. */
+.fondLieu::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--bg) 70%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 80%, transparent) 45%,
+      color-mix(in srgb, var(--bg) 90%, transparent) 100%);
+}
+
+/* Un emplacement publicitaire ne flotte pas sur une illustration : il se
+   confondrait avec elle, et un clic sur l'image prise pour l'annonce est un
+   clic invalide — le premier motif de fermeture de compte chez Google. */
+.pub, .pubRail {
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+/* ---------- le curseur d'opacité du fond ----------
+   Discret et à droite : c'est un réglage de confort, pas une commande de jeu.
+   Il ne s'affiche que sur les onglets qui ont une vue à régler. */
+.fondReglage {
+  display: flex; align-items: center; justify-content: flex-end; gap: 9px;
+  margin: 0 0 10px; font-size: 11px; color: var(--dim2);
+}
+.fondReglage label { cursor: default; white-space: nowrap; }
+.fondReglage input[type="range"] {
+  width: 110px; height: 3px; -webkit-appearance: none; appearance: none;
+  background: var(--line2); border-radius: 99px; cursor: pointer;
+}
+.fondReglage input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--accent); border: 0; cursor: pointer;
+}
+.fondReglage input[type="range"]::-moz-range-thumb {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--accent); border: 0; cursor: pointer;
+}
+.fondReglage input[type="range"]:focus-visible { outline: 2px solid var(--coin); outline-offset: 4px; }
+.fondReglage .fondVal {
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  min-width: 38px; text-align: right;
 }
 
 @media (max-width: 560px) {
-  .lieuBanniere { margin-bottom: 16px; }
-  .lieuVue { border-radius: 12px; }
+  .fondReglage input[type="range"] { width: 88px; }
 }
+
+
+/* ============================================================
+   LES RAYONS DES HAUTS PALIERS
+
+   L'effet des gachas : des traits fins qui partent du bord de la carte dans
+   toutes les directions, tournent lentement, s'éteignent et sont remplacés par
+   d'autres. La version précédente projetait un anneau net en une demi-seconde —
+   ça claquait, et il ne restait rien après.
+
+   COMMENT C'EST FAIT, ET POURQUOI COMME ÇA. Un `repeating-conic-gradient` : un
+   dégradé conique qui alterne couleur et vide donne des rayons droits, sans un
+   seul élément de plus dans la page. Deux couches tournent en sens INVERSE, à
+   des vitesses et des nombres de rayons différents ; là où elles se croisent,
+   un rayon s'éteint pendant qu'un autre s'allume. C'est ce croisement qui fait
+   le renouvellement, pas une animation par rayon.
+
+   LE MASQUE FAIT TOUT LE TRAVAIL DE PROPRETÉ. Sans lui, le dégradé serait un
+   disque plein qui recouvrirait la carte. Le masque radial creuse le centre —
+   les rayons naissent au bord de la carte, pas dessus — et les éteint en
+   allant vers l'extérieur, pour qu'ils se perdent au lieu de se couper net.
+
+   Trois crans : l'Épique a une couche, le Légendaire deux, le Mythique deux
+   plus vives et plus rapides.
+   ============================================================ */
+/* LES CARTES QUI RAYONNENT PASSENT DEVANT LEURS VOISINES.
+
+   Sans ça, l'effet ne se voyait que sur la première carte de la grille : les
+   rayons débordent, et chaque carte suivante se peignait par-dessus ceux de la
+   précédente. Un Épique coincé entre deux voisines n'irradiait donc nulle part.
+
+   L'ordre suit la rareté — un Mythique passe devant un Légendaire — et comme
+   les rayons sont translucides, ils éclairent les cartes voisines au lieu de
+   les cacher. C'est exactement ce qu'on veut : la lumière déborde. */
+.rcard[data-r="epique"]     { z-index: 1; }
+.rcard[data-r="legendaire"] { z-index: 2; }
+.rcard[data-r="mythique"]   { z-index: 3; }
+
+.rcard[data-r="epique"]::before,
+.rcard[data-r="legendaire"]::before,
+.rcard[data-r="legendaire"]::after,
+.rcard[data-r="mythique"]::before,
+.rcard[data-r="mythique"]::after {
+  content: ''; position: absolute; pointer-events: none;
+  left: 50%; top: 50%; width: 250%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  opacity: 0;                       /* rien avant que la carte ne se retourne */
+  /* Les rayons naissent au bord de la carte et s'éteignent au loin. */
+  -webkit-mask-image: radial-gradient(closest-side, transparent 26%, #000 42%, transparent 78%);
+          mask-image: radial-gradient(closest-side, transparent 26%, #000 42%, transparent 78%);
+}
+
+/* La couche qui tourne dans le sens des aiguilles : des rayons larges. */
+.rcard[data-r="epique"]::before,
+.rcard[data-r="legendaire"]::before,
+.rcard[data-r="mythique"]::before {
+  background: repeating-conic-gradient(from 0deg,
+    var(--rc) 0deg 1.6deg, transparent 1.6deg 15deg);
+}
+/* Celle qui tourne à l'envers : plus de rayons, plus fins. Le décalage des
+   deux vitesses est ce qui donne l'impression que les traits se renouvellent. */
+.rcard[data-r="legendaire"]::after,
+.rcard[data-r="mythique"]::after {
+  background: repeating-conic-gradient(from 7deg,
+    var(--rc) 0deg .9deg, transparent .9deg 9deg);
+}
+
+.rcard.flip[data-r="epique"]::before {
+  animation: rayonner 26s linear infinite, respirerRayons 3.4s ease-in-out .25s infinite both;
+}
+.rcard.flip[data-r="legendaire"]::before,
+.rcard.flip[data-r="mythique"]::before {
+  animation: rayonner 22s linear infinite, respirerRayons 3s ease-in-out .25s infinite both;
+}
+.rcard.flip[data-r="legendaire"]::after,
+.rcard.flip[data-r="mythique"]::after {
+  animation: rayonnerInverse 31s linear infinite, respirerRayons 4.3s ease-in-out .5s infinite both;
+}
+
+/* La rotation doit reconduire le centrage : sans le `translate`, la couche
+   part se coller dans un coin dès la première image. */
+@keyframes rayonner {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes rayonnerInverse {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+/* Le souffle. Il ne descend jamais à zéro : les rayons faiblissent, ils ne
+   disparaissent pas — c'est la différence entre respirer et clignoter. */
+@keyframes respirerRayons {
+  0%   { opacity: 0; }
+  18%  { opacity: .30; }
+  50%  { opacity: .13; }
+  82%  { opacity: .26; }
+  100% { opacity: .13; }
+}
+
+.rcard.flip[data-r="mythique"]::before,
+.rcard.flip[data-r="mythique"]::after { filter: brightness(1.3); }
+
+/* Un doublon rayonne encore — c'est le même nombre — mais en veilleuse. */
+.rcard.dupe::before, .rcard.dupe::after { filter: saturate(.5) brightness(.7); }
+.rcard.dupe.flip::before, .rcard.dupe.flip::after { animation-name: rayonner, respirerFaible; }
+.rcard.dupe.flip[data-r="legendaire"]::after,
+.rcard.dupe.flip[data-r="mythique"]::after { animation-name: rayonnerInverse, respirerFaible; }
+@keyframes respirerFaible {
+  0% { opacity: 0; } 25% { opacity: .12; } 100% { opacity: .07; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* On garde la présence, on retire le mouvement : les rayons restent, fixes. */
+  .rcard::before, .rcard::after { animation: none !important; }
+  .rcard.flip[data-r="epique"]::before,
+  .rcard.flip[data-r="legendaire"]::before,
+  .rcard.flip[data-r="legendaire"]::after,
+  .rcard.flip[data-r="mythique"]::before,
+  .rcard.flip[data-r="mythique"]::after { opacity: .18 !important; }
+}
+
+/* En mode dense, une carte fait 63 px : à ce rayon, des traits de 1,6° font
+   moins d'un pixel de large et se fondent en un halo uniforme. On élargit le
+   trait et on en met moins — c'est le même effet, à une autre échelle. */
+.revealGrid.dense .rcard[data-r="epique"]::before,
+.revealGrid.dense .rcard[data-r="legendaire"]::before,
+.revealGrid.dense .rcard[data-r="mythique"]::before {
+  background: repeating-conic-gradient(from 0deg,
+    var(--rc) 0deg 3.4deg, transparent 3.4deg 26deg);
+}
+.revealGrid.dense .rcard[data-r="legendaire"]::after,
+.revealGrid.dense .rcard[data-r="mythique"]::after {
+  background: repeating-conic-gradient(from 13deg,
+    var(--rc) 0deg 2deg, transparent 2deg 17deg);
+}
+/* Et ils portent un peu plus loin, pour dépasser des cartes voisines. */
+.revealGrid.dense .rcard::before,
+.revealGrid.dense .rcard::after { width: 290%; }
+
+/* ---------- le quai de la Gare : le tableau des quêtes ---------- */
+.qtListe { display: flex; flex-direction: column; gap: 6px; }
+.qtLigne {
+  display: grid; align-items: baseline; gap: 4px 12px; width: 100%;
+  grid-template-columns: 1fr max-content; text-align: left; cursor: pointer;
+  padding: 10px 13px; border-radius: 11px;
+  border: 1px solid var(--line); background: var(--panel);
+  color: var(--txt); font: inherit;
+  transition: border-color .12s, background .12s;
+}
+.qtLigne:hover { border-color: var(--coin); background: var(--panel2); }
+.qtLigne:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.qtLTitre { font-size: 14px; font-weight: 600; }
+.qtLPas { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.qtLQui { grid-column: 1; font-size: 11.5px; color: var(--accent); }
+.qtLEtat { grid-column: 1 / -1; font-size: 11.5px; color: var(--dim); }
+.qtLigne.faite { opacity: .5; }
+.qtLigne.faite .qtLEtat { color: #7ee6a4; }
+
+.qtVide { margin: 4px 0 0; font-size: 13px; color: var(--dim); line-height: 1.55; }
+.qtFaites { margin-top: 18px; }
+.qtFTitre {
+  display: block; margin-bottom: 7px;
+  font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim2);
+}
+
+/* ---------- un objectif à remplir ---------- */
+.qtObjectif {
+  display: flex; align-items: baseline; gap: 10px; margin-top: 12px;
+  padding: 10px 13px; border-radius: 11px;
+  border: 1px dashed var(--line2); background: rgba(0,0,0,.22);
+  font-size: 13px; color: var(--dim);
+}
+.qtObjectif.ok { border-style: solid; border-color: rgba(126,230,164,.5); color: var(--txt); }
+.qtOCoche { color: var(--dim2); }
+.qtObjectif.ok .qtOCoche { color: #7ee6a4; }
+.qtOTexte { flex: 1; }
+.qtOCompte { font-family: var(--mono); font-size: 11.5px; color: var(--dim2); font-variant-numeric: tabular-nums; }
+.qtObjectif.ok .qtOCompte { color: #7ee6a4; }
+
+/* ---------- une énigme ---------- */
+.qtQuestion {
+  margin: 12px 0 0; padding: 12px 14px; border-radius: 10px;
+  border-left: 2px solid var(--coin); background: rgba(255,215,106,.07);
+  font-family: var(--mono); font-size: 14.5px; line-height: 1.6; color: var(--txt);
+}
+.qtReponse { display: flex; gap: 8px; margin-top: 12px; }
+.qtReponse input {
+  flex: 1; min-width: 0; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--txt);
+  font-family: var(--mono); font-size: 15px;
+}
+.qtReponse input:focus-visible { outline: 2px solid var(--coin); outline-offset: 1px; }
+/* L'erreur explique, elle ne gronde pas : elle porte l'indice. */
+.qtRate {
+  margin: 10px 0 0; padding: 9px 12px; border-radius: 9px;
+  border-left: 2px solid rgba(255,176,46,.6); background: rgba(255,176,46,.08);
+  font-size: 12.5px; color: #e0c48a; line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .qtReponse { flex-direction: column; }
+  .qtReponse .btn { width: 100%; }
+}
+
+/* ---------- le Carnet ---------- */
+.carnetBtn {
+  position: relative; padding: 7px 10px; border-radius: 11px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--txt);
+  font-size: 15px; line-height: 1; align-self: center;
+  transition: border-color .12s, background .12s;
+}
+.carnetBtn:hover { border-color: var(--coin); background: var(--panel2); }
+.carnetBtn:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.carnetBtn .badge { position: absolute; top: -5px; right: -5px; }
+
+/* ============================================================
+   LE CARNET — DEUX COLONNES, TAILLE FIXE
+
+   À gauche les actes, à droite l'acte consulté.
+
+   LE CADRE NE BOUGE JAMAIS. Sa hauteur est imposée, pas déduite du contenu :
+   sinon la fenêtre grandit et rétrécit à chaque acte visité, l'acte scellé
+   tenant en trois lignes et l'acte atteint en trois écrans. Les onglets se
+   déplaceraient sous le curseur entre deux clics — on viserait un acte et on
+   en ouvrirait un autre. C'est donc la colonne de droite qui défile, seule ;
+   le cadre et la colonne des actes restent immobiles.
+
+   Sous 700 px il n'y a plus la place pour deux colonnes : les onglets passent
+   en haut, en bande horizontale qui défile. La hauteur reste fixe.
+   ============================================================ */
+.cnCadre {
+  width: min(880px, 100%);
+  height: min(660px, 86vh);
+  max-height: none;              /* on annule celle de .qtCadre */
+  overflow: hidden;              /* le cadre ne défile pas : sa vue le fait */
+  display: flex; flex-direction: column;
+}
+
+.cnCorps {
+  display: grid; grid-template-columns: 172px 1fr; gap: 18px; margin-top: 12px;
+  flex: 1; min-height: 0;        /* sans min-height, la grille déborde le cadre */
+}
+
+.cnOnglets {
+  display: flex; flex-direction: column; gap: 4px;
+  align-self: stretch; overflow-y: auto; min-height: 0;
+}
+.cnOnglet {
+  display: grid; grid-template-columns: 16px 1fr; gap: 1px 8px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 8px 11px; border-radius: 10px;
+  border: 1px solid transparent; background: none;
+  color: var(--txt); font: inherit;
+  transition: background .12s, border-color .12s;
+}
+.cnOnglet:hover { background: var(--panel); border-color: var(--line); }
+.cnOnglet:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.cnOnglet.actif { background: var(--panel2); border-color: var(--accent); }
+.cnOMarque { grid-row: 1 / 3; align-self: center; font-size: 11px; color: var(--dim2); }
+.cnOnglet.fait .cnOMarque { color: var(--ok, #6fd08c); }
+.cnOnglet.ici .cnOMarque { color: var(--accent); }
+.cnOActe {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim2);
+}
+.cnOnglet .cnONom { font-size: 12.5px; font-weight: 600; }
+/* Un acte hors de portée reste lisible : on le grise, on ne le cache pas.
+   Le joueur a le droit de savoir ce qui l'attend. */
+.cnOnglet.loin .cnONom { color: var(--dim2); font-weight: 500; }
+
+.cnVue { min-width: 0; overflow-y: auto; padding-right: 4px; }
+.cnVTete { margin-bottom: 4px; }
+.cnVEpoque { font-family: var(--mono); font-size: 10.5px; color: var(--coin); }
+.cnVNom { margin: 2px 0 3px; font-size: 17px; }
+.cnVSous { margin: 0 0 6px; font-size: 12.5px; color: var(--accent); }
+.cnVResume { margin: 0; font-size: 12.5px; color: var(--dim); line-height: 1.55; }
+
+/* Ce qu'un acte ouvre : des clefs, pas des boutons — on ne s'y rend pas
+   d'ici, on constate. */
+.cnClefs { display: flex; flex-wrap: wrap; gap: 6px; }
+.cnClef {
+  padding: 5px 10px; border-radius: 8px; font-size: 11.5px;
+  border: 1px solid var(--line2); background: var(--panel); color: var(--dim);
+}
+
+.cnBloc { margin-top: 20px; }
+.cnBloc:first-of-type { margin-top: 6px; }
+.cnTitre {
+  display: flex; align-items: baseline; gap: 8px; margin: 0 0 10px;
+  font-size: 11px; letter-spacing: .11em; text-transform: uppercase; color: var(--dim2);
+  padding-bottom: 7px; border-bottom: 1px solid var(--line);
+}
+.cnTitre i { font-family: var(--mono); font-style: normal; font-size: 11px; letter-spacing: 0; }
+.cnMot { margin: 0; font-size: 12.5px; color: var(--dim2); font-style: italic; }
+
+.cnQuetes { display: flex; flex-direction: column; gap: 6px; }
+.cnQuete {
+  display: grid; grid-template-columns: 1fr max-content; gap: 3px 12px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 13px; border-radius: 11px;
+  border: 1px solid var(--line); background: var(--panel);
+  color: var(--txt); font: inherit;
+  transition: border-color .12s, background .12s;
+}
+.cnQuete:hover { border-color: var(--coin); background: var(--panel2); }
+/* Une quête qui dort n'est pas cliquable : elle ne doit pas se présenter
+   comme un bouton. */
+.cnQuete.morte { cursor: default; opacity: .55; }
+.cnQuete.faite { border-color: rgba(185,138,78,.35); background: rgba(185,138,78,.05); }
+.cnQuete:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.cnQTitre { font-size: 13.5px; font-weight: 600; }
+.cnQPas { font-family: var(--mono); font-size: 11px; color: var(--dim2); }
+.cnQQui { grid-column: 1; font-size: 11px; color: var(--accent); }
+.cnQQuoi { grid-column: 1 / -1; font-size: 11.5px; color: var(--dim); }
+
+/* Une curiosité : une notice, pas une carte à statistiques. Elle ne rapporte
+   rien, elle se lit — c'est tout ce qu'on lui demande. */
+.cnObjets { display: flex; flex-direction: column; gap: 8px; }
+.cnObjet {
+  padding: 11px 14px; border-radius: 11px;
+  border: 1px solid rgba(185,138,78,.35); background: rgba(185,138,78,.06);
+}
+.cnODate { font-family: var(--mono); font-size: 10.5px; color: var(--coin); }
+.cnONomP { display: block; margin: 3px 0 5px; font-size: 14px; }
+/* Une pièce pas encore rapportée : la place est tenue, le contenu non. */
+.cnObjet.vide { border-style: dashed; border-color: var(--line2); background: none; }
+.cnObjet.vide .cnONomP { color: var(--dim2); }
+.cnOTexte { margin: 0 0 6px; font-size: 12.5px; color: var(--dim); line-height: 1.5; }
+.cnOQui { font-size: 11px; color: var(--dim2); }
+
+/* Un acte scellé : trois lignes au milieu d'un cadre qui, lui, ne bouge pas.
+   Le vide est assumé — c'est ce qu'il y a à voir. */
+.cnScelle {
+  height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  gap: 8px; padding: 20px; color: var(--dim2);
+}
+.cnSCadenas { font-size: 30px; opacity: .5; }
+.cnSMot { margin: 0; font-size: 14px; color: var(--dim); }
+.cnSNote { margin: 0; max-width: 34ch; font-size: 12.5px; line-height: 1.55; font-style: italic; }
+
+@media (max-width: 700px) {
+  .cnCadre { height: min(660px, 88vh); }
+  .cnCorps { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 14px; }
+  .cnOnglets {
+    flex-direction: row; gap: 6px; align-self: start;
+    overflow-x: auto; overflow-y: hidden; padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+  .cnOnglet { width: auto; flex: none; grid-template-columns: 16px auto; }
+}
+
+/* Sur la Frise, ce qu'on a rapporté se signale. */
+.friAcquis {
+  padding: 3px 8px; border-radius: 7px; white-space: nowrap;
+  font-size: 10.5px; font-weight: 600;
+  border: 1px solid rgba(185,138,78,.55); background: rgba(185,138,78,.14); color: var(--coin);
+}
+
+@media (max-width: 560px) {
+  .carnetBtn { padding: 6px 8px; font-size: 14px; }
+}
+
+/* ============================================================
+   LE COMPTOIR, LE CASINO, L'OBSERVATOIRE
+
+   Trois salles de lecture. Elles ne distribuent rien : leur mise en page est
+   donc celle d'un document, pas d'un tableau de bord — des tableaux qui se
+   lisent, des chiffres alignés, et pas un seul bouton qui rapporte.
+   ============================================================ */
+
+/* ---------- communs aux trois ---------- */
+.cpBloc, .csBloc, .obBloc { margin-top: 26px; }
+.cpBloc:first-child, .csBloc:first-child, .obBloc:first-child { margin-top: 14px; }
+.cpTitre, .csTitre, .obTitre {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 10px;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim2);
+  padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.cpTitre i, .csTitre i, .obTitre i {
+  font-family: var(--mono); font-style: normal; font-size: 11px;
+  letter-spacing: 0; text-transform: none; color: var(--dim2);
+}
+.cpNote, .csNote, .obNote {
+  margin: 0 0 12px; font-size: 12.5px; color: var(--dim); line-height: 1.6;
+  max-width: 74ch;
+}
+/* Un tableau large ne fait jamais défiler la page de côté : il défile chez lui. */
+.cpTableCadre, .csTableCadre { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); }
+.cpTable, .csTable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cpTable th, .csTable th {
+  text-align: left; padding: 9px 12px; background: var(--panel2);
+  font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2);
+  font-weight: 600; white-space: nowrap;
+}
+.cpTable td, .csTable td { padding: 8px 12px; border-top: 1px solid var(--line); }
+
+/* ---------- Le Comptoir ---------- */
+.cpBarre { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.cpBarre label { font-size: 12.5px; color: var(--dim); }
+.cpBarre input {
+  width: 120px; padding: 7px 10px; border-radius: 9px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--txt);
+  font-family: var(--mono); font-size: 13px;
+}
+.cpEspace { flex: 1; }
+.cpVerdict {
+  margin: 0 0 16px; padding: 12px 15px; border-radius: 12px;
+  border: 1px solid rgba(185,138,78,.35); background: rgba(185,138,78,.06);
+  font-size: 13px; line-height: 1.6;
+}
+.cpTable tbody tr { cursor: pointer; }
+.cpTable tbody tr:hover { background: var(--panel); }
+/* La base dix est signalée : c'est la seule que le joueur lit partout ailleurs,
+   et tout l'intérêt est de la voir comme une base parmi d'autres. */
+.cpTable tr.dix td { background: rgba(124,92,255,.09); }
+.cpTable tr.dix .cpBase { color: var(--accent); font-weight: 600; }
+.cpBase { white-space: nowrap; color: var(--dim2); font-size: 11.5px; }
+.cpEcrit { font-family: var(--mono); font-size: 13.5px; word-break: break-all; }
+.cpChiffres { color: var(--dim2); font-size: 11px; white-space: nowrap; }
+.cpTraits { display: flex; flex-wrap: wrap; gap: 5px; }
+.cpTrait {
+  padding: 2px 8px; border-radius: 7px; font-size: 10.5px;
+  border: 1px solid rgba(78,201,122,.4); background: rgba(78,201,122,.1); color: #7fe0a0;
+}
+.cpRien { color: var(--dim2); }
+.cpJetons { display: flex; flex-wrap: wrap; gap: 6px; }
+.cpJeton {
+  padding: 4px 10px; border-radius: 8px; font-size: 11.5px;
+  border: 1px solid var(--line2); background: var(--panel); color: var(--dim2);
+}
+.cpJeton.eu { border-color: var(--coin); background: rgba(255,215,106,.1); color: var(--coin); }
+
+/* ---------- Le Casino ---------- */
+.csNum { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.csNum.fort { color: var(--txt); font-weight: 600; }
+.csPastille { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; }
+.csGaranties { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.csGar {
+  padding: 13px 15px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.csGar b { display: block; font-size: 13.5px; }
+.csGVal { font-family: var(--mono); font-size: 17px; color: var(--coin); }
+.csGar p { margin: 6px 0 0; font-size: 11.5px; color: var(--dim); line-height: 1.55; }
+
+.csReglages { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+.csReglages label { font-size: 12.5px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
+.csReglages input {
+  width: 62px; padding: 5px 8px; border-radius: 8px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--txt);
+  font-family: var(--mono); font-size: 13px;
+}
+/* La bonne et la mauvaise réponse côte à côte : c'est la comparaison qui
+   enseigne, pas la bonne réponse seule. */
+.csPartis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.csFaux, .csVrai { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); }
+.csFaux { background: rgba(255,77,109,.05); border-color: rgba(255,77,109,.3); }
+.csVrai { background: rgba(78,201,122,.05); border-color: rgba(78,201,122,.35); }
+.csEtiq { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--dim2); }
+.csFaux b, .csVrai b { display: block; margin: 5px 0 7px; font-family: var(--mono); font-size: 19px; }
+.csFaux p, .csVrai p { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.6; }
+
+.csSuites { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.csSuite { padding: 13px 15px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+.csSTete { display: flex; align-items: baseline; gap: 10px; }
+.csSTete b { font-size: 13.5px; flex: 1; }
+.csSCompte { font-family: var(--mono); font-size: 10.5px; color: var(--dim2); }
+.csSQuoi { margin: 6px 0 4px; font-size: 12.5px; }
+.csSEx { margin: 0 0 9px; font-size: 11.5px; color: var(--dim2); line-height: 1.5; }
+.csSSuite { display: flex; flex-wrap: wrap; gap: 4px; }
+.csTerme {
+  padding: 2px 7px; border-radius: 6px; font-family: var(--mono); font-size: 11px;
+  border: 1px solid var(--line2); background: rgba(0,0,0,.25); color: var(--dim2);
+}
+.csTerme.eu { border-color: var(--coin); background: rgba(255,215,106,.12); color: var(--coin); }
+/* Au-delà du mur : le terme existe, mais pas dans le vivier. Le dire évite de
+   laisser croire qu'on peut le pêcher. */
+.csTerme.hors { opacity: .4; text-decoration: line-through; }
+
+/* ---------- L'Observatoire ---------- */
+.obGrandChiffre { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 16px; }
+.obGrandChiffre b { font-family: var(--mono); font-size: 34px; line-height: 1; color: var(--coin); }
+.obGrandChiffre span { font-size: 12.5px; color: var(--dim); }
+.obGrandChiffre.sombre b { color: var(--txt); }
+
+.obRangs { display: flex; flex-direction: column; gap: 7px; }
+.obRang { display: grid; grid-template-columns: 116px 1fr max-content max-content; gap: 10px; align-items: center; }
+.obRNom { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+.obRNom i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.obRBarre { height: 8px; border-radius: 5px; background: rgba(0,0,0,.35); overflow: hidden; }
+.obRBarre i { display: block; height: 100%; border-radius: 5px; }
+.obRVal, .obRPc { font-family: var(--mono); font-size: 11.5px; color: var(--dim2); font-variant-numeric: tabular-nums; }
+.obRPc { min-width: 52px; text-align: right; }
+
+.obDeux { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 12px; }
+.obMesure { padding: 12px 15px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+.obMEtiq { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim2); }
+.obMesure b { display: block; margin: 4px 0 3px; font-family: var(--mono); font-size: 22px; }
+.obMDetail { font-size: 11.5px; color: var(--dim2); font-family: var(--mono); }
+
+.obManques { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.obManque { padding: 10px 13px; border-radius: 11px; border: 1px solid var(--line); background: var(--panel); }
+.obManque b { display: block; font-size: 13px; }
+.obMCompte, .obMChance { display: block; font-size: 11px; color: var(--dim2); font-family: var(--mono); }
+.obMChance { margin-top: 3px; color: var(--dim); }
+
+@media (max-width: 560px) {
+  .obRang { grid-template-columns: 96px 1fr max-content; }
+  .obRPc { display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LES MODALES
+
+   UNE SEULE COQUE POUR TOUTES. Le jeu en compte cinq — la fiche d'un nombre,
+   la Gare, une scène de quête, le Carnet, la Place — et chacune avait sa
+   bordure, son flou et son ombre. Cinq surcouches qui ne se ressemblent pas
+   donnent l'impression de cinq jeux. Elles partagent maintenant le même fond,
+   la même entrée, la même ombre et le même bouton de fermeture ; seule leur
+   couleur d'accent change.
+
+   L'ENTRÉE VAUT PLUS QUE N'IMPORTE QUEL DÉTAIL. Une modale qui apparaît d'un
+   coup se lit comme un bug ; la même, montée en 180 ms depuis 96 % avec le
+   fond qui s'assombrit derrière, se lit comme une intention. C'est le seul
+   endroit du jeu où trois lignes de CSS changent autant l'impression.
+
+   POURQUOI L'ANIMATION EST PILOTÉE PAR UNE CLASSE. `display: none` → `grid`
+   n'anime rien : un élément qui vient d'apparaître n'a pas d'état de départ à
+   interpoler. Le JS ajoute donc `.on` (qui affiche) puis `.vu` à l'image
+   suivante (qui anime). Voir openModal() dans js/ui.js.
+
+   ET ELLE SE TAIT SI ON LE DEMANDE. `prefers-reduced-motion` supprime les
+   transformations — pas les couleurs : quelqu'un qui coupe les animations
+   veut moins de mouvement, pas une interface plus laide.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ---------- le fond ----------
+   Un flou seul aplatit ; on ajoute une lueur radiale teintée par l'accent de
+   la modale, qui pousse le regard vers le centre. */
+.modal, .queteBoite, .seuilBoite, .placeBoite, .carnetBoite {
+  --mdAccent: var(--coin);
+  position: fixed; inset: 0; display: none; place-items: center;
+  background:
+    radial-gradient(120% 80% at 50% 42%,
+      color-mix(in srgb, var(--mdAccent) 10%, transparent), transparent 62%),
+    rgba(5, 6, 11, .86);
+  backdrop-filter: blur(7px) saturate(.9);
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.modal { z-index: 120; padding: 20px; --mdAccent: var(--rc, var(--coin)); }
+.queteBoite, .seuilBoite, .placeBoite, .carnetBoite { z-index: 80; padding: 18px; }
+
+/* `on` affiche, `vu` anime — voir montrerSurcouche() dans js/ui.js. */
+.modal.on, .queteBoite.on, .seuilBoite.on,
+.placeBoite.on, .carnetBoite.on { display: grid; }
+.modal.vu, .queteBoite.vu, .seuilBoite.vu,
+.placeBoite.vu, .carnetBoite.vu { opacity: 1; }
+
+/* ---------- le cadre ----------
+   Trois couches font toute la profondeur : une ombre portée très étalée qui
+   décolle la boîte du fond, un halo de la couleur d'accent qui dit de quoi on
+   parle, et un filet clair sur l'arête haute — le reflet qu'a n'importe quel
+   objet éclairé par le dessus. Sans ce filet, une boîte sombre sur fond sombre
+   n'a pas de bord. */
+.modalBox, .qtCadre, .slCadre {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--mdAccent) 42%, var(--line2));
+  background:
+    radial-gradient(140% 100% at 50% 0%,
+      color-mix(in srgb, var(--mdAccent) 13%, transparent), transparent 58%),
+    linear-gradient(168deg, #14161f, #0a0b12);
+  box-shadow:
+    0 36px 90px -30px rgba(0, 0, 0, .95),
+    0 0 60px -26px color-mix(in srgb, var(--mdAccent) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, .07);
+  transform: translateY(10px) scale(.965);
+  opacity: 0;
+  transition: transform .2s cubic-bezier(.2, .8, .3, 1), opacity .2s ease;
+}
+.modal.vu .modalBox,
+.queteBoite.vu .qtCadre, .seuilBoite.vu .slCadre,
+.placeBoite.vu .qtCadre, .carnetBoite.vu .qtCadre {
+  transform: none; opacity: 1;
+}
+
+/* Le filet de tête : une ligne de la couleur du palier, en haut du cadre.
+   C'est ce qui fait qu'un Mythique et un Commun ne se ressemblent pas au
+   premier coup d'œil, avant même d'avoir lu le mot. */
+.modalBox::before, .qtCadre::before, .slCadre::before {
+  content: ''; position: absolute; left: 22px; right: 22px; top: 0; height: 2px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg,
+    transparent, var(--mdAccent) 22%, var(--mdAccent) 78%, transparent);
+  opacity: .85; pointer-events: none;
+}
+
+.modalBox { width: min(560px, 100%); max-height: 86vh; overflow-y: auto; padding: 26px 24px 24px; }
+.qtCadre, .slCadre { --mdAccent: var(--coin); }
+
+/* ---------- la fermeture ----------
+   Elle flottait à droite du contenu, ce qui la faisait bouger avec le texte.
+   Elle est maintenant calée dans le coin, et elle ne défile pas avec la
+   fiche : on peut fermer sans remonter. */
+.modalClose {
+  position: sticky; top: 0; float: right; z-index: 2;
+  width: 32px; height: 32px; margin: -6px -4px 0 12px;
+  display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--line2);
+  background: rgba(10, 11, 18, .8); color: var(--dim);
+  font: inherit; font-size: 13px; line-height: 1; cursor: pointer;
+  transition: color .13s, border-color .13s, background .13s, transform .13s;
+}
+.modalClose:hover {
+  color: var(--txt); border-color: var(--mdAccent);
+  background: color-mix(in srgb, var(--mdAccent) 18%, rgba(10, 11, 18, .9));
+  transform: rotate(90deg);
+}
+.modalClose:focus-visible { outline: 2px solid var(--mdAccent); outline-offset: 2px; }
+
+/* ---------- la barre de défilement ----------
+   Celle du système est large et claire ; sur un cadre sombre elle attire
+   l'œil plus que le contenu. */
+.modalBox, .qtCadre, .slCadre, .cnVue { scrollbar-width: thin; scrollbar-color: var(--line2) transparent; }
+.modalBox::-webkit-scrollbar, .qtCadre::-webkit-scrollbar,
+.slCadre::-webkit-scrollbar, .cnVue::-webkit-scrollbar { width: 9px; }
+.modalBox::-webkit-scrollbar-thumb, .qtCadre::-webkit-scrollbar-thumb,
+.slCadre::-webkit-scrollbar-thumb, .cnVue::-webkit-scrollbar-thumb {
+  border-radius: 99px; background: var(--line2);
+  border: 3px solid transparent; background-clip: content-box;
+}
+.modalBox::-webkit-scrollbar-thumb:hover, .qtCadre::-webkit-scrollbar-thumb:hover,
+.slCadre::-webkit-scrollbar-thumb:hover, .cnVue::-webkit-scrollbar-thumb:hover {
+  background: var(--dim2); background-clip: content-box;
+}
+
+/* ══════════ LA FICHE D'UN NOMBRE ══════════ */
+
+/* Le rang AVANT le nombre, en petit : on annonce ce qu'on tient avant de le
+   montrer, comme une étiquette d'herbier. */
+.mdTete { margin-bottom: 16px; }
+.mdRang {
+  display: inline-block; padding: 3px 10px; margin-bottom: 8px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--mdAccent) 55%, transparent);
+  background: color-mix(in srgb, var(--mdAccent) 15%, transparent);
+  color: var(--mdAccent);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+.mdN {
+  display: block;
+  font-family: var(--mono); font-size: clamp(42px, 9vw, 66px); font-weight: 700;
+  line-height: .95; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  /* Le nombre porte la couleur de son palier en lueur, pas en teinte : écrit
+     en couleur il deviendrait illisible sur les paliers sombres. */
+  text-shadow: 0 0 34px color-mix(in srgb, var(--mdAccent) 55%, transparent);
+}
+.mdSurnom { margin: 8px 0 0; font-size: 14px; font-style: italic; color: var(--dim); }
+.mdAbsent { margin: 8px 0 0; font-size: 12.5px; color: var(--dim2); }
+
+/* Les faits, en jetons : un fait par jeton, tous à la même hauteur. */
+.mdJetons { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.mdJeton {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 99px;
+  border: 1px solid var(--line); background: rgba(0, 0, 0, .3);
+  font-family: var(--mono); font-size: 11.5px; color: var(--dim);
+}
+.mdJeton i { font-style: normal; font-size: 12px; opacity: .8; }
+
+.mdTheos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.mdTheo {
+  padding: 5px 11px; border-radius: 99px; font-size: 11.5px;
+  border: 1px solid rgba(185, 138, 78, .45);
+  background: rgba(185, 138, 78, .1); color: var(--coin);
+}
+
+/* Une ligne de trait gagne un liseré à gauche : la liste devient une colonne
+   de fiches, pas un empilement de rectangles identiques. */
+.modalBox .traitRow {
+  border-left: 2px solid color-mix(in srgb, var(--mdAccent) 35%, var(--line));
+  transition: border-color .13s, background .13s;
+}
+.modalBox .traitRow:hover {
+  border-left-color: var(--mdAccent);
+  background: rgba(0, 0, 0, .34);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal, .queteBoite, .seuilBoite, .placeBoite, .carnetBoite,
+  .modalBox, .qtCadre, .slCadre { transition: none; }
+  .modalBox, .qtCadre, .slCadre { transform: none; opacity: 1; }
+  .modalClose:hover { transform: none; }
+}
+
+@media (max-width: 560px) {
+  .modal { padding: 12px; }
+  .modalBox { padding: 20px 16px 18px; border-radius: 16px; max-height: 90vh; }
+  .modalBox::before, .qtCadre::before, .slCadre::before { left: 16px; right: 16px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LE PLAN ILLUSTRÉ
+
+   Le plan était un schéma tracé : deux rues, une rivière, une place ronde.
+   C'est maintenant un dessin, et le dessin porte la ville. Les rues et la
+   rivière restent tracées PAR-DESSUS, en très discret : elles servent encore
+   à montrer ce qui mène à quoi, et elles suivent les bâtiments quand on les
+   déplace.
+
+   LE VOILE N'EST PAS UN EFFET, C'EST DE LA LISIBILITÉ. Chaque bâtiment porte
+   son nom, sa description et son compteur en petit texte gris. Posés à nu sur
+   une illustration claire, ils deviennent illisibles. Le voile est donc
+   assombri en haut et en bas — là où se trouvent le rempart et la rue basse —
+   et laisse respirer le centre.
+
+   L'IMAGE FAIT 1536 × 1024, SOIT 3/2. Le plan large adopte ce rapport : le
+   dessin y tient en entier, sans recadrage, et une position en pourcentage
+   tombe donc exactement sur ce qu'on vise. Le plan étroit est en portrait :
+   l'image y est recadrée au centre, et les positions du plan étroit ne
+   correspondent pas aux mêmes toits. C'est pour ça qu'il y a deux jeux de
+   coordonnées.
+   ══════════════════════════════════════════════════════════════ */
+.villePlan {
+  background-image:
+    linear-gradient(180deg, rgba(6,7,12,.72) 0%, rgba(6,7,12,.34) 26%,
+                            rgba(6,7,12,.34) 68%, rgba(6,7,12,.78) 100%),
+    var(--villeFond, none);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  border-radius: 16px;
+  overflow: hidden;
+}
+/* Le plan large prend le rapport du dessin : rien n'est coupé. */
+.villePlan.large { aspect-ratio: 3 / 2; }
+
+
+/* L'emprise d'un bâtiment sur une illustration a besoin de son propre fond,
+   sinon le nom se perd dans le dessin. */
+.villePlan .villeNom,
+.villePlan .villeDesc,
+.villePlan .villeJauge {
+  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 10px rgba(0,0,0,.7);
+}
+
+/* ---------- ⚠ MODE PLACEMENT ---------- */
+/* Le plan rogne ses enfants pour que l'illustration garde ses coins arrondis.
+   Pendant le placement, un bâtiment traîné jusqu'au bord se retrouverait coupé
+   en deux : on laisse déborder le temps de poser. Le fond, lui, reste rogné —
+   c'est le `border-radius` qui s'en charge, pas l'`overflow`. */
+.villePlan.enEdition { overflow: visible; }
+.villePlan.enEdition .villeLieu { cursor: grab; touch-action: none; user-select: none; }
+.villePlan.enEdition .villeLieu:hover .villeIcone { transform: none; }
+.villePlan.enEdition .villeLieu::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 14px;
+  border: 1px dashed rgba(255,107,129,.45); opacity: 0;
+  transition: opacity .12s; pointer-events: none;
+}
+.villePlan.enEdition .villeLieu:hover::after,
+.villePlan.enEdition .villeLieu:focus-visible::after { opacity: 1; }
+.villePlan.enEdition .villeLieu.saisi { cursor: grabbing; z-index: 20; }
+.villePlan.enEdition .villeLieu.saisi::after {
+  opacity: 1; border-style: solid; border-color: #ff6b81;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 14px 34px -14px #000;
+}
+/* Un bâtiment fermé par les actes reste saisissable : on le place avant qu'il
+   n'ouvre, sinon il faudrait finir le jeu pour dessiner la carte. */
+.villePlan.enEdition .villeLieu.ferme { opacity: .7; cursor: grab; }
+
+#carteEdit {
+  position: fixed; left: 14px; bottom: 14px; z-index: 140;
+  width: min(300px, calc(100vw - 28px));
+  padding: 12px 14px; border-radius: 14px;
+  border: 1px dashed #ff6b81;
+  background: rgba(12,10,16,.94); backdrop-filter: blur(8px);
+  box-shadow: 0 20px 50px -22px #000;
+}
+.ceTete { display: flex; align-items: baseline; gap: 8px; }
+.ceTete b { font-size: 12.5px; color: #ff9aa8; }
+#ceQuel { font-family: var(--mono); font-size: 10px; color: var(--dim2); margin-left: auto; }
+.ceMot { margin: 6px 0 8px; font-size: 11px; color: var(--dim); line-height: 1.5; }
+#ceLu {
+  display: block; padding: 6px 9px; border-radius: 8px; margin-bottom: 8px;
+  background: rgba(0,0,0,.4); border: 1px solid var(--line);
+  font-family: var(--mono); font-size: 11.5px; color: var(--coin);
+}
+.cePied { display: flex; gap: 6px; flex-wrap: wrap; }
+#ceSortie {
+  width: 100%; height: 84px; margin-top: 8px; padding: 7px 9px;
+  border-radius: 8px; border: 1px solid var(--line);
+  background: rgba(0,0,0,.4); color: var(--dim);
+  font-family: var(--mono); font-size: 10px; resize: vertical;
+}
+#ceSortie:empty { display: none; }
+
+@media (max-width: 560px) {
+  #carteEdit { left: 8px; right: 8px; bottom: 8px; width: auto; }
+  #ceSortie { height: 60px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ⚠ ENCART « BIENTÔT » — PROVISOIRE
+
+   Il annonce un lieu qui n'est pas fini et dit de quoi il traitera. Il se
+   distingue d'un encart ordinaire par sa bordure tramée : c'est la même
+   convention que les aides de test, en plus calme — un bandeau qui a vocation
+   à disparaître ne doit pas ressembler au reste de la page, sinon personne ne
+   pense à le retirer.
+
+   Il est en HTML dans index.html, pas dans le rendu : le supprimer, c'est
+   effacer cinq lignes.
+   ══════════════════════════════════════════════════════════════ */
+.aVenir {
+  display: block; margin: 0 0 20px; padding: 14px 17px; border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--coin) 45%, var(--line2));
+  background:
+    linear-gradient(160deg, rgba(255, 215, 106, .07), rgba(255, 255, 255, .015));
+}
+.avEtiq {
+  display: inline-block; margin-bottom: 8px; padding: 3px 10px; border-radius: 8px;
+  border: 1px solid rgba(255, 215, 106, .5); background: rgba(255, 215, 106, .12);
+  color: var(--coin);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+}
+.avMot { margin: 0; font-size: 13px; line-height: 1.65; color: var(--dim); max-width: 74ch; }
+.avMot b { color: var(--txt); }
+/* La seconde ligne dit ce que l'encart doit à l'honnêteté : ce qui suit
+   fonctionne déjà. Un « bientôt » posé au-dessus d'un écran qui marche serait
+   un mensonge s'il ne le précisait pas. */
+.avNote {
+  margin: 9px 0 0; padding-top: 9px; border-top: 1px dashed var(--line);
+  font-size: 11.5px; color: var(--dim2); font-style: italic;
+}
+
+/* ⚠ L'interrupteur du placement. Il reprend la peinture des aides de test —
+   rouge tramé — pour la même raison : un bouton qui ne doit jamais atteindre
+   un joueur ne doit pas ressembler au reste de l'interface. Allumé, il devient
+   plein, parce qu'un mode actif se voit de loin ou ne sert à rien. */
+.neuf.placement { border-style: dashed; }
+.neuf.placement.actif {
+  border-style: solid; border-color: #ff6b81;
+  background: rgba(255, 107, 129, .22); color: #ffd2d8;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LES QUARTIERS
+
+   Un quartier est un bâtiment de plus sur le plan : il en a l'emprise, le
+   picto et le déplacement. Il s'en distingue par un liseré et par son
+   compteur de lieux — assez pour qu'on sache qu'un clic ouvre un choix et
+   n'emmène nulle part directement.
+   ══════════════════════════════════════════════════════════════ */
+.villeLieu.quartier .villeIcone {
+  border-color: color-mix(in srgb, var(--coin) 45%, var(--line2));
+  background: rgba(24, 20, 14, .94);
+}
+.villeLieu.quartier:hover .villeIcone { border-color: var(--coin); stroke: var(--coin); }
+.villeLieu.quartier .villeJauge { color: var(--coin); }
+
+/* La cible de rangement, pendant qu'on traîne un bâtiment au-dessus. */
+.villePlan.enEdition .villeLieu.cible .villeIcone {
+  border-color: #4ec97a; stroke: #4ec97a;
+  background: rgba(20, 40, 28, .96);
+  box-shadow: 0 0 0 3px rgba(78, 201, 122, .28);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LA FENÊTRE D'UN QUARTIER
+
+   INCRUSTÉE, PAS SUPERPOSÉE. Les autres modales du jeu posent un voile noir
+   sur toute la page : c'est juste quand on interrompt le joueur pour lui
+   montrer autre chose. Ici on ne l'interrompt pas — on lui déplie une adresse.
+   Le plan reste entièrement visible, la fenêtre se colle à côté du quartier
+   qu'on vient de toucher, et un bec dit lequel.
+
+   LE FOND N'EST PAS NOIR, IL EST TRANSPARENT — mais il existe : c'est lui qui
+   attrape le clic à côté pour refermer. Un panneau ancré sans zone de sortie
+   se referme au jugé, ou pas du tout.
+   ══════════════════════════════════════════════════════════════ */
+.quartierBoite {
+  --mdAccent: var(--coin);
+  position: fixed; inset: 0; z-index: 110; display: none;
+  background: none; backdrop-filter: none;
+  opacity: 0; transition: opacity .16s ease;
+}
+.quartierBoite.on { display: block; }
+.quartierBoite.vu { opacity: 1; }
+
+.qrCadre {
+  position: fixed;                       /* posé par placerQuartier() */
+  width: min(470px, calc(100vw - 24px));
+  max-height: min(560px, calc(100vh - 24px));
+  /* `visible` est obligatoire : le bec est posé hors du cadre. C'est donc le
+     corps qui défile quand un quartier compte trop de lieux — sans ça la
+     fenêtre déborderait de l'écran au lieu de se laisser parcourir. */
+  overflow: visible;
+  display: flex; flex-direction: column;
+  padding: 15px 17px 16px;
+  /* Le plan est une illustration chargée : sans une ombre franche, la fenêtre
+     s'y noie. Elle est plus dense que celle des autres modales. */
+  box-shadow:
+    0 26px 60px -18px rgba(0, 0, 0, .96),
+    0 0 0 1px rgba(0, 0, 0, .5),
+    0 0 44px -20px color-mix(in srgb, var(--coin) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, .07);
+  transform: scale(.97); opacity: 0;
+  transition: transform .16s cubic-bezier(.2, .8, .3, 1), opacity .16s ease;
+}
+.quartierBoite.vu .qrCadre { transform: none; opacity: 1; }
+
+/* Le bec : un carré tourné, moitié dedans moitié dehors, qui n'emprunte que
+   les deux bords visibles de la fenêtre pour ne pas dessiner de croix. */
+.qrBec {
+  position: absolute; width: 13px; height: 13px;
+  background: #12141d;
+  border: 1px solid color-mix(in srgb, var(--coin) 42%, var(--line2));
+  transform: rotate(45deg);
+}
+.qrCadre[data-cote="droite"] .qrBec { left: -7px; margin-top: -7px; border-right: 0; border-top: 0; }
+.qrCadre[data-cote="gauche"] .qrBec { right: -7px; margin-top: -7px; border-left: 0; border-bottom: 0; }
+.qrCadre[data-cote="dessous"] .qrBec { top: -7px; margin-left: -7px; border-right: 0; border-bottom: 0; }
+
+.qrMot { margin: 0 0 10px; font-size: 12px; color: var(--dim); }
+
+/* ---------- deux colonnes ---------- */
+.qrCorps {
+  display: grid; grid-template-columns: 152px 1fr; gap: 14px; margin-top: 10px;
+  min-height: 0; overflow-y: auto; scrollbar-width: thin;
+}
+
+.qrListe { display: flex; flex-direction: column; gap: 4px; align-self: start; }
+.qrChoix {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 8px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 8px 10px; border-radius: 10px;
+  border: 1px solid transparent; background: none;
+  color: var(--txt); font: inherit;
+  transition: background .12s, border-color .12s;
+}
+.qrChoix:hover { background: var(--panel); border-color: var(--line); }
+.qrChoix:focus-visible { outline: 2px solid var(--coin); outline-offset: 2px; }
+.qrChoix.on { background: var(--panel2); border-color: var(--coin); }
+.qrChoix.ferme { opacity: .5; }
+.qrPicto {
+  width: 20px; height: 20px; fill: none; stroke: var(--dim2); stroke-width: 1.5;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+.qrChoix.on .qrPicto { stroke: var(--coin); }
+.qrCNom { font-size: 12.5px; font-weight: 600; }
+.qrCadenas { font-size: 10px; }
+
+/* ---------- le volet de droite ---------- */
+.qrVolet { min-width: 0; }
+/* L'image en bandeau : large et courte, elle situe le lieu sans manger la
+   place des informations. */
+.qrBandeau {
+  border-radius: 11px; overflow: hidden; margin-bottom: 10px;
+  border: 1px solid var(--line2); background: rgba(0, 0, 0, .3);
+}
+.qrBandeau img { display: block; width: 100%; height: auto; aspect-ratio: 450 / 160; object-fit: cover; }
+.qrBandeau svg {
+  display: block; width: 100%; aspect-ratio: 450 / 160; padding: 14px 40%;
+  box-sizing: border-box;
+  fill: none; stroke: var(--dim); stroke-width: 1.3;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+
+.qrInfos { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.qrINom { font-size: 15px; }
+.qrIDesc { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
+.qrIEtat { font-family: var(--mono); font-size: 10.5px; color: var(--coin); }
+.qrIFerme { margin: 4px 0 0; font-size: 11.5px; color: var(--dim2); font-style: italic; }
+.qrInfos .btn { margin-top: 6px; }
+
+.qrEdit {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+  padding-top: 11px; border-top: 1px dashed rgba(255, 107, 129, .35);
+}
+
+/* Sous 560 px il n'y a plus deux colonnes à faire tenir : la liste passe en
+   bande horizontale au-dessus du volet, et la fenêtre se pose sous le nœud. */
+@media (max-width: 560px) {
+  .qrCorps { grid-template-columns: 1fr; gap: 10px; }
+  .qrListe {
+    flex-direction: row; overflow-x: auto; padding-bottom: 4px;
+    border-bottom: 1px solid var(--line); scrollbar-width: thin;
+  }
+  .qrChoix { flex: none; width: auto; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LA PLACE ET LE PORT — MÊME FORME QUE LE QUARTIER
+
+   Les trois fenêtres qui s'ouvrent depuis la carte partagent le cadre
+   (`.qrCadre`), le bec et l'ancrage. Ce qui les distingue tient dans leur
+   contenu, pas dans leur habillage : le plan reste visible dans les trois
+   cas, et rien ne noircit la page.
+   ══════════════════════════════════════════════════════════════ */
+/* `.ancree` est posée par le rendu, pas déduite du contenu. On aurait pu
+   écrire `:has(.gaCadre)` — mais là où `:has` manque, la règle entière tombe
+   et la fenêtre s'affiche en haut à gauche, sans fond ni position. Une classe
+   ne se dérobe jamais. */
+.placeBoite.ancree, .queteBoite.ancree {
+  z-index: 110; display: none; padding: 0;
+  background: none; backdrop-filter: none;
+}
+.placeBoite.ancree.on, .queteBoite.ancree.on { display: block; }
+
+/* LES TROIS FENÊTRES DE LA CARTE DÉFILENT PAR LEUR CORPS, JAMAIS PAR LEUR
+   CADRE. Le cadre doit garder `overflow: visible` — le bec est posé dehors —
+   et il est donc en colonne flexible : l'en-tête reste en place, le contenu
+   glisse dessous. Sans ça, un quai de quinze quêtes poussait le bouton
+   « Fermer » hors de l'écran, et il n'y avait plus qu'Échap pour sortir. */
+.plCadre { width: min(500px, calc(100vw - 24px)); }
+.gaCadre { width: min(470px, calc(100vw - 24px)); }
+.gaCorps {
+  min-height: 0; overflow-y: auto; scrollbar-width: thin;
+  margin-top: 4px; padding-right: 4px;
+}
+
+/* ---------- la Place ---------- */
+.plEmoji { font-size: 15px; line-height: 1; width: 20px; text-align: center; }
+.plDit {
+  padding: 12px 14px; border-radius: 12px; margin-bottom: 9px;
+  border: 1px solid rgba(255, 215, 106, .3);
+  background: linear-gradient(160deg, rgba(255, 215, 106, .07), rgba(255, 255, 255, .015));
+}
+.plQui {
+  display: block; margin-bottom: 5px;
+  font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase; color: var(--coin);
+}
+.plTexte { margin: 0; font-size: 13px; line-height: 1.6; }
+.plRole { margin: 0; font-size: 11.5px; color: var(--dim2); font-style: italic; line-height: 1.5; }
+
+.plPied { display: flex; align-items: center; gap: 10px; margin-top: 11px; }
+/* Les perles disent qu'il reste des choses à entendre, sans promettre une fin :
+   la suite tourne en boucle, et c'est visible parce qu'elles se rallument. */
+.plPerles { display: flex; gap: 4px; }
+.plPerles i {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--line2); transition: background .15s;
+}
+.plPerles i.encours { background: var(--coin); }

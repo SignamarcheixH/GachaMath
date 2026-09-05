@@ -87,7 +87,8 @@ let idleSpin = null;
    qu'il arrive : on gagne le bouton Retour sans créer huit pages
    vides, ce qui pénaliserait le référencement au lieu de l'aider.
    ============================================================ */
-const VUES = ['hub', 'gacha', 'collection', 'forge', 'atelier', 'bonus', 'minijeux', 'classement', 'oracle', 'retours'];
+const VUES = ['hub', 'frise', 'gacha', 'collection', 'forge', 'atelier', 'bonus',
+              'minijeux', 'classement', 'comptoir', 'observatoire', 'casino', 'retours'];
 
 /* Les adresses des anciens onglets restent valides : un lien partagé, un
    signet ou un onglet resté ouvert doivent continuer de fonctionner. */
@@ -117,6 +118,9 @@ function fermerSurcouches() {
    d'un retour arrière, qui n'en ajoute évidemment pas. */
 function ouvrirOnglet(nom, pousser = true) {
   if (!VUES.includes(nom)) nom = 'gacha';
+  /* Le verrou des actes vaut aussi pour l'adresse : sans ça, #/forge ouvrirait
+     la Forge à l'acte 0. On retombe sur le Vivier, qui est toujours là. */
+  if (typeof vueOuverte === 'function' && !vueOuverte(nom)) nom = 'gacha';
   const btn = $(`#tabs button[data-tab="${nom}"]`);
   if (!btn) return;
 
@@ -139,6 +143,7 @@ function ouvrirOnglet(nom, pousser = true) {
     if (state.revision) { state.revision = null; save(); }
   }
 
+  majOngletsVerrouilles();
   $$('#tabs button').forEach(b => b.classList.toggle('on', b === btn));
   $$('main .tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + nom));
 
@@ -151,7 +156,28 @@ function ouvrirOnglet(nom, pousser = true) {
   if (nom === 'retours' && typeof ouvrirRetours === 'function') ouvrirRetours();
 }
 
+/* UN ONGLET ABSENT DE `VUES` NE S'OUVRE PAS, ET RIEN NE LE DISAIT. Le Comptoir,
+   l'Observatoire et le Casino ont vécu plusieurs jours avec leur bouton, leur
+   section et leur rendu — mais pas leur nom ici : `ouvrirOnglet` les
+   remplaçait silencieusement par le Vivier. Le rendu, lui, marchait, parce
+   que `renderAll()` rend toutes les sections quelle que soit celle affichée :
+   on pouvait lire leur contenu dans le document sans jamais pouvoir les voir.
+   Un bouton qui n'ouvre rien ne se signale pas tout seul ; il le fait
+   maintenant. */
+function verifierOnglets() {
+  const orphelins = $$('#tabs button[data-tab]')
+    .map(b => b.dataset.tab)
+    .filter(t => !VUES.includes(t));
+  if (orphelins.length) {
+    console.error('Onglets absents de VUES — leur bouton ne les ouvrira pas : '
+      + orphelins.join(', '));
+  }
+  return orphelins;
+}
+
 function initUI() {
+  verifierOnglets();
+
   // onglets
   $('#tabs').addEventListener('click', e => {
     const btn = e.target.closest('button[data-tab]');
@@ -175,8 +201,14 @@ function initUI() {
 
   // tirage
   $('#btnPull').addEventListener('click', () => doPull(state.paquet || 10));
-  $('#revealClose').addEventListener('click', closeReveal);
-  $('#revealSkip').addEventListener('click', () => $$('.rcard').forEach(c => c.classList.add('flip')));
+  $('#revealClose').addEventListener('click', () => {
+    closeReveal();
+    if (typeof visiteSignal === 'function') visiteSignal('revelationFermee');
+  });
+  $('#revealSkip').addEventListener('click', () => {
+    annulerCascade();
+    $$('.rcard').forEach(c => c.classList.add('flip'));
+  });
 
   // machine au repos
   idleSpin = setInterval(() => {
@@ -200,13 +232,14 @@ function initUI() {
     save(); renderAll();
   });
 
-  // oracle
-  $('#btnOracle').addEventListener('click', doOracle);
-  $('#oracleIn').addEventListener('keydown', e => { if (e.key === 'Enter') doOracle(); });
-  $('#btnOracleRnd').addEventListener('click', () => {
-    $('#oracleIn').value = (Math.random() * FORGE_MAX + 1) | 0;
-    doOracle();
-  });
+  /* ⚠ L'interrupteur du mode placement. Hors développement il est retiré du
+     document — pas caché : un bouton `hidden` reste dans le DOM, et un bouton
+     de développement n'a rien à y faire en production. */
+  const bp = $('#btnPlacement');
+  if (bp) {
+    if (typeof CARTE_DEV === 'undefined' || !CARTE_DEV) bp.remove();
+    else bp.addEventListener('click', () => basculerPlacement());
+  }
 
   // sauvegarde en ligne
   $('#nuageBtn').addEventListener('click', () => { if (typeof ouvrirNuage === 'function') ouvrirNuage(); });
@@ -217,6 +250,32 @@ function initUI() {
   });
 
   // effacement
+  /* ⚠ AIDE DE TEST. Repartir VRAIMENT de zéro : la sauvegarde locale, la
+     progression, les quêtes, et le choix de mini-jeu. Le rechargement fait le
+     reste — `wipe()` bloque l'écriture, donc rien ne peut être réenregistré
+     entre l'effacement et le redémarrage. */
+  const carnetB = $('#carnetBtn');
+  if (carnetB) carnetB.addEventListener('click', ouvrirCarnet);
+
+  const neuf = $('#btnNeuf');
+  if (neuf) {
+    if (typeof ACTES_TEST === 'undefined' || !ACTES_TEST) neuf.remove();
+    else neuf.addEventListener('click', () => {
+      const enLigne = typeof nuage !== 'undefined' && nuage.connecte;
+      if (!confirm("TEST — repartir de zéro ?\n\n"
+        + "Collection, jetons, poussière, actes, quêtes : tout est effacé, et le "
+        + "tutoriel se relance comme au premier lancement."
+        + (enLigne ? "\n\n⚠ Cet appareil est lié au nuage : la partie en ligne "
+                   + "reviendra au prochain chargement. Déliez-le d'abord." : ""))) return;
+      wipe();
+      try {
+        localStorage.removeItem('gachanombres.minijeu');
+        localStorage.removeItem('gachanombres.sync.v1');
+      } catch (e) {}
+      location.reload();
+    });
+  }
+
   $('#btnWipe').addEventListener('click', () => {
     const enLigne = typeof nuage !== 'undefined' && nuage.connecte;
     const message = enLigne
@@ -236,6 +295,9 @@ Votre partie restera sauvegardée en ligne sous « ${nuage.pseudo} » `
     if (e.key !== 'Escape') return;
     closeModal();
     if ($('#reveal').classList.contains('on')) closeReveal();
+    /* La fenêtre d'un quartier n'a pas de voile : sans Échap, le seul moyen de
+       sortir au clavier serait d'atteindre son bouton « Fermer ». */
+    if (typeof fermerQuartier === 'function') fermerQuartier();
   });
 
   reglerFondsOnglets();
@@ -245,7 +307,6 @@ Votre partie restera sauvegardée en ligne sous « ${nuage.pseudo} » `
   buildPackSizes();
   buildRarityChips();
   buildOddsTable();
-  buildCodex();
 
   // boucle de jeu
   setInterval(() => { tick(); renderWallet(); }, 200);   // la pastille suit les jetons de près
@@ -271,7 +332,7 @@ function reglerFondsOnglets() {
   t.classList.toggle('fondG', t.scrollLeft > marge);
 }
 
-/* L'onglet choisi doit rester visible : sinon on clique sur « Oracle » et la
+/* L'onglet choisi doit rester visible : sinon on clique sur « Codex » et la
    barre continue d'afficher « Tirage ». */
 function centrerOnglet(btn) {
   if (!btn || !btn.scrollIntoView) return;
@@ -297,10 +358,48 @@ const SECTIONS = [
   ['mini-jeux',    () => renderRevision(), '#revZone'],
   ['classement',   () => renderClassement(), '#clZone'],
   ['retours',      () => renderRetours(),   '#retZone'],
+  ['comptoir',     () => renderComptoir(), '#cpZone'],
+  ['casino',       () => renderCasino(),   '#csZone'],
+  ['observatoire', () => renderObservatoire(), '#obZone'],
   ['carte',        () => renderHub(),       '#hubZone'],
-  ['bannières',    () => poserBannieresDeLieu(), null],
+  ['quartier',     () => renderQuartier(), null],
+  ['frise',        () => renderFrise(),     '#friZone'],
+  ['quête',        () => renderQuete(),     null],
+  ['accueil',      () => renderAccueil(),   null],
+  ['seuil',        () => renderSeuil(),     null],
+  ['onglets',      () => majOngletsVerrouilles(), null],
+  ['placement',    () => majBoutonPlacement(), null],
+  ['place',        () => renderPlace(),     null],
+  ['carnet',       () => renderCarnet(),    null],
+  ['visite',       () => renderVisite(),    null],
+  ['fond du lieu', () => poserFondDeLieu(),  null],
+  ['opacité fond', () => appliquerFondOpacite(), null],
 ];
 const sectionsSignalees = new Set();
+
+/* ⚠ L'interrupteur du placement ne se montre que sur la Carte : ailleurs il
+   n'aurait rien à commander, et un bouton inerte dans un en-tête est une
+   promesse qu'on ne tient pas. */
+function majBoutonPlacement() {
+  const b = $('#btnPlacement');
+  if (!b) return;
+  b.hidden = vueCourante() !== 'hub';
+  const actif = typeof CARTE_EDITION !== 'undefined' && CARTE_EDITION;
+  b.classList.toggle('actif', actif);
+  b.textContent = actif ? '⇱ placement actif' : '⇱ placement';
+}
+
+/* Un onglet dont le lieu n'est pas ouvert disparaît de la barre. On le CACHE
+   au lieu de le désactiver : une barre de onze onglets à moitié grisés dit au
+   joueur qu'il lui manque tout, alors qu'une barre courte qui s'allonge dit
+   qu'il progresse. La Carte, elle, garde les lieux fermés en sourdine — c'est
+   là qu'on va voir ce qui reste à mériter. */
+function majOngletsVerrouilles() {
+  if (typeof vueOuverte !== 'function') return;
+  $$('#tabs button[data-tab]').forEach(b => {
+    b.hidden = !vueOuverte(b.dataset.tab);
+  });
+}
 
 function renderAll() {
   for (const [nom, fn, cible] of SECTIONS) {
@@ -382,6 +481,21 @@ function renderBadges() {
   const aPrendre = pendingCollections().length + pendingDefis().length;
   $('#bBonus').textContent = aPrendre || '';
   $('#bCollection').textContent = uniqueCount(state) || '';
+  /* Une porte franchissable se signale là où on la franchit. On l'annonce par
+     une pastille et pas par un toast : le toast se répéterait à chaque rendu,
+     et il partirait pendant qu'on regarde ailleurs. */
+  const acte = $('#bActe');
+  if (acte) acte.textContent = (typeof peutFranchir === 'function' && peutFranchir()) ? '▸' : '';
+  /* La pastille du Carnet compte ce qui demande une action : une porte
+     franchissable, et les quêtes dont l'objectif vient d'être rempli. */
+  const carnet = $('#bCarnet');
+  if (carnet && typeof quetesOuvertes === 'function') {
+    const prets = quetesOuvertes().filter(q => {
+      const e = etapeCourante(q);
+      return e.type !== 'faire' || objectifRempli(e);
+    }).length + ((typeof peutFranchir === 'function' && peutFranchir()) ? 1 : 0);
+    carnet.textContent = prets || '';
+  }
 }
 
 function renderPity() {
@@ -414,7 +528,17 @@ function doPull(count) {
   save();
   renderWallet(); renderPity(); renderBadges();
   showReveal(res.results);
+  /* La visite attend un vrai tirage, pas un clic sur « Continuer ». */
+  if (typeof visiteSignal === 'function') visiteSignal('tirage');
 }
+
+/* Les minuteurs de la cascade sont gardés pour pouvoir être annulés : sans
+   ça, « Tout révéler » laisse cent réveils en attente, et un second tirage
+   lancé aussitôt après verrait les retardataires du premier retourner ses
+   cartes à contretemps. */
+const CASCADE_DUREE_MAX = 2600;      // millisecondes, du premier au dernier
+let _cascade = [];
+function annulerCascade() { _cascade.forEach(clearTimeout); _cascade = []; }
 
 function showReveal(recolte, titre) {
   /* Trié par valeur croissante, et sur une copie : `recolte` appartient à
@@ -425,8 +549,11 @@ function showReveal(recolte, titre) {
      un paquet de cent lisible d'un coup d'œil, et fait ressortir les suites. */
   const results = [...recolte].sort((a, b) => a.n - b.n);
   const grid = $('#revealGrid');
-  /* Au-delà d'une vingtaine, on renonce au retournement carte par carte :
-     cent animations en cascade feraient attendre pour rien. */
+  /* `dense` ne commande QUE la mise en page — des cartes plus petites et une
+     grille qui défile. Elle coupait aussi la cascade : au-delà de vingt cartes
+     tout se retournait d'un bloc, et un paquet de cent n'avait pas de
+     révélation du tout. Le retournement un à un vaut maintenant pour tous les
+     paquets ; c'est le pas qui s'ajuste, pas le principe. */
   const dense = results.length > 20;
   grid.className = 'revealGrid'
     + (results.length === 1 ? ' one' : '')
@@ -462,19 +589,38 @@ function showReveal(recolte, titre) {
   $('#revealSummary').innerHTML =
     `${nNew} nouveau${nNew > 1 ? 'x' : ''} · +${fmt(dust)} ✨ · meilleur : <b style="color:var(--r-${best.ev.rarity.key})">${best.ev.rarity.label}</b>`;
 
-  $('#revealSkip').style.display = results.length > 1 && !dense ? '' : 'none';
+  /* C'est sur un paquet de cent qu'on a le plus envie d'écourter : le bouton
+     est donc proposé dès qu'il y a plus d'une carte. */
+  $('#revealSkip').style.display = results.length > 1 ? '' : 'none';
   $('#reveal').classList.add('on');
 
+  /* LE PAS DE LA CASCADE. Il se resserre quand le paquet grossit, et la durée
+     totale est bornée : un paquet de dix se déroule en une seconde, un paquet
+     de cent en moins de trois. Sans ce plafond, cent cartes à 35 ms auraient
+     fait attendre trois secondes et demie sans rien apporter de plus. */
   const cards = [...grid.children];
-  if (dense) cards.forEach(c => c.classList.add('flip'));
-  else cards.forEach((c, i) => setTimeout(() => c.classList.add('flip'), 260 + i * Math.max(35, 130 - results.length * 6)));
+  const pas = Math.min(Math.max(35, 130 - results.length * 6),
+                       CASCADE_DUREE_MAX / Math.max(1, results.length));
+  annulerCascade();
+  cards.forEach((c, i) => _cascade.push(
+    setTimeout(() => c.classList.add('flip'), 260 + i * pas)));
 
   results.filter(r => r.ev.rarity.idx >= 4).slice(0, 5).forEach(r => {
     setTimeout(() => toast(`${r.ev.rarity.idx === 5 ? '🌠' : '✨'} <b>${fmt(r.n)}</b> — ${r.ev.rarity.label}${r.ev.nickname ? ' · ' + r.ev.nickname : ''}`, 'gold'), 700);
   });
 }
 
-function closeReveal() { $('#reveal').classList.remove('on'); renderAll(); }
+function closeReveal() {
+  /* Pendant la visite, on ne referme pas ce qu'elle est en train de montrer.
+     Le refus vaut pour toutes les portes : le bouton, la touche Échap et le
+     retour arrière passent tous par ici. */
+  if (typeof visiteRetientRecap === 'function' && visiteRetientRecap()) {
+    toast("Regardez votre prise — la visite vous dira quand refermer.", 'bad');
+    return;
+  }
+  $('#reveal').classList.remove('on');
+  renderAll();
+}
 
 /* ============================================================
    COLLECTION
@@ -554,7 +700,23 @@ function renderCollection() {
 
   const grid = $('#colGrid');
   if (!list.length) {
-    grid.innerHTML = `<div class="empty">${total ? "Aucun nombre ne correspond." : "Collection vide. Direction l'onglet Tirage."}</div>`;
+    /* CE QUE L'ORACLE SAVAIT FAIRE, ET QUE PLUS RIEN NE FAISAIT.
+       L'onglet Oracle permettait d'interroger n'importe quel entier jusqu'à
+       99 999 — y compris ceux qu'on ne possède pas et ceux qui sont au-delà du
+       mur. En le retirant, on aurait perdu ça sans le remplacer. La recherche
+       de l'Herbier est exactement l'endroit où l'on tape un nombre : quand
+       elle ne trouve rien mais qu'on a tapé un entier valide, elle propose sa
+       fiche. Un geste de moins qu'un onglet dédié, et au bon endroit. */
+    const cherche = /^[0-9]+$/.test(q) ? +q : null;
+    const consultable = cherche !== null && cherche >= 0 && cherche <= FORGE_MAX;
+    grid.innerHTML = `<div class="empty">
+      ${total ? "Aucun nombre ne correspond." : "Collection vide. Direction l'onglet Tirage."}
+      ${consultable ? `<br><button class="btn ghost sm" id="colFiche" type="button" style="margin-top:10px">
+          Voir la fiche de ${fmt(cherche)}</button>
+        <br><span class="tiny">Vous ne l'avez pas — la fiche dit quand même ce qu'il est.</span>` : ''}
+    </div>`;
+    const fiche = $('#colFiche');
+    if (fiche) fiche.addEventListener('click', () => openModal(cherche));
     $('#colMore').innerHTML = '';
     return;
   }
@@ -693,41 +855,6 @@ function renderDefis() {
   ].map(([k, v]) => `<div><b>${v}</b><small>${k}</small></div>`).join('');
 }
 
-/* ============================================================
-   ORACLE & CODEX
-   ============================================================ */
-function doOracle() {
-  const n = intOrNull($('#oracleIn').value);
-  if (n === null || n < 0 || n > FORGE_MAX)
-    return toast(`Entrez un entier entre 0 et ${fmt(FORGE_MAX)}.`, 'bad');
-  $('#oracleOut').innerHTML = oracleCardHTML(n);
-  $('#oracleOut').querySelectorAll('[data-n]').forEach(el =>
-    el.addEventListener('click', () => openModal(+el.dataset.n)));
-}
-
-function oracleCardHTML(n) {
-  const ev = evaluate(n);
-  const k = ev.rarity.key;
-  const rec = state.owned[n];
-  const tirable = n >= 1 && n <= POOL_MAX;
-  return `<div class="oracleCard" style="${rc(k)}">
-    <div class="oracleTop">
-      <span class="n">${fmt(n)}</span>
-      <span class="rr">${ev.rarity.label}</span>
-      <span class="tiny">${ev.score} pts de rareté</span>
-    </div>
-    ${ev.nickname ? `<p style="font-style:italic;margin:0 0 10px">« ${ev.nickname} »</p>` : ''}
-    <div class="oracleMeta">
-      ${ev.factors} · ${ev.divisors} diviseur${ev.divisors > 1 ? 's' : ''} · somme des chiffres ${digitSum(n)}
-      <br>${rec ? `✅ Possédé ×${rec.copies}` : '❌ Absent de la collection'}
-      · ${tirable ? 'Accessible au tirage' : '<b>Hors tirage — forge obligatoire</b>'}
-    </div>
-    <div class="traitList">
-      ${ev.traits.map(t => traitRowHTML(t, n)).join('')}
-    </div>
-  </div>`;
-}
-
 /* La démonstration : un calcul posé, ou une phrase quand le calcul n'a pas de sens. */
 function proofHTML(t, n, isExample) {
   if (!t.proof || !Number.isInteger(n)) return '';
@@ -741,6 +868,21 @@ function proofHTML(t, n, isExample) {
 }
 
 function traitRowHTML(t, n, isExample) {
+  /* UN TRAIT PEUT ÊTRE SANS NOM. Tant que sa quête n'est pas achevée, on
+     montre qu'il y a là quelque chose — les points comptent, la rareté est
+     déjà acquise — mais on ne dit pas quoi. Le manque est le déclencheur :
+     c'est en voyant « ??? » sur un Mythique qu'on va chercher qui sait. */
+  if (typeof traitConnu === 'function' && !traitConnu(t.id)) {
+    return `<div class="traitRow inconnu">
+      <span class="em">❔</span>
+      <div class="body">
+        <b>Propriété sans nom</b>
+        <p>Ce nombre a quelque chose de remarquable, et personne dans la Cité
+           ne sait encore le dire. Sa rareté, elle, est déjà comptée.</p>
+      </div>
+      <span class="pts">+${t.pts}</span>
+    </div>`;
+  }
   return `<div class="traitRow ${t.culte ? 'culte' : ''}">
     <span class="em">${t.emoji}</span>
     <div class="body">
@@ -752,36 +894,97 @@ function traitRowHTML(t, n, isExample) {
   </div>`;
 }
 
-function buildCodex() {
-  $('#codexList').innerHTML = TRAITS.map(t => traitRowHTML(t, t.example, true)).join('');
-}
-
 /* ============================================================
    MODALE
    ============================================================ */
+/* ============================================================
+   MONTRER ET CACHER UNE SURCOUCHE
+
+   `display: none` → `grid` n'anime rien : un élément qui vient d'apparaître
+   n'a pas d'état de départ à interpoler. On affiche donc d'abord (`on`), puis
+   on anime à l'image suivante (`vu`). Toutes les surcouches du jeu passent par
+   ici, sinon la fiche d'un nombre monterait en douceur pendant que la Gare
+   apparaîtrait d'un coup — et deux modales qui n'entrent pas de la même façon
+   se lisent comme deux jeux.
+
+   Appelée à chaque rendu, elle ne rejoue rien : les classes sont déjà là. */
+function montrerSurcouche(boite) {
+  if (!boite) return;
+  boite.classList.add('on');
+  if (boite.classList.contains('vu')) return;
+  /* ONGLET EN ARRIÈRE-PLAN : le navigateur gèle requestAnimationFrame. Sans ce
+     cas, la surcouche resterait affichée à opacité zéro — invisible, mais
+     posée par-dessus la page et avalant les clics. Personne ne regarde : on
+     passe directement à l'état final, sans animation. */
+  if (document.hidden) { boite.classList.add('vu'); return; }
+  requestAnimationFrame(() => {
+    if (boite.classList.contains('on')) boite.classList.add('vu');
+  });
+}
+function cacherSurcouche(boite) {
+  if (boite) boite.classList.remove('on', 'vu');
+}
+
 function openModal(n) {
+  /* Une quête demande d'avoir ouvert une fiche : on compte. C'est le seul
+     compteur que ce geste alimente, et il ne sert qu'à ça. */
+  state.stats.fichesOuvertes = (state.stats.fichesOuvertes || 0) + 1;
   const ev = evaluate(n);
   const rec = state.owned[n];
   const k = ev.rarity.key;
   const inSets = COLLECTIONS.filter(c => c.nums ? c.nums.includes(n) : (c.pred && forgeable(n)));
 
-  $('#modalBox').style.setProperty('--rc', `var(--r-${k})`);
+  /* LA COULEUR DU PALIER COMMANDE TOUTE LA FICHE : bordure, halo, pastille,
+     filet de tête. C'est la seule chose qui distingue visuellement un Commun
+     d'un Mythique, et c'est ce que le joueur vient voir. */
+  $('#modal').style.setProperty('--rc', `var(--r-${k})`);
+
+  /* Les renseignements passent en jetons plutôt qu'en lignes séparées par des
+     <br> : trois faits sur une ligne se lisent d'un coup d'œil, trois lignes
+     de texte gris se sautent. */
+  const jetons = [
+    ['🧩', ev.factors],
+    ['➗', `${ev.divisors} diviseur${ev.divisors > 1 ? 's' : ''}`],
+    ['★', `${ev.score} pts`],
+  ];
+  if (rec) {
+    jetons.push(['📗', `×${rec.copies}`]);
+    jetons.push(['🪙', `${fmt(Math.round(ev.rarity.coin * (1 + 0.15 * (Math.min(rec.copies, 25) - 1))))}/min`]);
+    jetons.push(['✨', `doublon ${fmt(ev.rarity.dust)}`]);
+  }
+
   $('#modalBox').innerHTML = `
-    <button class="btn ghost sm modalClose">✕</button>
-    <div class="oracleTop">
-      <span class="n">${fmt(n)}</span>
-      <span class="rr">${ev.rarity.label}</span>
-    </div>
-    ${ev.nickname ? `<p style="font-style:italic;margin:0 0 8px">« ${ev.nickname} »</p>` : ''}
-    <div class="oracleMeta">
-      ${ev.factors} · ${ev.divisors} diviseur${ev.divisors > 1 ? 's' : ''} · ${ev.score} pts
-      ${rec ? `<br>Possédé ×${rec.copies} · rapporte ${Math.round(ev.rarity.coin * (1 + 0.15 * (Math.min(rec.copies, 25) - 1)))} 🪙/min · doublon = ${ev.rarity.dust} ✨` : '<br>Non possédé'}
-      ${inSets.length ? `<br>Théorème${inSets.length > 1 ? 's' : ''} : ${inSets.map(c => c.emoji + ' ' + c.nom).join(', ')}` : ''}
-    </div>
-    <div class="traitList">${ev.traits.map(t => traitRowHTML(t, n)).join('')}</div>
-    v>`;
+    <button class="modalClose" type="button" aria-label="Fermer">✕</button>
+    <header class="mdTete">
+      <span class="mdRang">${ev.rarity.label}</span>
+      <span class="mdN">${fmt(n)}</span>
+      ${ev.nickname ? `<p class="mdSurnom">« ${ev.nickname} »</p>` : ''}
+      ${!rec ? '<p class="mdAbsent">Pas encore dans votre herbier.</p>' : ''}
+    </header>
+
+    <div class="mdJetons">${jetons.map(([e, t]) =>
+      `<span class="mdJeton"><i>${e}</i>${t}</span>`).join('')}</div>
+
+    ${inSets.length ? `<div class="mdTheos">${inSets.map(c =>
+      `<span class="mdTheo">${c.emoji} ${c.nom}</span>`).join('')}</div>` : ''}
+
+    <div class="traitList">${ev.traits.map(t => traitRowHTML(t, n)).join('')}</div>`;
 
   $('#modalBox').querySelector('.modalClose').addEventListener('click', closeModal);
-  $('#modal').classList.add('on');
+  montrerSurcouche($('#modal'));
 }
-function closeModal() { $('#modal').classList.remove('on'); }
+/* La fermeture rend la main en 200 ms au lieu de couper net : `vu` part
+   d'abord (la boîte redescend et s'efface), `on` ensuite (elle disparaît).
+   Le garde évite qu'une réouverture rapide se fasse escamoter par la
+   temporisation de la fermeture précédente. */
+function closeModal() {
+  /* UNE MODALE PEUT ÊTRE IMPOSÉE. La partie périmée en est une : elle n'offre
+     qu'un seul geste, et la fuir par Échap ou par un clic à côté laisserait le
+     joueur sur une sauvegarde que le jeu ne sait plus interpréter. Le drapeau
+     vit dans js/nuage.js, seul endroit qui le pose. */
+  if (typeof _modaleImposee !== 'undefined' && _modaleImposee) return;
+  const m = $('#modal');
+  if (!m.classList.contains('on')) return;
+  m.classList.remove('vu');
+  setTimeout(() => { if (!m.classList.contains('vu')) m.classList.remove('on'); }, 200);
+}

@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <!-- ?v=N sur chaque asset : sans ça les navigateurs resservent le JS en cache
      après une modification. Incrémenter à chaque changement de source. -->
-<link rel="stylesheet" href="css/style.css?v=147">
+<link rel="stylesheet" href="css/style.css?v=230">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -21,6 +21,9 @@
         crossorigin="anonymous"></script>
 </head>
 <body>
+<!-- La vue du lieu, en fond de page. Fixe, voilée, derrière tout le reste :
+     voir poserFondDeLieu() dans js/hub.js. -->
+<div id="fondLieu" class="fondLieu" aria-hidden="true"></div>
 
 <div id="boot"><div class="bootInner"><div class="bootNum">0000</div><p>Évaluation de dix mille nombres…</p></div></div>
 
@@ -30,6 +33,22 @@
     <span class="brandText"><b>GACHA</b><i>DES NOMBRES</i></span>
   </div>
   <div class="wallet">
+    <!-- ⚠ AIDE DE TEST — voir ACTES_TEST dans js/actes.js. Elle est peinte en
+         rouge tramé, comme celles de l'Atelier : un bouton qui efface tout ne
+         doit jamais ressembler au reste de l'interface. -->
+    <button class="neuf" id="btnNeuf" type="button"
+            title="Test — repartir de zéro, comme un nouveau joueur">⟲ neuf</button>
+    <!-- Le Carnet : quêtes en cours, porte de l'acte, curiosités. Il vit dans
+         l'en-tête pour être atteignable de n'importe quel onglet — c'est la
+         réponse à « qu'est-ce que je dois faire ? », et cette question se pose
+         partout. -->
+    <!-- ⚠ AIDE DE DÉVELOPPEMENT — l'interrupteur du mode placement. Il
+         n'apparaît qu'en local et seulement sur la Carte : voir CARTE_DEV
+         dans js/hub.js, qui le retire du document ailleurs. -->
+    <button class="neuf placement" id="btnPlacement" type="button" hidden
+            title="Dev — activer le placement des bâtiments">⇱ placement</button>
+    <button class="carnetBtn" id="carnetBtn" type="button"
+            title="Carnet — quêtes et progression">📓<i class="badge alert" id="bCarnet"></i></button>
     <button class="nuage" id="nuageBtn" title="Sauvegarde en ligne"><span class="nIc">◌</span><span class="nTxt">…</span></button>
     <div class="cur coins" title="Jetons — servent aux tirages">
       <span class="ic">🪙</span>
@@ -45,7 +64,8 @@
 </header>
 
 <nav class="tabs" id="tabs">
-  <button data-tab="hub"><span>🗺️</span>Carte</button>
+  <button data-tab="hub"><span>🗺️</span>Carte<i class="badge alert" id="bActe"></i></button>
+  <button data-tab="frise"><span>📜</span>Frise</button>
   <button data-tab="gacha"      class="on"><span>🎰</span>Tirage<i class="badge" id="bTirage"></i></button>
   <button data-tab="collection"><span>🗃️</span>Collection<i class="badge" id="bCollection"></i></button>
   <button data-tab="forge"><span>⚒️</span>Forge</button>
@@ -53,7 +73,9 @@
   <button data-tab="bonus"><span>🎁</span>Bonus<i class="badge alert" id="bBonus"></i></button>
   <button data-tab="minijeux"><span>🎮</span>Mini-jeux</button>
   <button data-tab="classement"><span>🏆</span>Classement</button>
-  <button data-tab="oracle"><span>🔮</span>Oracle</button>
+  <button data-tab="comptoir"><span>🧮</span>Comptoir</button>
+  <button data-tab="observatoire"><span>🔭</span>Observatoire</button>
+  <button data-tab="casino"><span>🎲</span>Casino</button>
   <button data-tab="retours"><span>✉️</span>Retours</button>
 </nav>
 
@@ -62,20 +84,26 @@
   <!-- ══════════ CARTE ══════════ -->
   <section id="tab-hub" class="tab">
     <h2>🗺️ La carte</h2>
-    <p class="lead">Le tirage règne de <b>1 à 9 999</b>. Au-delà se dresse le mur, et il n'a que
-       deux portes : la <b>Forge</b>, qui fabrique ce que le hasard ne donne pas, et
-       l'<b>Expédition</b>, qui va le chercher au loin.</p>
     <div id="hubZone"></div>
+  </section>
+
+  <!-- ══════════ FRISE ══════════
+       Plan de travail, pas onglet de jeu : il sert à trancher ce qui devient
+       une quête et ce qui reste du décor. Pas d'emplacement publicitaire ici —
+       c'est une page de lecture continue, une annonce au milieu la couperait. -->
+  <section id="tab-frise" class="tab">
+    <div class="forgeIntro">
+      <h2>📜 La Frise</h2>
+      <p>Quatre mille ans, point par point. Chaque notice porte ce qu'on peut en
+         faire : <b>déjà dans le jeu</b>, <b>procédure jouable</b> — il y a un geste
+         à refaire à la main —, <b>donne des nombres</b>, ou simplement <b>décor</b>.
+         Les dates disputées le disent.</p>
+    </div>
+    <div id="friZone"></div>
   </section>
 
   <!-- ══════════ TIRAGE ══════════ -->
   <section id="tab-gacha" class="tab on">
-    <!-- La vue du lieu, reprise de la carte. Elle ouvre l'onglet, très loin de
-         l'emplacement publicitaire posé plus bas : une image collée à une
-         annonce se prend pour l'annonce, et le clic qui suit est un clic
-         invalide. Voir .lieuBanniere dans la feuille de style. -->
-    <div class="lieuBanniere" data-lieu="vivier"></div>
-
     <div class="pullStage">
       <div class="machine">
         <div class="machineGlow"></div>
@@ -144,8 +172,6 @@
 
   <!-- ══════════ FORGE ══════════ -->
   <section id="tab-forge" class="tab">
-    <div class="lieuBanniere" data-lieu="forge"></div>
-
     <div class="forgeIntro">
       <h2>⚒️ La Forge — Le Compte est Bon</h2>
       <p>Le tirage règne sur <b>1 à 9 999</b> : c'est le domaine de la chance. La Forge règne sur le reste — <b>0</b>, et <b>10 000 à 99 999</b> : c'est le domaine de l'adresse. Ici vous ne choisissez pas ce que vous fabriquez. La Forge pioche six nombres dans votre collection, annonce une cible, et vous laisse chercher.</p>
@@ -189,9 +215,6 @@
 
   <!-- ══════════ MINI-JEUX ══════════ -->
   <section id="tab-minijeux" class="tab">
-    <!-- Deux lieux partagent cet onglet : la bannière suit l'exercice choisi. -->
-    <div class="lieuBanniere" data-lieu="academie" data-lieu-variante="minijeux"></div>
-
     <div class="forgeIntro">
       <h2>🎮 Mini-jeux</h2>
       <p>Quatre exercices courts. Les deux premiers apprennent à reconnaître les
@@ -229,30 +252,6 @@
 
   </section>
 
-  <!-- ══════════ ORACLE ══════════ -->
-  <section id="tab-oracle" class="tab">
-    <div class="forgeIntro">
-      <h2>🔮 L'Oracle</h2>
-      <p>Interrogez n'importe quel entier de <b>0</b> à <b>99 999</b>. L'Oracle est gratuit et ne vous donne rien : il vous dit seulement ce que le nombre vaut, et pourquoi.</p>
-    </div>
-    <div class="oracleBar">
-      <input type="number" id="oracleIn" min="0" max="99999" placeholder="Un nombre…" inputmode="numeric">
-      <button class="btn" id="btnOracle">Consulter</button>
-      <button class="btn ghost" id="btnOracleRnd">🎲 Au hasard</button>
-    </div>
-    <div id="oracleOut"></div>
-
-    <!-- Entre la fiche et le codex. -->
-    <div class="pubVue" data-vue="oracle"></div>
-
-    <div class="codex">
-      <h3>Codex des traits</h3>
-      <p class="tiny">Toutes les propriétés que le moteur sait reconnaître, de la plus précieuse à la plus banale.</p>
-      <div class="codexList" id="codexList"></div>
-    </div>
-  </section>
-
-
   <!-- ══════════ ATELIER ══════════ -->
   <section id="tab-atelier" class="tab">
     <h2>🛠️ L'Atelier</h2>
@@ -261,6 +260,77 @@
        le crible vit sur vos premiers, la règle à calcul sur vos puissances de deux.
        Ils se paient en <b>poussière</b>, et ils en produisent.</p>
     <div id="atZone"></div>
+  </section>
+
+  <!-- ══════════ LE COMPTOIR ══════════ -->
+  <section id="tab-comptoir" class="tab">
+    <h2>🧮 Le Comptoir</h2>
+    <!-- ⚠ ENCART PROVISOIRE — à retirer le jour où le lieu ouvre pour de bon.
+         Il est écrit ici, en HTML, et non produit par le rendu : un bandeau
+         temporaire doit se supprimer en effaçant cinq lignes, pas en
+         démontant une fonction. -->
+    <aside class="aVenir">
+      <span class="avEtiq">Bientôt</span>
+      <p class="avMot"><b>Le Comptoir ouvrira sur la numération.</b> On y changera un
+         nombre de base comme on change de monnaie, pour voir ce qui lui reste :
+         dix-neuf des traits que reconnaît la Cité — palindrome, repdigit, narcissique,
+         Kaprekar — ne parlent pas du nombre mais de son écriture décimale. Ils ne
+         disent rien de lui : ils disent que nous avons dix doigts.</p>
+      <p class="avNote">Ce que vous voyez ci-dessous est un premier jet, ouvert en
+         avance. Il fonctionne, mais il bougera encore.</p>
+    </aside>
+    <p class="lead">La même valeur, écrite autrement. Dix-neuf des traits que reconnaît
+       la Cité ne parlent pas du nombre : ils parlent de son écriture décimale.
+       Changez la base et regardez lesquels survivent.</p>
+    <div id="cpZone"></div>
+  </section>
+
+  <!-- ══════════ L'OBSERVATOIRE ══════════ -->
+  <section id="tab-observatoire" class="tab">
+    <h2>🔭 L'Observatoire</h2>
+    <!-- ⚠ ENCART PROVISOIRE — à retirer le jour où le lieu ouvre pour de bon.
+         Il est écrit ici, en HTML, et non produit par le rendu : un bandeau
+         temporaire doit se supprimer en effaçant cinq lignes, pas en
+         démontant une fonction. -->
+    <aside class="aVenir">
+      <span class="avEtiq">Bientôt</span>
+      <p class="avMot"><b>L'Observatoire ouvrira sur les statistiques.</b> Pas celles
+         du jeu : les vôtres. Votre couverture du vivier palier par palier, la densité
+         de vos premiers comparée à celle du vivier entier, les traits qui vous
+         manquent du plus rare au plus commun — et le compte exact de ce qu'il reste
+         à payer, donné par le problème du collectionneur de coupons. Il est brutal,
+         et c'est plus honnête que de le taire.</p>
+      <p class="avNote">Ce que vous voyez ci-dessous est un premier jet, ouvert en
+         avance. Il fonctionne, mais il bougera encore.</p>
+    </aside>
+    <p class="lead">Ce que vous avez, mesuré contre ce qui existe. Le Casino dit ce qui
+       va arriver ; ici on mesure ce qui est arrivé — et ce que coûtera la suite.</p>
+    <div id="obZone"></div>
+  </section>
+
+  <!-- ══════════ LE CASINO ══════════ -->
+  <section id="tab-casino" class="tab">
+    <h2>🎲 Le Casino</h2>
+    <!-- ⚠ ENCART PROVISOIRE — à retirer le jour où le lieu ouvre pour de bon.
+         Il est écrit ici, en HTML, et non produit par le rendu : un bandeau
+         temporaire doit se supprimer en effaçant cinq lignes, pas en
+         démontant une fonction. -->
+    <aside class="aVenir">
+      <span class="avEtiq">Bientôt</span>
+      <p class="avMot"><b>Le Casino ouvrira sur les probabilités et le dénombrement.</b>
+         Le problème des partis, posé à Pascal par un joueur en 1654, qui fait naître
+         la théorie des probabilités en six lettres. Ce que comptent vraiment Catalan,
+         Bell, Motzkin et les factorielles. Et les taux réels du tirage, que le jeu
+         n'affiche nulle part ailleurs. <b>On n'y gagnera jamais de nombres</b> : la
+         rareté se démontre, elle ne se mise pas.</p>
+      <p class="avNote">Ce que vous voyez ci-dessous est un premier jet, ouvert en
+         avance. Il fonctionne, mais il bougera encore.</p>
+    </aside>
+    <p class="lead">Les probabilités sont nées ici : d'une partie de dés interrompue, et
+       d'un joueur qui voulait sa part. <b>On n'y gagne aucun nombre</b> — la rareté se
+       démontre, elle ne se mise pas. On y gagne de connaître ses chances : le jeu montre
+       ici ses taux réels, et nulle part ailleurs.</p>
+    <div id="csZone"></div>
   </section>
 
   <!-- ══════════ RETOURS ══════════ -->
@@ -303,26 +373,57 @@
 <!-- fiche détaillée -->
 <div id="modal" class="modal"><div class="modalBox" id="modalBox"></div></div>
 
+<!-- L'accueil : la page vide d'avant la ville. Elle recouvre tout tant que
+     le joueur n'a pas poussé la porte. -->
+<div id="accueilBoite" class="accueilBoite"></div>
+
+<!-- La visite guidée : elle assombrit la page et découpe un trou autour de
+     ce dont elle parle. -->
+<div id="visiteBoite" class="visiteBoite"></div>
+
+<!-- Le Carnet : quêtes, porte de l'acte, curiosités. -->
+<div id="carnetBoite" class="carnetBoite"></div>
+
+<!-- La Place et ses gens. -->
+<div id="placeBoite" class="placeBoite"></div>
+
+<!-- Le choix d'un lieu dans un quartier. Même coque que les autres modales. -->
+<div id="quartierBoite" class="quartierBoite"></div>
+
+<!-- Le tutoriel de l'acte 0. -->
+<div id="seuilBoite" class="seuilBoite"></div>
+
+<!-- La saynète d'une quête. Surcouche, comme la révélation des tirages :
+     elle interrompt, puis rend la main. -->
+<div id="queteBoite" class="queteBoite"></div>
+
 <div id="toasts"></div>
 
-<script src="js/config.js?v=147"></script>
-<script src="js/pub.js?v=147"></script>
-<script src="js/numerology.js?v=147"></script>
-<script src="js/data.js?v=147"></script>
-<script src="js/state.js?v=147"></script>
-<script src="js/nuage.js?v=147"></script>
-<script src="js/classement.js?v=147"></script>
-<script src="js/forge.js?v=147"></script>
-<script src="js/forge-ui.js?v=147"></script>
-<script src="js/revision.js?v=147"></script>
-<script src="js/appariement.js?v=147"></script>
-<script src="js/calcul.js?v=147"></script>
-<script src="js/expedition.js?v=147"></script>
-<script src="js/retours.js?v=147"></script>
-<script src="js/atelier.js?v=147"></script>
-<script src="js/hub.js?v=147"></script>
-<script src="js/fond.js?v=147"></script>
-<script src="js/ui.js?v=147"></script>
-<script src="js/retour.js?v=147"></script>
+<script src="js/config.js?v=230"></script>
+<script src="js/pub.js?v=230"></script>
+<script src="js/numerology.js?v=230"></script>
+<script src="js/data.js?v=230"></script>
+<script src="js/state.js?v=230"></script>
+<script src="js/nuage.js?v=230"></script>
+<script src="js/classement.js?v=230"></script>
+<script src="js/forge.js?v=230"></script>
+<script src="js/forge-ui.js?v=230"></script>
+<script src="js/revision.js?v=230"></script>
+<script src="js/appariement.js?v=230"></script>
+<script src="js/calcul.js?v=230"></script>
+<script src="js/expedition.js?v=230"></script>
+<script src="js/retours.js?v=230"></script>
+<script src="js/atelier.js?v=230"></script>
+<script src="js/actes.js?v=230"></script>
+<script src="js/visite.js?v=230"></script>
+<script src="js/quetes.js?v=230"></script>
+<script src="js/frise.js?v=230"></script>
+<script src="js/comptoir.js?v=230"></script>
+<script src="js/casino.js?v=230"></script>
+<script src="js/observatoire.js?v=230"></script>
+<script src="js/hub.js?v=230"></script>
+<script src="js/fond.js?v=230"></script>
+<script src="js/ui.js?v=230"></script>
+<script src="js/retour.js?v=230"></script>
 </body>
 </html>
