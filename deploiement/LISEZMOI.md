@@ -300,6 +300,15 @@ leur adresse change.
 
 Si les modèles ont bougé, sauvegardez d'abord, puis `manage.py migrate`.
 
+Si `deploiement/nginx-statique.conf` a bougé, le `git pull` ne suffit pas : le
+fichier servi est une COPIE dans `/etc/nginx/snippets/`. Il faut la refaire et
+recharger nginx.
+
+```bash
+cp deploiement/nginx-statique.conf /etc/nginx/snippets/gachamath-statique.conf
+nginx -t && systemctl reload nginx
+```
+
 ---
 
 ## Après la mise en ligne
