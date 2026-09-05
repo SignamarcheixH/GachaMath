@@ -3254,10 +3254,11 @@ body.surAccueil { overflow: hidden; }
      voile plus bas ferait passer ce pire cas sous 3,0, et là on ne lit plus. */
   filter: brightness(.85) saturate(.95);
 }
-/* L'opacité vient du curseur — un seul réglage pour tout le jeu, rangé dans
-   localStorage. La moitié par défaut : voir poserCurseurFond() dans js/hub.js
-   pour la mesure de lisibilité qui fixe ce point. */
-.fondLieu.on { opacity: var(--fond-op, .5); }
+/* PLEINE, ET PLUS RÉGLABLE. Le curseur qui pilotait cette valeur était un
+   outil d'auteur : il servait à trouver le bon niveau sur les vraies
+   illustrations. La valeur trouvée est 1 — c'est le voile ci-dessous qui tient
+   la lisibilité, pas un affaiblissement de l'image. */
+.fondLieu.on { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .fondLieu { transition: none; } }
 
 /* LE VOILE. C'est lui qui rend le texte lisible, et il est épais par choix :
@@ -3280,36 +3281,7 @@ body.surAccueil { overflow: hidden; }
   border-radius: 12px;
 }
 
-/* ---------- le curseur d'opacité du fond ----------
-   Discret et à droite : c'est un réglage de confort, pas une commande de jeu.
-   Il ne s'affiche que sur les onglets qui ont une vue à régler. */
-.fondReglage {
-  display: flex; align-items: center; justify-content: flex-end; gap: 9px;
-  margin: 0 0 10px; font-size: 11px; color: var(--dim2);
-}
-.fondReglage label { cursor: default; white-space: nowrap; }
-.fondReglage input[type="range"] {
-  width: 110px; height: 3px; -webkit-appearance: none; appearance: none;
-  background: var(--line2); border-radius: 99px; cursor: pointer;
-}
-.fondReglage input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 13px; height: 13px; border-radius: 50%;
-  background: var(--accent); border: 0; cursor: pointer;
-}
-.fondReglage input[type="range"]::-moz-range-thumb {
-  width: 13px; height: 13px; border-radius: 50%;
-  background: var(--accent); border: 0; cursor: pointer;
-}
-.fondReglage input[type="range"]:focus-visible { outline: 2px solid var(--coin); outline-offset: 4px; }
-.fondReglage .fondVal {
-  font-family: var(--mono); font-variant-numeric: tabular-nums;
-  min-width: 38px; text-align: right;
-}
 
-@media (max-width: 560px) {
-  .fondReglage input[type="range"] { width: 88px; }
-}
 
 
 /* ============================================================

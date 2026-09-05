@@ -1135,7 +1135,6 @@ function poserFondDeLieu() {
   if (!lieu || !lieu.image) {
     fond.style.backgroundImage = '';
     fond.classList.remove('on');
-    poserCurseurFond(false);
     return;
   }
 
@@ -1146,7 +1145,6 @@ function poserFondDeLieu() {
   const url = `url("${lieu.image}${VERSION_ASSETS}")`;
   if (fond.style.backgroundImage !== url) fond.style.backgroundImage = url;
   fond.classList.add('on');
-  poserCurseurFond(true);
 }
 
 /* Basculer d'une forme d'écran à l'autre change d'implantation : sans ce
@@ -1194,78 +1192,21 @@ function cablerHub() {
 
 
 /* ============================================================
-   LE CURSEUR D'OPACITÉ DU FOND
+   L'OPACITÉ DU FOND EST FIGÉE
 
-   UN SEUL RÉGLAGE POUR TOUT LE JEU. Il vit dans `localStorage` et non dans la
-   sauvegarde : c'est une préférence d'affichage, elle n'a rien à faire dans ce
-   qu'on synchronise au nuage ni dans ce qui alimente le classement.
+   Il y a eu un curseur ici — un réglage par joueur, rangé dans localStorage,
+   posé en tête de chaque onglet qui avait une vue à régler. Il n'était là que
+   pour trouver la bonne valeur à l'œil, sur les vraies illustrations : c'était
+   un outil d'auteur, pas une option de jeu, et il n'aurait jamais dû partir en
+   production.
 
-   LE CURSEUR SE DÉPLACE AVEC LE JOUEUR. Un exemplaire par onglet aurait voulu
-   dire quatre copies à tenir d'accord ; comme un seul onglet est visible à la
-   fois, on déplace le même. Il n'apparaît que là où il y a une vue à régler.
+   La valeur est trouvée : PLEINE. L'image porte le lieu, et c'est le voile de
+   `.fondLieu::after` qui tient la lisibilité — pas un affaiblissement de
+   l'illustration. Ce voile est mesuré : le texte le plus pâle du jeu (--dim2)
+   vaut 4,1 de contraste sur fond plein, et 3,1 dans le pire cas où il tombe
+   sur le pixel le plus clair d'une image. C'est lui qu'il faut épaissir si un
+   jour la lecture devient pénible, pas l'opacité.
 
-   POURQUOI 50 % PAR DÉFAUT, ET PAS 100 %. Le réglage est mesuré, pas choisi :
-   les panneaux du jeu sont transparents à 4,5 %, donc c'est le fond de page
-   qui porte toute la lisibilité. Sur les zones les plus claires d'une
-   illustration, le texte le plus pâle (--dim2) vaut 4,1 de contraste sans
-   image, 3,1 à mi-curseur, et 2,1 à fond. La moitié est le point où l'on voit
-   l'illustration sans que rien ne devienne pénible à lire ; au-delà, c'est un
-   choix assumé du joueur, et c'est très bien ainsi — c'est sa partie.
+   Il n'y a plus de JavaScript ici : `--fond-op` vaut 1 dans la feuille de
+   style, et personne ne la change.
    ============================================================ */
-const CLE_FOND_OPACITE = 'gachanombres.fondOpacite';
-const FOND_OPACITE_DEFAUT = 50;
-
-function fondOpacite() {
-  try {
-    const v = parseInt(localStorage.getItem(CLE_FOND_OPACITE), 10);
-    if (Number.isFinite(v) && v >= 0 && v <= 100) return v;
-  } catch (e) {}
-  return FOND_OPACITE_DEFAUT;
-}
-
-function reglerFondOpacite(v) {
-  const n = Math.max(0, Math.min(100, Math.round(v)));
-  try { localStorage.setItem(CLE_FOND_OPACITE, String(n)); } catch (e) {}
-  appliquerFondOpacite();
-  return n;
-}
-
-/* La valeur est posée sur la racine : la couche la lit, et tout exemplaire du
-   curseur affiché ailleurs la relit au même endroit. */
-function appliquerFondOpacite() {
-  const v = fondOpacite();
-  document.documentElement.style.setProperty('--fond-op', (v / 100).toFixed(3));
-  document.querySelectorAll('.fondReglage input[type="range"]').forEach(i => {
-    if (+i.value !== v) i.value = v;
-  });
-  document.querySelectorAll('.fondReglage .fondVal').forEach(s => s.textContent = v + ' %');
-}
-
-/* Pose le curseur en tête de l'onglet courant, s'il y a une vue à régler.
-
-   ON NE LE RECONSTRUIT PAS S'IL EST DÉJÀ LÀ. `renderAll()` passe ici à chaque
-   tirage, chaque gain, chaque changement d'onglet ; remplacer l'élément à
-   chaque fois arracherait le curseur des doigts du joueur en plein glissement,
-   et lui volerait le focus au clavier. */
-function poserCurseurFond(actif) {
-  const section = actif ? document.querySelector('.tab.on') : null;
-  document.querySelectorAll('.fondReglage').forEach(el => {
-    if (el.parentElement !== section) el.remove();
-  });
-  if (!section) return;
-  if (section.querySelector(':scope > .fondReglage')) { appliquerFondOpacite(); return; }
-
-  const bloc = document.createElement('div');
-  bloc.className = 'fondReglage';
-  bloc.innerHTML = `
-    <label for="fondOp" title="Opacité de la vue du lieu, en fond de page">🖼️ Fond</label>
-    <input type="range" id="fondOp" min="0" max="100" step="5"
-           aria-label="Opacité de l’image de fond">
-    <span class="fondVal"></span>`;
-  section.insertBefore(bloc, section.firstChild);
-
-  const curseur = bloc.querySelector('input');
-  curseur.value = fondOpacite();
-  curseur.addEventListener('input', () => reglerFondOpacite(curseur.value));
-  appliquerFondOpacite();
-}

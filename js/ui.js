@@ -373,7 +373,6 @@ const SECTIONS = [
   ['carnet',       () => renderCarnet(),    null],
   ['visite',       () => renderVisite(),    null],
   ['fond du lieu', () => poserFondDeLieu(),  null],
-  ['opacité fond', () => appliquerFondOpacite(), null],
 ];
 const sectionsSignalees = new Set();
 

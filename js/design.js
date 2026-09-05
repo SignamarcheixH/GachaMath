@@ -110,9 +110,11 @@ const DS = [
 
   {
     id: 'curseur', nom: 'Curseur', famille: 'Commandes', cible: 'input[type="range"]',
-    note: "Celui du fond de page. La pastille est stylée séparément par navigateur.",
-    apercu: () => `<div class="fondReglage" style="justify-content:flex-start">
-      <label>🖼️ Fond</label><input type="range" min="0" max="100" value="50"><span class="fondVal">50 %</span></div>`,
+    note: "Le curseur du fond de page a été retiré ; celui-ci reste comme "
+        + "référence pour les prochains. La pastille est stylée séparément par "
+        + "chaque navigateur.",
+    apercu: () => `<div style="display:flex;align-items:center;gap:9px;font-size:11px;color:var(--dim2)">
+      <label>Un réglage</label><input type="range" min="0" max="100" value="50"><span>50 %</span></div>`,
     reglages: [
       { prop: 'width',            nom: 'Largeur', type: 'plage', min: 60, max: 300, unite: 'px', defaut: 110 },
       { prop: 'height',           nom: 'Épaisseur', type: 'plage', min: 1, max: 14, unite: 'px', defaut: 3 },
