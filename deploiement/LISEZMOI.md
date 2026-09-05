@@ -298,7 +298,16 @@ et `const V` dans `outils/generer_pages.js`) : le HTML n'est jamais mis en
 cache, mais le CSS et le JS le sont un an, et ne seront rechargés que si
 leur adresse change.
 
-Si les modèles ont bougé, sauvegardez d'abord, puis `manage.py migrate`.
+Si les modèles ont bougé, sauvegardez d'abord, puis migrez. Le chemin du
+Python est relatif au répertoire où l'on se trouve, et c'est la faute qu'on
+fait une fois : depuis `/srv/gachamath`, le venv est `.venv`, pas `../.venv`
+— ce dernier vaut pour les commandes lancées depuis `serveur/`, à
+l'installation.
+
+```bash
+cd /srv/gachamath
+.venv/bin/python serveur/manage.py migrate
+```
 
 Si `deploiement/nginx-statique.conf` a bougé, le `git pull` ne suffit pas : le
 fichier servi est une COPIE dans `/etc/nginx/snippets/`. Il faut la refaire et
