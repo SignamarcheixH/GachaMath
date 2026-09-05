@@ -54,6 +54,16 @@ function freshState() {
     paquet: 10,              // taille du paquet de tirage choisie
     commande: null,          // la commande de forge en cours
     revision: null,          // l'examen en cours
+    /* Faux tant que le joueur n'a pas poussé la porte de l'accueil. C'est le
+       seul témoin d'une partie vraiment neuve. */
+    entree: false,
+    objets: [],              // les curiosités rapportées des quêtes
+    rencontres: [],          // les gens de la Place à qui l'on a parlé
+    visiteFaite: false,      // la visite guidée de l'acte 0 est passée
+    /* La version de sauvegarde que cette partie honore. Zéro tant que le
+       serveur ne s'est pas prononcé ; il l'inscrit au premier démarrage.
+       Voir `partieObsolete()` dans js/nuage.js. */
+    version: 0,
     lastTick: Date.now(),
     started: Date.now(),
   };
@@ -146,39 +156,47 @@ function buildPool() {
 /* Probabilités du banner. Les paliers vides retombent d'un cran. */
 /* ---------- taux d'apparition ----------
    Ces taux ne sont pas arbitraires : ils se lisent par rapport à la taille
-   réelle des viviers, qui découle des mathématiques et non d'un choix.
+   réelle des viviers, qui découle des mathématiques et non d'un choix. Les
+   tailles ci-dessous viennent du barème calculé — voir `outils/calculer_points.js`
+   et `outils/verifier_points.py` — où les points des traits, et donc les
+   paliers de rareté, sont dérivés de la fréquence réelle de chaque propriété
+   plutôt que posés à la main.
 
      palier        vivier   part du vivier   taux ici   écart
-     commun          4737       47,4 %        55,6 %     1,2x
-     peu commun      4748       47,5 %        32,7 %     0,7x
-     rare             412        4,1 %         8,4 %     2,0x
-     épique            79        0,8 %         2,7 %     3,4x
-     légendaire        11        0,1 %         0,5 %     4,2x
-     mythique          12        0,1 %         0,1 %     1,0x
+     commun          5238      52,4 %         50,8 %     0,97x
+     peu commun      3174      31,7 %         22,7 %     0,72x
+     rare            1155      11,6 %         16,6 %     1,43x
+     épique           344       3,4 %          7,5 %     2,19x
+     légendaire        74       0,7 %          2,3 %     3,03x
+     mythique          14       0,1 %          0,1 %     1,00x
 
    L'écart est la part de gacha assumée : on penche en faveur du rare, sinon
    il n'y aurait pas de frisson. Mais jamais en dessous de 1,0x — un Mythique
    plus rare qu'un entier tiré au hasard contredirait la promesse du jeu, qui
-   est que la rareté se calcule au lieu de se décréter.
-
-   Le réglage précédent penchait à 15,6x sur le Légendaire : on en trouvait un
-   tous les 58 tirages alors qu'il n'en existe que onze, et le palier entier se
-   bouclait en 1 500 tirages — quatre fois plus vite que les Épiques, pourtant
-   censés être moins rares. */
+   est que la rareté se calcule au lieu de se décréter. C'est pour ça que le
+   Mythique est justement fixé À 1,0x pile : aucun favoritisme, même léger,
+   sur le palier le plus haut. */
 const PULL_ODDS = [
-  ['mythique',   0.0012],
-  ['legendaire', 0.0030],
-  ['epique',     0.0200],
-  ['rare',       0.0850],
-  ['peucommun',  0.3300],
-  ['commun',     0.5608],
+  ['mythique',   0.0014],
+  ['legendaire', 0.0225],
+  ['epique',     0.0754],
+  ['rare',       0.1655],
+  ['peucommun',  0.2274],
+  ['commun',     0.5078],
 ];
 
 /* Garanties. Elles doivent rester au-delà de l'espérance du tirage, sinon
-   c'est la garantie qui distribue le palier et non le hasard : à 2 % pour
-   l'Épique, on en attend un tous les 50 tirages, d'où un filet à 60. */
-const PITY_EPIQUE = 60;
-const PITY_LEGENDAIRE = 300;
+   c'est la garantie qui distribue le palier et non le hasard — c'est
+   exactement ce qui s'était produit avec l'ancien barème : la garantie
+   Légendaire, posée à 300, tombait SOUS l'espérance de 333 tirages, et
+   distribuait donc le palier plus vite que le hasard ne l'aurait fait.
+
+   Avec le nouveau barème, à 7,54 % l'Épique sort en moyenne tous les 13
+   tirages, d'où un filet à 20 (1,5x) ; à 2,25 % le Légendaire sort tous les
+   44 tirages, d'où un filet à 70 (1,6x). Le Mythique n'a pas de filet : à
+   1,0x pile, lui ajouter une garantie reviendrait à le favoriser quand même. */
+const PITY_EPIQUE = 20;
+const PITY_LEGENDAIRE = 70;
 
 function rollTier() {
   let r = Math.random();
@@ -331,6 +349,10 @@ function acquire(n, source) {
     state.owned[n] = { copies: 1, first: Date.now() };
     out.coins = Math.round(ev.rarity.coin * 25 + 40);
     if (ev.score > state.stats.bestScore) { state.stats.bestScore = ev.score; state.stats.bestNum = n; }
+    /* `acquire` est le seul entonnoir par lequel un nombre entre dans
+       l'herbier — tirage, forge, expédition. C'est donc le seul endroit où
+       guetter un déclencheur de quête. */
+    if (typeof declencherQuetes === 'function') out.quetes = declencherQuetes(n);
   } else {
     rec.copies++;
     out.copies = rec.copies;
