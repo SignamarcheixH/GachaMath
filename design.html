@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Page de développement : elle ne doit ni être indexée, ni apparaître dans
+     le plan du site. La vraie garde est dans js/design.js — hors de localhost,
+     la page ne s'assemble pas. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Système de design — Gacha des Nombres (dev)</title>
+<link rel="stylesheet" href="css/style.css?v=230">
+<style>
+/* ============================================================
+   LA PLANCHE
+
+   Le style de la page elle-même — pas celui du jeu. Tout ce qui commence par
+   `ds` appartient à l'outil ; le reste vient de css/style.css et c'est le
+   propos : on regarde les vrais composants, pas des imitations.
+   ============================================================ */
+body { padding: 0 0 60px; }
+
+.dsTete {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 22px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+.dsTete h1 { margin: 0; font-size: 17px; }
+.dsDev {
+  padding: 3px 9px; border-radius: 8px;
+  border: 1px dashed #ff6b81; background: rgba(255,107,129,.12); color: #ff9aa8;
+  font-family: var(--mono); font-size: 10px;
+}
+.dsTete .dsEspace { flex: 1; }
+#dsModifies { font-size: 11.5px; color: var(--dim2); font-family: var(--mono); }
+
+.dsFamille { padding: 0 22px; margin-bottom: 34px; }
+.dsFamille > h2 {
+  margin: 0 0 14px; font-size: 12px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--dim2);
+  padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.dsCompos { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+.dsCompo {
+  border: 1px solid var(--line); border-radius: 16px; background: var(--panel);
+  cursor: pointer; overflow: hidden; transition: border-color .14s, background .14s;
+}
+.dsCompo:hover, .dsCompo:focus-visible { border-color: var(--accent); background: var(--panel2); outline: none; }
+.dsCompo:focus-visible { box-shadow: 0 0 0 2px var(--coin); }
+.dsCompo header {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 11px 15px; border-bottom: 1px solid var(--line);
+}
+.dsCompo h3 { margin: 0; font-size: 14px; flex: 1; }
+.dsRegler { font-size: 10.5px; color: var(--dim2); text-transform: uppercase; letter-spacing: .1em; }
+.dsCompo:hover .dsRegler { color: var(--accent); }
+/* L'aperçu ne réagit pas au pointeur : on clique sur la carte, pas sur le
+   bouton d'exemple — sinon on lance l'action au lieu d'ouvrir les réglages. */
+.dsApercu {
+  padding: 20px 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  min-height: 92px; pointer-events: none;
+}
+
+.dsSwatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.dsSwatch { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--dim2); }
+.dsSwatch i { width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--line2); }
+.dsGrille { display: grid; grid-template-columns: repeat(6, 46px); gap: 6px; }
+.dsGrille .card { aspect-ratio: 1; }
+.cardN { font-family: var(--mono); font-size: 13px; font-weight: 700; color: #fff; }
+.dsRevele { display: flex; gap: 14px; padding: 14px 0; }
+.dsRevele .rcard { width: 74px; }
+.dsPanneau { padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); width: 100%; }
+
+/* ---------- le panneau de réglages ---------- */
+#dsPanneau {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%);
+  z-index: 40; display: none; flex-direction: column; overflow-y: auto;
+  padding: 18px 20px 28px;
+  border-left: 1px solid var(--line2);
+  background: color-mix(in srgb, var(--bg2) 96%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: -24px 0 60px -30px #000;
+}
+#dsPanneau.on { display: flex; }
+.dsPTete { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.dsPTete h2 { margin: 2px 0 0; font-size: 18px; }
+.dsPFamille { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim2); }
+.dsPNote { margin: 0 0 8px; font-size: 12.5px; color: var(--dim); line-height: 1.5; }
+.dsPCible { margin: 0 0 16px; font-size: 11px; color: var(--dim2); }
+.dsPCible code { font-family: var(--mono); color: var(--accent); }
+
+.dsReglages { display: flex; flex-direction: column; gap: 12px; }
+.dsReglage { display: flex; flex-direction: column; gap: 5px; }
+.dsRNom { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
+.dsRNom i { font-family: var(--mono); font-size: 10px; color: var(--dim2); font-style: normal; }
+.dsRChamps { display: flex; align-items: center; gap: 8px; }
+.dsRChamps input[type="color"] {
+  width: 38px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 8px;
+  background: none; cursor: pointer; flex: none;
+}
+.dsTexte {
+  flex: 1; min-width: 0; padding: 6px 9px; border-radius: 8px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--txt);
+  font-family: var(--mono); font-size: 11.5px;
+}
+.dsRChamps input[type="range"] { flex: 1; }
+.dsRChamps select {
+  padding: 6px 9px; border-radius: 8px; border: 1px solid var(--line);
+  background: rgba(0,0,0,.3); color: var(--txt); font: inherit; font-size: 12px;
+}
+.dsVal { font-family: var(--mono); font-size: 11px; color: var(--dim2); min-width: 62px; text-align: right; }
+
+.dsPPied { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 12px; }
+.dsCode {
+  margin: 0; padding: 11px 13px; border-radius: 10px; overflow-x: auto;
+  border: 1px solid var(--line); background: rgba(0,0,0,.35);
+  font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--dim);
+  white-space: pre;
+}
+
+#dsMot {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(12px);
+  z-index: 60; padding: 9px 16px; border-radius: 10px;
+  border: 1px solid var(--coin); background: rgba(255,215,106,.14); color: var(--coin);
+  font-size: 12.5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+#dsMot.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.dsHors { max-width: 460px; margin: 18vh auto; text-align: center; padding: 0 20px; }
+.dsHors h1 { font-size: 20px; }
+.dsHors p { color: var(--dim); }
+
+@media (max-width: 760px) {
+  .dsFamille { padding: 0 14px; }
+  #dsPanneau { width: 100%; border-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Les réglages vivent ici, et nulle part ailleurs : css/style.css n'est
+     jamais touché. Voir dsAppliquer() dans js/design.js. -->
+<style id="dsStyle"></style>
+
+<header class="dsTete">
+  <h1>Système de design</h1>
+  <span class="dsDev">DEV — local uniquement</span>
+  <span class="dsEspace"></span>
+  <span id="dsModifies">aucune modification</span>
+  <button class="btn ghost sm" id="dsToutCopier" type="button">Copier tout le CSS</button>
+  <button class="btn ghost sm danger" id="dsToutReset" type="button">⟲ Tout réinitialiser</button>
+  <a class="btn ghost sm" href="index.html">Le jeu</a>
+</header>
+
+<main id="dsScene"></main>
+
+<aside id="dsPanneau"></aside>
+<div id="dsMot"></div>
+
+<script src="js/design.js?v=230"></script>
+</body>
+</html>
