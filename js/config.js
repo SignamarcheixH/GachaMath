@@ -70,7 +70,7 @@ const PUB = {
      jamais contre le bouton « Tirer », jamais au milieu d'un quiz chronométré.
      Retirer une vue de cette liste suffit à la laisser sans annonce. */
   vues: ['gacha', 'collection', 'forge', 'bonus',
-         'minijeux', 'classement', 'oracle'],
+         'minijeux', 'classement'],
 
   // Mettre à true pour visualiser les emplacements sans charger AdSense.
   apercu: false,
