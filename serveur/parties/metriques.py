@@ -6,12 +6,39 @@ avec la divergence garantie qui va avec. Il lit la sauvegarde et s'appuie sur
 une table nombre → rareté générée depuis le moteur du jeu lui-même
 (voir serveur/outils/generer_raretes.js).
 """
+import json
 from pathlib import Path
 
 VIVIER = 9999                    # le tirage va de 1 à 9999
 FORGE_MIN = 10000
 
 _TABLE = None
+_BORNES = None
+
+
+def bornes() -> dict:
+    """Combien il existe de Légendaires, de théorèmes, de défis.
+
+    CES NOMBRES NE SE RETAPENT PAS. Ils étaient écrits en dur juste en dessous,
+    et le jour où le barème des traits a été recalculé sur la fréquence réelle
+    des propriétés, il y a eu 74 Légendaires au lieu de 11. Le contrôle de
+    plausibilité s'est alors mis à signaler comme tricheur tout joueur qui en
+    possédait douze — et le classement écarte les joueurs signalés, sans jamais
+    les prévenir. Un plafond faux est pire qu'un plafond absent.
+
+    Ils sont donc générés depuis le moteur du jeu, comme la table des raretés :
+    node serveur/outils/generer_raretes.js
+    """
+    global _BORNES
+    if _BORNES is None:
+        chemin = Path(__file__).resolve().parent / "data" / "bornes.json"
+        if not chemin.exists():
+            raise RuntimeError(
+                "serveur/parties/data/bornes.json manque. "
+                "Générez-le : node serveur/outils/generer_raretes.js"
+            )
+        _BORNES = json.loads(chemin.read_text(encoding="utf-8"))
+    return _BORNES
 
 
 def table_raretes() -> str:
@@ -140,11 +167,15 @@ def incoherences(donnees: dict, m: dict) -> str:
     if m.get("forges", 0) > voies_forge + 10:
         motifs.append(f"{m['forges']} nombres forgés pour {voies_forge} occasions d'en obtenir")
 
-    # Les douze mythiques et onze légendaires du vivier sont un plafond absolu.
-    if m.get("mythiques", 0) > 12 or m.get("legendaires", 0) > 11:
+    # Le nombre de mythiques et de légendaires du vivier est un plafond absolu —
+    # mais il change avec le barème des traits, donc on le lit, on ne le devine
+    # pas. Voir bornes().
+    b = bornes()
+    if (m.get("mythiques", 0) > b["paliers"]["mythique"]
+            or m.get("legendaires", 0) > b["paliers"]["legendaire"]):
         motifs.append("plus de mythiques ou de légendaires qu'il n'en existe")
 
-    if m.get("theoremes", 0) > 14 or m.get("defis", 0) > 22:
+    if m.get("theoremes", 0) > b["theoremes"] or m.get("defis", 0) > b["defis"]:
         motifs.append("plus de théorèmes ou de défis qu'il n'en existe")
 
     return " ; ".join(motifs)[:200]

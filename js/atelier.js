@@ -65,7 +65,14 @@ const ATELIER = {
    calcul, 2 625 pour les bâtons de Napier — pour qu'aucun instrument ne soit
    ridicule à côté d'un autre. */
 const MACHINES = (() => {
-  const trait = (...ids) => n => evaluate(n).traits.some(t => t.pts > 0 && ids.includes(t.id));
+  /* On teste l'APPARTENANCE au trait, pas sa valeur. Filtrer aussi sur
+     `pts > 0` était redondant — les traits sont nommés un par un juste en
+     dessous — et surtout fragile : le jour où le barème a été recalculé sur la
+     fréquence réelle, « semi-premier » est tombé à zéro point (il concerne
+     26 % du vivier) et les Bâtons de Napier se sont retrouvés SANS AUCUN
+     gisement. Une machine travaille une propriété mathématique ; que cette
+     propriété rapporte des points au tirage ne la regarde pas. */
+  const trait = (...ids) => n => evaluate(n).traits.some(t => ids.includes(t.id));
   return [
     { id: 'abaque', nom: "L'Abaque", epoque: '−2700', emoji: '🧮',
       op: 'additionner',
@@ -384,6 +391,7 @@ function gisementsVivier() {
 const rendementParNombre = m => m.taux * niveauMachine(m.id);
 
 function rendementMachine(m) {
+  if (typeof instrumentOuvert === 'function' && !instrumentOuvert(m.id)) return 0;
   return rendementParNombre(m) * (gisements()[m.id] || 0);
 }
 
@@ -451,6 +459,9 @@ const palierDe = niveauVise =>
 function commencerMiseEnService(id) {
   const m = MACHINE_PAR_ID[id];
   if (!m) return { erreur: 'Machine inconnue.' };
+  if (typeof instrumentOuvert === 'function' && !instrumentOuvert(id)) {
+    return { erreur: "Cet instrument n'a pas encore été inventé." };
+  }
   const vise = niveauMachine(id) + 1;
   if (!estUnePorte(vise)) return { erreur: 'Ce niveau ne demande pas d’épreuve.' };
   const prix = prixMachine(m);
@@ -515,6 +526,9 @@ function repondreMiseEnService(valeur) {
 /* Améliorer, en revanche, ne demande rien : la machine tourne déjà, on ne fait
    qu'en monter une seconde à côté. */
 function ameliorerMachine(id) {
+  if (typeof instrumentOuvert === 'function' && !instrumentOuvert(id)) {
+    return { erreur: "Cet instrument n'a pas encore été inventé." };
+  }
   const m = MACHINE_PAR_ID[id];
   if (!m) return { erreur: 'Machine inconnue.' };
   if (!niveauMachine(id)) return { erreur: 'Mettez-la d’abord en service.' };
@@ -1243,7 +1257,14 @@ function renderAtelier() {
     const enCours = _miseEnService && _miseEnService.id === m.id;
     const vise = niveau + 1, porte = estUnePorte(vise);
 
-    return `<article class="atLigne ${niveau ? 'batie' : 'aBatir'}${enCours ? ' enCours' : ''}">
+    /* Un instrument que l'époque n'a pas encore inventé reste sur l'établi,
+       en sourdine, avec la date à laquelle il arrivera. Le masquer priverait
+       le joueur de la frise que l'Atelier raconte. */
+    const invente = typeof instrumentOuvert !== 'function' || instrumentOuvert(m.id);
+    const acteDeM = typeof ACTES !== 'undefined'
+      ? ACTES.find(a => (a.instruments || []).includes(m.id)) : null;
+
+    return `<article class="atLigne ${niveau ? 'batie' : 'aBatir'}${enCours ? ' enCours' : ''}${invente ? '' : ' scelle'}">
       <div class="atCorps">
         <span class="atEmoji" aria-hidden="true">${m.emoji}</span>
 
@@ -1269,15 +1290,17 @@ function renderAtelier() {
         </div>
 
         <div class="atAction">
-          <button class="btn ${abordable ? '' : 'ghost'} sm ${porte && niveau ? 'porte' : ''}"
+          ${!invente ? `<span class="atScelle">Pas encore inventé</span>
+            <span class="atPrix">${acteDeM ? `acte ${acteDeM.n} · ${acteDeM.nom}` : 'plus tard'}</span>`
+          : `<button class="btn ${abordable ? '' : 'ghost'} sm ${porte && niveau ? 'porte' : ''}"
                   data-machine="${m.id}" data-geste="${porte ? 'epreuve' : 'ameliorer'}"
                   ${abordable && !enCours ? '' : 'disabled'}>
             ${!niveau ? 'Mettre en service' : porte ? 'Réviser' : 'Améliorer'}
-          </button>
-          ${ATELIER_TEST && niveau ? `<button class="atTest" type="button" data-reset="${m.id}"
+          </button>`}
+          ${invente && ATELIER_TEST && niveau ? `<button class="atTest" type="button" data-reset="${m.id}"
              title="Test — remet la machine à zéro">⟲ test</button>` : ''}
-          <span class="atPrix">${fmt(prix)} ✨${porte && niveau
-            ? ` · <b class="atPorte">palier ${palierDe(vise)}</b>` : ''}</span>
+          ${invente ? `<span class="atPrix">${fmt(prix)} ✨${porte && niveau
+            ? ` · <b class="atPorte">palier ${palierDe(vise)}</b>` : ''}</span>` : ''}
         </div>
       </div>
 

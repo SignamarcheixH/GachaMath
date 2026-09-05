@@ -1,0 +1,13 @@
+{
+  "vivier": 9999,
+  "paliers": {
+    "commun": 5238,
+    "peucommun": 3174,
+    "rare": 1155,
+    "epique": 344,
+    "legendaire": 74,
+    "mythique": 14
+  },
+  "theoremes": 21,
+  "defis": 22
+}
