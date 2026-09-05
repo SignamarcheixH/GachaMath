@@ -22,6 +22,45 @@ def nouveau_code() -> str:
     return "GN-" + "-".join(tirage[i:i + 4] for i in range(0, 12, 4))
 
 
+class Reglages(models.Model):
+    """Les réglages que l'exploitant change sans redéployer.
+
+    UN SEUL ENREGISTREMENT, et c'est voulu : ce ne sont pas des données, c'est
+    un panneau de commande. `charger()` le crée à la volée, donc l'admin n'a
+    jamais à s'occuper de son existence.
+
+    LA VERSION DE SAUVEGARDE. Quand une refonte rend les anciennes parties
+    incohérentes — un barème de rareté refait, un acte 0 réécrit — il faut
+    pouvoir demander à tout le monde de repartir. On l'annonce ici : le jeu
+    compare ce nombre à celui inscrit dans la partie du joueur, et propose
+    d'effacer si elle est plus ancienne.
+
+    ZÉRO PAR DÉFAUT, ET C'EST IMPORTANT. Les parties existantes n'ont aucune
+    version : elles valent zéro. Tant que ce champ vaut zéro, personne n'est
+    dérangé. C'est en le passant à 1 qu'on déclenche la remise à zéro — un
+    geste explicite, jamais un effet de bord de mise en production.
+    """
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    version_sauvegarde = models.PositiveIntegerField(
+        "version de sauvegarde exigée", default=0,
+        help_text="Une partie dont la version est inférieure est déclarée obsolète : "
+                  "le jeu propose au joueur de l'effacer. Augmentez de 1 après une "
+                  "refonte qui rend les anciennes parties incohérentes.")
+    maj_le = models.DateTimeField("modifié le", auto_now=True)
+
+    class Meta:
+        verbose_name = "réglages"
+        verbose_name_plural = "réglages"
+
+    def __str__(self):
+        return f"version de sauvegarde exigée : {self.version_sauvegarde}"
+
+    @classmethod
+    def charger(cls):
+        objet, _ = cls.objects.get_or_create(id=1)
+        return objet
+
+
 class Joueur(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pseudo = models.CharField("pseudo", max_length=24, unique=True)

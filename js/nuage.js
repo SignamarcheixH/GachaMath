@@ -24,6 +24,7 @@ const nuage = {
   pseudo: null,
   code: null,
   majLe: null,        // horodatage serveur de la dernière synchro réussie
+  versionExigee: 0,   // version de sauvegarde réclamée par le serveur
   etat: 'sonde',      // sonde · absent · anonyme · ok · envoi · erreur · conflit
   detail: '',
 };
@@ -90,6 +91,7 @@ async function initNuage(avaitLocal = false) {
   try {
     const moi = await appel('/moi');                 // pose aussi le jeton CSRF
     nuage.dispo = true;
+    nuage.versionExigee = +moi.version_sauvegarde || 0;
     nuage.connecte = !!moi.connecte;
     nuage.pseudo = moi.pseudo || null;
     nuage.code = moi.code || null;
@@ -101,6 +103,19 @@ async function initNuage(avaitLocal = false) {
     return;
   }
   renderNuage();
+
+  /* LA PÉREMPTION SE TRANCHE AVANT LA SYNCHRO. Réconcilier une partie qu'on
+     s'apprête à jeter n'a pas de sens — et pousserait au passage la version
+     périmée vers le serveur. On propose d'abord, on synchronise après. */
+  if (partieObsolete()) return proposerObsolete();
+
+  /* La partie est à jour : on inscrit la version qu'elle honore, pour ne plus
+     avoir à la déduire au chargement suivant. */
+  if (nuage.versionExigee && versionDeLaPartie() !== nuage.versionExigee) {
+    state.version = nuage.versionExigee;
+    save();
+  }
+
   if (nuage.connecte) await reconcilier();
 }
 
@@ -318,8 +333,15 @@ function ouvrirNuage() {
   });
   b('#nFichier', telechargerSauvegarde);
 
-  $('#modal').classList.add('on');
+  montrerSurcouche($('#modal'));
 }
+
+/* LES MODALES DE CE FICHIER PASSENT PAR `montrerSurcouche`, comme toutes les
+   autres. Elles ajoutaient la classe `on` à la main, ce qui saute l'étape qui
+   pose `vu` — la surcouche restait alors à opacité zéro : invisible, mais
+   posée sur la page et avalant les clics. L'assistant traite en plus le cas de
+   l'onglet en arrière-plan, où `requestAnimationFrame` est gelé.
+   Voir js/ui.js. */
 
 /* Dernier recours, sans serveur ni compte : le joueur emporte ses données. */
 function telechargerSauvegarde() {
@@ -329,6 +351,92 @@ function telechargerSauvegarde() {
   a.download = `gacha-des-nombres-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+/* ============================================================
+   LA SAUVEGARDE OBSOLÈTE
+
+   POURQUOI CE MÉCANISME. Certaines refontes rendent les anciennes parties
+   incohérentes plutôt qu'illisibles : le barème de rareté refait, l'acte 0
+   réécrit. Rien ne casse — et c'est bien le problème. Le joueur continue sur
+   une partie dont les chiffres ne veulent plus dire ce qu'ils disent, et il ne
+   verra jamais ce qui a changé au début du jeu.
+
+   POURQUOI PAS UN NUMÉRO DANS LE CODE. Changer `SAVE_KEY` en `…v2` marche une
+   fois, exige un déploiement, et ne se défait pas si l'on s'est trompé. Le
+   serveur porte donc le numéro : on le change dans l'admin, sans redéployer,
+   et on peut revenir en arrière.
+
+   ON N'OFFRE PAS LE CHOIX, ET C'EST DÉLIBÉRÉ. Une partie déclarée périmée
+   l'est vraiment : ses scores ne veulent plus dire ce qu'ils disent, et la
+   laisser vivre « pour cette session » revient à laisser jouer une version du
+   jeu qu'on ne soutient plus. On explique pourquoi, puis on efface. Pas de
+   « plus tard » qu'on repousse indéfiniment, pas de téléchargement d'une
+   sauvegarde que plus rien ne saura relire.
+
+   LE FILET N'EST PAS CÔTÉ JOUEUR, IL EST CÔTÉ ADMIN. Si le numéro a été monté
+   par erreur, on le redescend dans l'admin et tout le monde rejoue
+   normalement à la seconde suivante. C'est précisément ce qu'un numéro figé
+   dans le code ne permettait pas.
+
+   ET ON EFFACE DES DEUX CÔTÉS. Vider `localStorage` seul ne sert à rien : la
+   sauvegarde du nuage redescendrait à la visite suivante. C'est le même piège
+   dans l'autre sens que la suppression côté serveur, que la montée locale
+   annulerait aussitôt. Les deux, ou rien.
+   ============================================================ */
+/* Vraie quand une modale ne doit pas pouvoir être refermée. Lue par
+   `closeModal()` dans js/ui.js. */
+let _modaleImposee = false;
+
+/* La version inscrite dans la partie. Absente — toutes les parties d'avant ce
+   mécanisme — vaut zéro. */
+const versionDeLaPartie = () => (state && +state.version) || 0;
+
+/* Le serveur a-t-il déclaré cette partie périmée ? On ne demande rien s'il n'y
+   a pas de partie : il n'y a rien à effacer. */
+function partieObsolete() {
+  if (!nuage.dispo || !nuage.versionExigee) return false;
+  if (!_avaitLocal) return false;
+  return versionDeLaPartie() < nuage.versionExigee;
+}
+
+/* Efface la partie ici ET là-bas, puis recharge sur une page neuve. */
+async function effacerPartieObsolete() {
+  if (nuage.connecte) {
+    /* Un échec réseau ne doit pas empêcher la remise à zéro locale : la
+       sauvegarde distante sera écrasée à la première montée de la partie
+       neuve, qui porte la bonne version. On le signale sans bloquer. */
+    try { await appel('/partie', { method: 'DELETE' }); }
+    catch (e) { console.warn('Sauvegarde distante non effacée :', e.message); }
+  }
+  wipe();
+  location.reload();
+}
+
+function proposerObsolete() {
+  const nb = uniqueCount(state);
+  const boite = document.querySelector('#modalBox');
+  if (!boite) return;
+  boite.style.setProperty('--rc', 'var(--r-legendaire)');
+  boite.innerHTML = `<h2>⚠ Cette partie n'est plus à jour</h2>
+    <p>Le jeu a changé depuis que vous l'avez commencée — le barème de rareté et
+       le début de la partie ont été refaits. Votre sauvegarde reste lisible, mais
+       ses chiffres ne veulent plus dire la même chose, et vous ne verriez jamais
+       ce qui a été ajouté au commencement.</p>
+    <p class="nDetail">Votre partie : <b>${fmt(nb)}</b> nombre${nb > 1 ? 's' : ''},
+       version ${versionDeLaPartie()} — le jeu en est à la version
+       ${nuage.versionExigee}. Elle va être effacée, ici et sur le serveur.</p>
+    <div class="nChoix">
+      <button class="btn" id="obEffacer" type="button">Repartir de zéro</button>
+    </div>
+    <p class="tiny">Il n'y a pas d'autre chemin : le jeu ne sait plus jouer cette
+       partie correctement.</p>`;
+  /* IMPOSÉE : ni la touche Échap, ni le clic à côté ne la referment. Une
+     modale qu'on peut fuir n'impose rien, et c'est bien ce qu'on veut ici. */
+  _modaleImposee = true;
+  montrerSurcouche(document.querySelector('#modal'));
+
+  boite.querySelector('#obEffacer').addEventListener('click', () => effacerPartieObsolete());
 }
 
 /* ---------- conflit ---------- */
@@ -358,5 +466,5 @@ function proposerConflit(distant) {
   $('#nGarderLocal').addEventListener('click', async () => { closeModal(); await pousser(true); toast('Version locale conservée.', 'good'); });
   $('#nGarderDistant').addEventListener('click', () => { closeModal(); adopter(distant); });
   $('#nFichier').addEventListener('click', telechargerSauvegarde);
-  $('#modal').classList.add('on');
+  montrerSurcouche($('#modal'));
 }

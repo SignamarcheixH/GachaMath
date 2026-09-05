@@ -20,7 +20,7 @@ from django.views.decorators.http import require_http_methods
 
 
 from .metriques import incoherences, mesurer
-from .models import Joueur, Retour, Sauvegarde, Voix
+from .models import Joueur, Reglages, Retour, Sauvegarde, Voix
 
 # Mesuré, pas estimé : une sauvegarde coûte ~30 octets par nombre possédé,
 # soit 2,9 Mo pour la collection complète (0 à 99 999). L'ancienne limite de
@@ -116,13 +116,19 @@ def reprise(requete):
 @ensure_csrf_cookie          # c'est ici que le client récupère son jeton CSRF
 @require_http_methods(["GET"])
 def moi(requete):
+    """La version exigée part AUSSI aux visiteurs sans compte : une partie
+    obsolète vit dans le navigateur, pas sur le serveur, et la plupart des
+    joueurs n'ont jamais créé de compte. La renvoyer seulement aux connectés
+    laisserait la majorité sur une sauvegarde périmée."""
+    version = Reglages.charger().version_sauvegarde
     joueur = joueur_courant(requete)
     if not joueur:
-        return JsonResponse({"connecte": False})
+        return JsonResponse({"connecte": False, "version_sauvegarde": version})
     sauv = getattr(joueur, "sauvegarde", None)
     return JsonResponse({
         "connecte": True, "pseudo": joueur.pseudo, "code": joueur.code,
         "maj_le": sauv.maj_le.isoformat() if sauv else None,
+        "version_sauvegarde": version,
     })
 
 
@@ -134,11 +140,29 @@ def deconnexion(requete):
 
 
 # ------------------------------------------------------------------ partie
-@require_http_methods(["GET", "PUT"])
+@require_http_methods(["GET", "PUT", "DELETE"])
 def partie(requete):
     joueur = joueur_courant(requete)
     if not joueur:
         return JsonResponse({"erreur": "Aucune partie associée à cet appareil."}, status=401)
+
+    if requete.method == "DELETE":
+        """Le joueur efface SA sauvegarde. C'est le pendant serveur de la
+        remise à zéro locale : sans lui, la partie effacée dans le navigateur
+        serait redescendue du nuage à la visite suivante, et la remise à zéro
+        n'aurait servi à rien.
+
+        On garde le Joueur — son pseudo, son code de reprise, son historique
+        de retours. Ce n'est pas une suppression de compte, c'est une partie
+        qu'on recommence. Les métriques retombent à zéro pour que le classement
+        ne le montre plus avec la collection qu'il n'a plus."""
+        with transaction.atomic():
+            Sauvegarde.objects.filter(joueur=joueur).delete()
+            for champ, valeur in mesurer({}).items():
+                setattr(joueur, champ, valeur)
+            joueur.suspect = ""
+            joueur.save()
+        return JsonResponse({"ok": True})
 
     if requete.method == "GET":
         sauv = getattr(joueur, "sauvegarde", None)

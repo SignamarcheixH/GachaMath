@@ -8,7 +8,25 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .metriques import incoherences, mesurer
-from .models import Joueur, Retour, Sauvegarde
+from .models import Joueur, Reglages, Retour, Sauvegarde
+
+
+@admin.register(Reglages)
+class ReglagesAdmin(admin.ModelAdmin):
+    """Le panneau de commande. Un seul enregistrement, qu'on ne supprime pas et
+    qu'on n'ajoute pas : on le modifie."""
+    list_display = ("version_sauvegarde", "maj_le")
+    readonly_fields = ("maj_le",)
+
+    def has_add_permission(self, requete):
+        return not Reglages.objects.exists()
+
+    def has_delete_permission(self, requete, obj=None):
+        return False
+
+    def changelist_view(self, requete, extra_context=None):
+        Reglages.charger()          # il existe toujours quand on ouvre la page
+        return super().changelist_view(requete, extra_context)
 
 
 class SauvegardeInline(admin.StackedInline):
