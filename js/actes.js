@@ -236,7 +236,13 @@ function vueOuverte(vue) {
    Délibérément voyante, comme celles de l'Atelier : une aide de test discrète
    finit en production. Elle disparaît entièrement avec ce drapeau.
    ============================================================ */
-const ACTES_TEST = true;
+/* CE N'EST PLUS UN DRAPEAU, C'EST L'ADRESSE. Il valait `true` dans le dépôt et
+   il fallait le passer à `false` avant chaque déploiement — une consigne qu'on
+   oublie une fois, et le bouton « repartir de zéro » se retrouve dans l'en-tête
+   de tous les joueurs. Le nom est conservé : trois fichiers et le vérificateur
+   de quêtes le nomment, et le harnais de ce dernier le définit lui-même pour
+   contrôler la quête d'essai. Voir `EN_DEV` dans js/config.js. */
+const ACTES_TEST = (typeof EN_DEV !== 'undefined') && EN_DEV;
 
 function reinitialiserProgression() {
   state.acte = 0;

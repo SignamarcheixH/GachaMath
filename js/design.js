@@ -376,6 +376,8 @@ function dsRendre() {
 function demarrer() {
   /* LA GARDE. Hors développement, la page ne s'assemble pas. C'est l'adresse
      qui décide et non un drapeau : on ne peut pas oublier de le remettre. */
+  /* La liste est recopiée ici, et c'est assumé : design.html ne charge pas
+     js/config.js, donc `EN_DEV` n'y existe pas. C'est la seule copie. */
   const local = ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname)
              || location.protocol === 'file:';
   if (!local) {

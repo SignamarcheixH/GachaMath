@@ -613,8 +613,7 @@ function allerAuLieu(id) {
    D'où un interrupteur dans l'en-tête, visible seulement sur la Carte et
    seulement en local. Son état vit dans `localStorage` : on ne le rallume pas
    à chaque rechargement au milieu d'un placement. */
-const CARTE_DEV = ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname)
-               || location.protocol === 'file:';
+const CARTE_DEV = (typeof EN_DEV !== 'undefined') && EN_DEV;
 const CARTE_EDITION_CLE = 'gachanombres.carteEditionActive';
 
 let CARTE_EDITION = (() => {

@@ -1,4 +1,21 @@
 /* ============================================================
+   SOMMES-NOUS EN DÉVELOPPEMENT ?
+
+   UNE SEULE RÉPONSE POUR TOUT LE JEU, ET C'EST L'ADRESSE QUI RÉPOND. Les
+   aides de développement étaient gardées par des drapeaux qu'il fallait
+   penser à baisser avant chaque mise en ligne. C'est exactement ce qui s'est
+   produit : le bouton « repartir de zéro » est parti en production, à portée
+   de clic de n'importe quel joueur.
+
+   Un drapeau se laisse à `true` ; une adresse ne s'oublie pas. La liste vit
+   ici, dans le premier fichier chargé, parce qu'elle était déjà recopiée à
+   deux endroits — et deux copies d'une même liste finissent toujours par
+   diverger.
+   ============================================================ */
+const EN_DEV = ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname)
+            || location.protocol === 'file:';
+
+/* ============================================================
    CONFIGURATION PUBLICITAIRE
 
    Tant que `client` est vide, aucune publicité n'est chargée et
