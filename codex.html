@@ -8,7 +8,7 @@
 <meta property="og:title" content="Codex des traits — Gacha des Nombres">
 <meta property="og:description" content="Les 65 propriétés mathématiques qui déterminent la rareté d'un nombre : parfait, narcissique, vampire, taxicab, Carmichael… chacune définie et démontrée.">
 <meta property="og:type" content="article">
-<link rel="stylesheet" href="css/style.css?v=147">
+<link rel="stylesheet" href="css/style.css?v=230">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <!-- AdSense. La balise est posée en dur, et pas seulement injectée par
      js/pub.js, parce que la validation du site par Google se fait sur le HTML
@@ -34,361 +34,883 @@
 <h1>Codex des traits</h1>
 <p class="chapo">Un nombre n'est pas rare parce qu'un serveur l'a décidé : il est rare
 parce qu'il <b>est</b> rare. Ces 65 propriétés sont celles que le moteur
-du jeu sait reconnaître, et leur cumul détermine la valeur d'un nombre. Chacune est
-accompagnée d'une démonstration calculée sur le plus petit nombre qui l'illustre.</p>
+du jeu sait reconnaître, et leur cumul détermine la valeur d'un nombre. Chacune indique
+<b>combien de nombres la portent sous 10 000</b> — c'est la mesure la plus honnête de sa
+rareté. Dépliez une ligne pour la définition et une démonstration calculée sur le plus
+petit nombre qui l'illustre.</p>
 <h2>Primalité</h2>
 <p>Ce qui touche aux nombres premiers, à leurs voisinages et à leurs formes particulières.</p>
 <div class="docListe">
-  <article class="docTrait">
-    <h3>🛸 Premier de Wieferich <span class="docPts">+25</span></h3>
-    <p>Un premier p tel que p² divise 2^(p−1) − 1. On n'en connaît que deux sous 10^17, et l'on ignore s'il en existe une infinité.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1093 est premier, et 1093² divise 2^(1093−1) − 1. Seuls 1093 et 3511 réussissent cela sous 10¹⁷.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧿 Nombre de Fermat <span class="docPts">+16</span></h3>
-    <p>De la forme 2^(2^k)+1. Fermat pensait qu'ils étaient tous premiers. Fermat avait tort.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 = 2¹ + 1, et 1 = 2⁰</p>
-  </article>
-  <article class="docTrait">
-    <h3>⛰️ Premier de Mersenne <span class="docPts">+14</span></h3>
-    <p>Un premier de la forme 2^p − 1. Aristocratie absolue.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 = 2² − 1, et 2 est premier</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔪 Premier tronquable <span class="docPts">+7</span></h3>
-    <p>Reste premier quand on lui arrache ses chiffres de droite, un par un.</p>
-    <p class="docPreuve"><b>Exemple.</b> 23 → 2 — tous premiers</p>
-  </article>
-  <article class="docTrait">
-    <h3>🪞 Emirp <span class="docPts">+6</span></h3>
-    <p>Premier à l'endroit, premier à l'envers, et pas le même. (« prime » retourné.)</p>
-    <p class="docPreuve"><b>Exemple.</b> 13 et 31 sont premiers tous les deux</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔀 Premier permutable <span class="docPts">+6</span></h3>
-    <p>Toutes les permutations de ses chiffres sont premières. 337, 373, 733 : tous premiers.</p>
-    <p class="docPreuve"><b>Exemple.</b> 13, 31 — toutes premières</p>
-  </article>
-  <article class="docTrait">
-    <h3>🪓 Tronquable à gauche <span class="docPts">+4</span></h3>
-    <p>Reste premier quand on lui arrache ses chiffres de gauche, un par un.</p>
-    <p class="docPreuve"><b>Exemple.</b> 13 → 3 — tous premiers</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔷 Premier <span class="docPts">+3</span></h3>
-    <p>Indivisible. Une brique de l'univers.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 n'est divisible que par 1 et par 2. Rien d'autre ne le découpe.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🎀 Sophie Germain <span class="docPts">+2</span></h3>
-    <p>Un premier p tel que 2p+1 est premier aussi. Elle publiait sous un faux nom d'homme pour être lue.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 est premier, et 2 × 2 + 1 = 5 l'est aussi</p>
-  </article>
-  <article class="docTrait">
-    <h3>🛡️ Premier sûr <span class="docPts">+2</span></h3>
-    <p>Un premier p tel que (p−1)/2 soit premier aussi. Le miroir de Sophie Germain, et la clé de voûte de la cryptographie Diffie-Hellman.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5 est premier, et (5 − 1) / 2 = 2 l'est aussi</p>
-  </article>
-  <article class="docTrait">
-    <h3>🪨 Sphénique <span class="docPts">+2</span></h3>
-    <p>Produit d'exactement trois premiers distincts.</p>
-    <p class="docPreuve"><b>Exemple.</b> 30 = 2 × 3 × 5 — trois premiers, tous différents</p>
-  </article>
-  <article class="docTrait">
-    <h3>👯 Premier jumeau <span class="docPts">+1</span></h3>
-    <p>Un premier à distance 2 d'un autre premier. On ignore encore s'il y en a une infinité.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 et 5 sont premiers, à 2 d'écart</p>
-  </article>
-  <article class="docTrait">
-    <h3>👪 Premier cousin <span class="docPts">+1</span></h3>
-    <p>Un premier à distance 4 d'un autre premier. Entre les jumeaux (2) et les sexy (6), il fallait bien quelqu'un.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 et 7 sont premiers, à 4 d'écart</p>
-  </article>
-  <article class="docTrait">
-    <h3>💋 Premier sexy <span class="docPts">+1</span></h3>
-    <p>Vrai terme mathématique, désolé. Deux premiers séparés par 6 — « sex » signifie six en latin.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5 et 11 sont premiers, à 6 d'écart</p>
-  </article>
-  <article class="docTrait">
-    <h3>📐 Premier de Pythagore <span class="docPts">+1</span></h3>
-    <p>Un premier de la forme 4k+1. Fermat a montré qu'ils sont exactement ceux qui s'écrivent comme somme de deux carrés.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5 = 4 × 1 + 1, et 5 = 1² + 2²</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔗 Semi-premier <span class="docPts">+1</span></h3>
-    <p>Produit de deux premiers, exactement. Toute la cryptographie tient là-dessus.</p>
-    <p class="docPreuve"><b>Exemple.</b> 4 = 2 × 2</p>
-  </article>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🛸</span>
+      <span class="docNom">Premier de Wieferich</span>
+      <span class="docCompte"><b>2</b>
+    <i>0,02 %</i></span>
+      <span class="docPts">+18</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier p tel que p² divise 2^(p−1) − 1. On n'en connaît que deux sous 10^17, et l'on ignore s'il en existe une infinité.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1093 est premier, et 1093² divise 2^(1093−1) − 1. Seuls 1093 et 3511 réussissent cela sous 10¹⁷.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧿</span>
+      <span class="docNom">Nombre de Fermat</span>
+      <span class="docCompte"><b>4</b>
+    <i>0,04 %</i></span>
+      <span class="docPts">+17</span>
+    </summary>
+    <div class="docCorps">
+      <p>De la forme 2^(2^k)+1. Fermat pensait qu'ils étaient tous premiers. Fermat avait tort.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 = 2¹ + 1, et 1 = 2⁰</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">⛰️</span>
+      <span class="docNom">Premier de Mersenne</span>
+      <span class="docCompte"><b>5</b>
+    <i>0,05 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier de la forme 2^p − 1. Aristocratie absolue.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 = 2² − 1, et 2 est premier</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔀</span>
+      <span class="docNom">Premier permutable</span>
+      <span class="docCompte"><b>17</b>
+    <i>0,17 %</i></span>
+      <span class="docPts">+14</span>
+    </summary>
+    <div class="docCorps">
+      <p>Toutes les permutations de ses chiffres sont premières. 337, 373, 733 : tous premiers.</p>
+      <p class="docPreuve"><b>Exemple.</b> 13, 31 — toutes premières</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔪</span>
+      <span class="docNom">Premier tronquable</span>
+      <span class="docCompte"><b>39</b>
+    <i>0,39 %</i></span>
+      <span class="docPts">+12</span>
+    </summary>
+    <div class="docCorps">
+      <p>Reste premier quand on lui arrache ses chiffres de droite, un par un.</p>
+      <p class="docPreuve"><b>Exemple.</b> 23 → 2 — tous premiers</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🛡️</span>
+      <span class="docNom">Premier sûr</span>
+      <span class="docCompte"><b>115</b>
+    <i>1,2 %</i></span>
+      <span class="docPts">+10</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier p tel que (p−1)/2 soit premier aussi. Le miroir de Sophie Germain, et la clé de voûte de la cryptographie Diffie-Hellman.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5 est premier, et (5 − 1) / 2 = 2 l'est aussi</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🎀</span>
+      <span class="docNom">Sophie Germain</span>
+      <span class="docCompte"><b>190</b>
+    <i>1,9 %</i></span>
+      <span class="docPts">+9</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier p tel que 2p+1 est premier aussi. Elle publiait sous un faux nom d'homme pour être lue.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 est premier, et 2 × 2 + 1 = 5 l'est aussi</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🪓</span>
+      <span class="docNom">Tronquable à gauche</span>
+      <span class="docCompte"><b>149</b>
+    <i>1,5 %</i></span>
+      <span class="docPts">+9</span>
+    </summary>
+    <div class="docCorps">
+      <p>Reste premier quand on lui arrache ses chiffres de gauche, un par un.</p>
+      <p class="docPreuve"><b>Exemple.</b> 13 → 3 — tous premiers</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🪞</span>
+      <span class="docNom">Emirp</span>
+      <span class="docCompte"><b>240</b>
+    <i>2,4 %</i></span>
+      <span class="docPts">+8</span>
+    </summary>
+    <div class="docCorps">
+      <p>Premier à l'endroit, premier à l'envers, et pas le même. (« prime » retourné.)</p>
+      <p class="docPreuve"><b>Exemple.</b> 13 et 31 sont premiers tous les deux</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">👯</span>
+      <span class="docNom">Premier jumeau</span>
+      <span class="docCompte"><b>409</b>
+    <i>4,1 %</i></span>
+      <span class="docPts">+7</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier à distance 2 d'un autre premier. On ignore encore s'il y en a une infinité.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 et 5 sont premiers, à 2 d'écart</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">👪</span>
+      <span class="docNom">Premier cousin</span>
+      <span class="docCompte"><b>405</b>
+    <i>4,1 %</i></span>
+      <span class="docPts">+7</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier à distance 4 d'un autre premier. Entre les jumeaux (2) et les sexy (6), il fallait bien quelqu'un.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 et 7 sont premiers, à 4 d'écart</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">💋</span>
+      <span class="docNom">Premier sexy</span>
+      <span class="docCompte"><b>704</b>
+    <i>7,0 %</i></span>
+      <span class="docPts">+6</span>
+    </summary>
+    <div class="docCorps">
+      <p>Vrai terme mathématique, désolé. Deux premiers séparés par 6 — « sex » signifie six en latin.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5 et 11 sont premiers, à 6 d'écart</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">📐</span>
+      <span class="docNom">Premier de Pythagore</span>
+      <span class="docCompte"><b>609</b>
+    <i>6,1 %</i></span>
+      <span class="docPts">+6</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un premier de la forme 4k+1. Fermat a montré qu'ils sont exactement ceux qui s'écrivent comme somme de deux carrés.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5 = 4 × 1 + 1, et 5 = 1² + 2²</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔷</span>
+      <span class="docNom">Premier</span>
+      <span class="docCompte"><b>1 229</b>
+    <i>12,3 %</i></span>
+      <span class="docPts">+5</span>
+    </summary>
+    <div class="docCorps">
+      <p>Indivisible. Une brique de l'univers.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 n'est divisible que par 1 et par 2. Rien d'autre ne le découpe.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🪨</span>
+      <span class="docNom">Sphénique</span>
+      <span class="docCompte"><b>1 800</b>
+    <i>18,0 %</i></span>
+      <span class="docPts">+4</span>
+    </summary>
+    <div class="docCorps">
+      <p>Produit d'exactement trois premiers distincts.</p>
+      <p class="docPreuve"><b>Exemple.</b> 30 = 2 × 3 × 5 — trois premiers, tous différents</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔗</span>
+      <span class="docNom">Semi-premier</span>
+      <span class="docCompte"><b>2 625</b>
+    <i>26,3 %</i></span>
+      <span class="docPts">—</span>
+    </summary>
+    <div class="docCorps">
+      <p>Produit de deux premiers, exactement. Toute la cryptographie tient là-dessus.</p>
+      <p class="docPreuve"><b>Exemple.</b> 4 = 2 × 2</p>
+    </div>
+  </details>
 </div>
 
 <h2>Diviseurs</h2>
 <p>Ce qu'un nombre devient quand on le décompose, et ce que la somme de ses diviseurs raconte.</p>
 <div class="docListe">
-  <article class="docTrait">
-    <h3>👑 Parfait <span class="docPts">+24</span></h3>
-    <p>Égal à la somme de ses diviseurs propres. Il n'en existe que quatre sous 10 000.</p>
-    <p class="docPreuve"><b>Exemple.</b> 6 = 1 + 2 + 3</p>
-  </article>
-  <article class="docTrait">
-    <h3>👽 Bizarre <span class="docPts">+13</span></h3>
-    <p>Abondant, mais jamais somme exacte d'un sous-ensemble de ses diviseurs. Le premier est 70. Personne ne sait s'il en existe d'impairs.</p>
-    <p class="docPreuve"><b>Exemple.</b> Ses diviseurs propres totalisent 74, donc plus que 70 — pourtant aucune de leurs combinaisons ne fait exactement 70.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🤝 Amical <span class="docPts">+11</span></h3>
-    <p>Il a une âme sœur : chacun est la somme des diviseurs propres de l'autre.</p>
-    <p class="docPreuve"><b>Exemple.</b> diviseurs propres de 220 → 284, et diviseurs propres de 284 → 220</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧬 Primorielle <span class="docPts">+10</span></h3>
-    <p>Produit de tous les premiers consécutifs à partir de 2.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = 2 (tous les premiers jusqu'à 2)</p>
-  </article>
-  <article class="docTrait">
-    <h3>🏗️ Hautement composé <span class="docPts">+9</span></h3>
-    <p>Il a plus de diviseurs que tout nombre plus petit que lui. Un carrefour.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 possède 2 diviseurs. Aucun entier plus petit que lui n'en a autant.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🦶 Achille <span class="docPts">+6</span></h3>
-    <p>Puissant sans être une puissance : chaque facteur premier y est au carré au moins, et pourtant il n'est ni carré, ni cube, ni rien. Fort mais vulnérable.</p>
-    <p class="docPreuve"><b>Exemple.</b> 72 = 2³ × 3² — tous les exposants valent 2 ou plus, et pourtant 72 n'est aucune puissance exacte</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧰 Pratique <span class="docPts">+3</span></h3>
-    <p>Tout entier plus petit que lui s'écrit comme une somme de ses diviseurs. Fibonacci s'en servait pour décomposer les fractions.</p>
-    <p class="docPreuve"><b>Exemple.</b> Tout entier de 1 à 1 s'écrit comme une somme de diviseurs distincts de 2, qui en compte 2.</p>
-  </article>
-  <article class="docTrait">
-    <h3>💪 Puissant <span class="docPts">+3</span></h3>
-    <p>Si un premier le divise, son carré le divise aussi. Aucun facteur ne s'y promène seul.</p>
-    <p class="docPreuve"><b>Exemple.</b> 4 = 2² — aucun exposant ne vaut 1</p>
-  </article>
-  <article class="docTrait">
-    <h3>🍇 Abondant <span class="docPts">—</span></h3>
-    <p>Ses diviseurs propres dépassent sa propre valeur. Gourmand.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1 + 2 + 3 + 4 + 6 = 16 &gt; 12</p>
-  </article>
-  <article class="docTrait">
-    <h3>🥀 Déficient <span class="docPts">—</span></h3>
-    <p>Ses diviseurs propres ne suffisent pas à l'atteindre. La majorité silencieuse.</p>
-    <p class="docPreuve"><b>Exemple.</b> Un premier n'a qu'un seul diviseur propre — 1 — et 1 est très loin de 2. Les premiers sont les plus déficients de tous.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧼 Sans facteur carré <span class="docPts">—</span></h3>
-    <p>Aucun carré ne le divise. Trois nombres sur cinq sont dans ce cas.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = 2 — aucun facteur répété</p>
-  </article>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">👑</span>
+      <span class="docNom">Parfait</span>
+      <span class="docCompte"><b>4</b>
+    <i>0,04 %</i></span>
+      <span class="docPts">+17</span>
+    </summary>
+    <div class="docCorps">
+      <p>Égal à la somme de ses diviseurs propres. Il n'en existe que quatre sous 10 000.</p>
+      <p class="docPreuve"><b>Exemple.</b> 6 = 1 + 2 + 3</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">👽</span>
+      <span class="docNom">Bizarre</span>
+      <span class="docCompte"><b>7</b>
+    <i>0,07 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Abondant, mais jamais somme exacte d'un sous-ensemble de ses diviseurs. Le premier est 70. Personne ne sait s'il en existe d'impairs.</p>
+      <p class="docPreuve"><b>Exemple.</b> Ses diviseurs propres totalisent 74, donc plus que 70 — pourtant aucune de leurs combinaisons ne fait exactement 70.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧬</span>
+      <span class="docNom">Primorielle</span>
+      <span class="docCompte"><b>5</b>
+    <i>0,05 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Produit de tous les premiers consécutifs à partir de 2.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = 2 (tous les premiers jusqu'à 2)</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🤝</span>
+      <span class="docNom">Amical</span>
+      <span class="docCompte"><b>10</b>
+    <i>0,10 %</i></span>
+      <span class="docPts">+15</span>
+    </summary>
+    <div class="docCorps">
+      <p>Il a une âme sœur : chacun est la somme des diviseurs propres de l'autre.</p>
+      <p class="docPreuve"><b>Exemple.</b> diviseurs propres de 220 → 284, et diviseurs propres de 284 → 220</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🏗️</span>
+      <span class="docNom">Hautement composé</span>
+      <span class="docCompte"><b>20</b>
+    <i>0,20 %</i></span>
+      <span class="docPts">+13</span>
+    </summary>
+    <div class="docCorps">
+      <p>Il a plus de diviseurs que tout nombre plus petit que lui. Un carrefour.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 possède 2 diviseurs. Aucun entier plus petit que lui n'en a autant.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🦶</span>
+      <span class="docNom">Achille</span>
+      <span class="docCompte"><b>60</b>
+    <i>0,60 %</i></span>
+      <span class="docPts">+11</span>
+    </summary>
+    <div class="docCorps">
+      <p>Puissant sans être une puissance : chaque facteur premier y est au carré au moins, et pourtant il n'est ni carré, ni cube, ni rien. Fort mais vulnérable.</p>
+      <p class="docPreuve"><b>Exemple.</b> 72 = 2³ × 3² — tous les exposants valent 2 ou plus, et pourtant 72 n'est aucune puissance exacte</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">💪</span>
+      <span class="docNom">Puissant</span>
+      <span class="docCompte"><b>183</b>
+    <i>1,8 %</i></span>
+      <span class="docPts">+9</span>
+    </summary>
+    <div class="docCorps">
+      <p>Si un premier le divise, son carré le divise aussi. Aucun facteur ne s'y promène seul.</p>
+      <p class="docPreuve"><b>Exemple.</b> 4 = 2² — aucun exposant ne vaut 1</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧰</span>
+      <span class="docNom">Pratique</span>
+      <span class="docCompte"><b>1 455</b>
+    <i>14,6 %</i></span>
+      <span class="docPts">+4</span>
+    </summary>
+    <div class="docCorps">
+      <p>Tout entier plus petit que lui s'écrit comme une somme de ses diviseurs. Fibonacci s'en servait pour décomposer les fractions.</p>
+      <p class="docPreuve"><b>Exemple.</b> Tout entier de 1 à 1 s'écrit comme une somme de diviseurs distincts de 2, qui en compte 2.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🍇</span>
+      <span class="docNom">Abondant</span>
+      <span class="docCompte"><b>2 487</b>
+    <i>24,9 %</i></span>
+      <span class="docPts">—</span>
+    </summary>
+    <div class="docCorps">
+      <p>Ses diviseurs propres dépassent sa propre valeur. Gourmand.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1 + 2 + 3 + 4 + 6 = 16 &gt; 12</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🥀</span>
+      <span class="docNom">Déficient</span>
+      <span class="docCompte"><b>7 508</b>
+    <i>75,1 %</i></span>
+      <span class="docPts">—</span>
+    </summary>
+    <div class="docCorps">
+      <p>Ses diviseurs propres ne suffisent pas à l'atteindre. La majorité silencieuse.</p>
+      <p class="docPreuve"><b>Exemple.</b> Un premier n'a qu'un seul diviseur propre — 1 — et 1 est très loin de 2. Les premiers sont les plus déficients de tous.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧼</span>
+      <span class="docNom">Sans facteur carré</span>
+      <span class="docCompte"><b>6 082</b>
+    <i>60,8 %</i></span>
+      <span class="docPts">—</span>
+    </summary>
+    <div class="docCorps">
+      <p>Aucun carré ne le divise. Trois nombres sur cinq sont dans ce cas.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = 2 — aucun facteur répété</p>
+    </div>
+  </details>
 </div>
 
 <h2>Figurés</h2>
 <p>Les nombres qui s'empilent en formes : triangles, carrés, pyramides.</p>
 <div class="docListe">
-  <article class="docTrait">
-    <h3>🧊 Cube parfait <span class="docPts">+4</span></h3>
-    <p>Un entier au cube. Solide.</p>
-    <p class="docPreuve"><b>Exemple.</b> 8 = 2³</p>
-  </article>
-  <article class="docTrait">
-    <h3>💾 Puissance de 2 <span class="docPts">+4</span></h3>
-    <p>La monnaie officielle des ordinateurs.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = 2¹</p>
-  </article>
-  <article class="docTrait">
-    <h3>⬛ Carré parfait <span class="docPts">+3</span></h3>
-    <p>Un entier au carré. Rassurant.</p>
-    <p class="docPreuve"><b>Exemple.</b> 4 = 2²</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔻 Tétraédrique <span class="docPts">+3</span></h3>
-    <p>Un empilement de triangles. La version en volume des nombres triangulaires.</p>
-    <p class="docPreuve"><b>Exemple.</b> 4 = 1 + 3 + 6 + … (2 étages triangulaires)</p>
-  </article>
-  <article class="docTrait">
-    <h3>🗿 Pyramidal carré <span class="docPts">+3</span></h3>
-    <p>Un empilement de carrés. 4900 est le seul, hormis 1, à être lui-même un carré — le fameux problème des boulets de canon.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5 = 1² + 2² + … + 2²</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔺 Triangulaire <span class="docPts">+2</span></h3>
-    <p>On peut l'empiler en triangle. 1, 3, 6, 10, 15…</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 = 1 + 2</p>
-  </article>
-  <article class="docTrait">
-    <h3>⬟ Pentagonal <span class="docPts">+2</span></h3>
-    <p>Même idée, mais en pentagone.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5 = 2 × (3 × 2 − 1) / 2</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔶 Hexagonal <span class="docPts">+2</span></h3>
-    <p>On peut l'empiler en hexagone. Tout hexagonal est aussi triangulaire.</p>
-    <p class="docPreuve"><b>Exemple.</b> 6 = 2 × (2 × 2 − 1)</p>
-  </article>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">💾</span>
+      <span class="docNom">Puissance de 2</span>
+      <span class="docCompte"><b>14</b>
+    <i>0,14 %</i></span>
+      <span class="docPts">+14</span>
+    </summary>
+    <div class="docCorps">
+      <p>La monnaie officielle des ordinateurs.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = 2¹</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧊</span>
+      <span class="docNom">Cube parfait</span>
+      <span class="docCompte"><b>20</b>
+    <i>0,20 %</i></span>
+      <span class="docPts">+13</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un entier au cube. Solide.</p>
+      <p class="docPreuve"><b>Exemple.</b> 8 = 2³</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🗿</span>
+      <span class="docNom">Pyramidal carré</span>
+      <span class="docCompte"><b>30</b>
+    <i>0,30 %</i></span>
+      <span class="docPts">+13</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un empilement de carrés. 4900 est le seul, hormis 1, à être lui-même un carré — le fameux problème des boulets de canon.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5 = 1² + 2² + … + 2²</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔻</span>
+      <span class="docNom">Tétraédrique</span>
+      <span class="docCompte"><b>38</b>
+    <i>0,38 %</i></span>
+      <span class="docPts">+12</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un empilement de triangles. La version en volume des nombres triangulaires.</p>
+      <p class="docPreuve"><b>Exemple.</b> 4 = 1 + 3 + 6 + … (2 étages triangulaires)</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔶</span>
+      <span class="docNom">Hexagonal</span>
+      <span class="docCompte"><b>70</b>
+    <i>0,70 %</i></span>
+      <span class="docPts">+11</span>
+    </summary>
+    <div class="docCorps">
+      <p>On peut l'empiler en hexagone. Tout hexagonal est aussi triangulaire.</p>
+      <p class="docPreuve"><b>Exemple.</b> 6 = 2 × (2 × 2 − 1)</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">⬛</span>
+      <span class="docNom">Carré parfait</span>
+      <span class="docCompte"><b>98</b>
+    <i>0,98 %</i></span>
+      <span class="docPts">+10</span>
+    </summary>
+    <div class="docCorps">
+      <p>Un entier au carré. Rassurant.</p>
+      <p class="docPreuve"><b>Exemple.</b> 4 = 2²</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">⬟</span>
+      <span class="docNom">Pentagonal</span>
+      <span class="docCompte"><b>81</b>
+    <i>0,81 %</i></span>
+      <span class="docPts">+10</span>
+    </summary>
+    <div class="docCorps">
+      <p>Même idée, mais en pentagone.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5 = 2 × (3 × 2 − 1) / 2</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔺</span>
+      <span class="docNom">Triangulaire</span>
+      <span class="docCompte"><b>140</b>
+    <i>1,4 %</i></span>
+      <span class="docPts">+9</span>
+    </summary>
+    <div class="docCorps">
+      <p>On peut l'empiler en triangle. 1, 3, 6, 10, 15…</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 = 1 + 2</p>
+    </div>
+  </details>
 </div>
 
 <h2>Suites</h2>
 <p>Les termes de suites célèbres, croisés au détour d'un tirage.</p>
 <div class="docListe">
-  <article class="docTrait">
-    <h3>🌳 Catalan <span class="docPts">+8</span></h3>
-    <p>Compte les façons de parenthéser, trianguler, arboriser. Il surgit partout en combinatoire.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = C₂</p>
-  </article>
-  <article class="docTrait">
-    <h3>❗ Factorielle <span class="docPts">+8</span></h3>
-    <p>Le produit de tous les entiers jusqu'à un certain point. Croît de façon indécente.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = 2! = 1 × 2</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔔 Bell <span class="docPts">+6</span></h3>
-    <p>Compte les façons de partitionner un ensemble. 5 objets se rangent de 52 manières.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 compte les façons de répartir 2 objets en groupes, sans en laisser aucun dehors.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🎪 Motzkin <span class="docPts">+5</span></h3>
-    <p>Compte les façons de relier des points sur un cercle par des cordes qui ne se croisent pas. Le cousin discret de Catalan.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 compte les façons de tracer des cordes qui ne se croisent pas entre des points d'un cercle.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🐚 Fibonacci <span class="docPts">+4</span></h3>
-    <p>La somme des deux précédents. Les lapins, les tournesols, les spirales.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = 1 + 1</p>
-  </article>
-  <article class="docTrait">
-    <h3>⛵ Pell <span class="docPts">+4</span></h3>
-    <p>Chaque terme vaut deux fois le précédent plus celui d'avant. Ses rapports approchent la racine de deux.</p>
-    <p class="docPreuve"><b>Exemple.</b> Terme initial de la suite.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🌗 Lucas <span class="docPts">+3</span></h3>
-    <p>Le cousin discret de Fibonacci : même règle, autre départ.</p>
-    <p class="docPreuve"><b>Exemple.</b> Terme initial de la suite (elle démarre sur 2, 1).</p>
-  </article>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">❗</span>
+      <span class="docNom">Factorielle</span>
+      <span class="docCompte"><b>7</b>
+    <i>0,07 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Le produit de tous les entiers jusqu'à un certain point. Croît de façon indécente.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = 2! = 1 × 2</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">⛵</span>
+      <span class="docNom">Pell</span>
+      <span class="docCompte"><b>11</b>
+    <i>0,11 %</i></span>
+      <span class="docPts">+15</span>
+    </summary>
+    <div class="docCorps">
+      <p>Chaque terme vaut deux fois le précédent plus celui d'avant. Ses rapports approchent la racine de deux.</p>
+      <p class="docPreuve"><b>Exemple.</b> Terme initial de la suite.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🌳</span>
+      <span class="docNom">Catalan</span>
+      <span class="docCompte"><b>9</b>
+    <i>0,09 %</i></span>
+      <span class="docPts">+15</span>
+    </summary>
+    <div class="docCorps">
+      <p>Compte les façons de parenthéser, trianguler, arboriser. Il surgit partout en combinatoire.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = C₂</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🎪</span>
+      <span class="docNom">Motzkin</span>
+      <span class="docCompte"><b>11</b>
+    <i>0,11 %</i></span>
+      <span class="docPts">+15</span>
+    </summary>
+    <div class="docCorps">
+      <p>Compte les façons de relier des points sur un cercle par des cordes qui ne se croisent pas. Le cousin discret de Catalan.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 compte les façons de tracer des cordes qui ne se croisent pas entre des points d'un cercle.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔔</span>
+      <span class="docNom">Bell</span>
+      <span class="docCompte"><b>8</b>
+    <i>0,08 %</i></span>
+      <span class="docPts">+15</span>
+    </summary>
+    <div class="docCorps">
+      <p>Compte les façons de partitionner un ensemble. 5 objets se rangent de 52 manières.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 compte les façons de répartir 2 objets en groupes, sans en laisser aucun dehors.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🐚</span>
+      <span class="docNom">Fibonacci</span>
+      <span class="docCompte"><b>19</b>
+    <i>0,19 %</i></span>
+      <span class="docPts">+14</span>
+    </summary>
+    <div class="docCorps">
+      <p>La somme des deux précédents. Les lapins, les tournesols, les spirales.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = 1 + 1</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🌗</span>
+      <span class="docNom">Lucas</span>
+      <span class="docCompte"><b>20</b>
+    <i>0,20 %</i></span>
+      <span class="docPts">+13</span>
+    </summary>
+    <div class="docCorps">
+      <p>Le cousin discret de Fibonacci : même règle, autre départ.</p>
+      <p class="docPreuve"><b>Exemple.</b> Terme initial de la suite (elle démarre sur 2, 1).</p>
+    </div>
+  </details>
 </div>
 
 <h2>Chiffres</h2>
 <p>Ce qui ne dépend pas du nombre mais de son écriture décimale — donc de notre choix d'avoir dix doigts.</p>
 <div class="docListe">
-  <article class="docTrait">
-    <h3>🎩 Münchhausen <span class="docPts">+26</span></h3>
-    <p>Égal à la somme de ses chiffres élevés à eux-mêmes. Comme le baron, il se soulève par ses propres bottes. Il n'en existe que deux.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3435 = 3³ + 4⁴ + 3³ + 5⁵</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔂 Candidat de Lychrel <span class="docPts">+18</span></h3>
-    <p>Ajoutez-lui son miroir, recommencez : tout le monde finit palindrome, sauf lui. Plus d'un milliard d'itérations n'ont rien donné, et personne n'a su le démontrer.</p>
-    <p class="docPreuve"><b>Exemple.</b> 196 → 887 → 1675 → 7436 → 13783 → … : plus d'un milliard d'étapes, toujours pas de palindrome</p>
-  </article>
-  <article class="docTrait">
-    <h3>💅 Narcissique <span class="docPts">+14</span></h3>
-    <p>Égal à la somme de ses chiffres élevés à la puissance de leur nombre. Il se suffit à lui-même.</p>
-    <p class="docPreuve"><b>Exemple.</b> 153 = 1³ + 5³ + 3³</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧩 Dudeney <span class="docPts">+10</span></h3>
-    <p>Cube de la somme de ses propres chiffres. Six exemplaires connus, tous sous 20 000.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5 + 1 + 2 = 8, et 8³ = 512</p>
-  </article>
-  <article class="docTrait">
-    <h3>🪆 Automorphe <span class="docPts">+10</span></h3>
-    <p>Son carré se termine par lui-même. 76² = 5776.</p>
-    <p class="docPreuve"><b>Exemple.</b> 5² = 25, qui se termine par 5</p>
-  </article>
-  <article class="docTrait">
-    <h3>🪜 Keith <span class="docPts">+9</span></h3>
-    <p>Amorcez une suite de Fibonacci avec ses chiffres : elle retombe exactement sur lui.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1 → 4 → 5 → 9 → 14 — la suite part de ses chiffres et retombe sur 14</p>
-  </article>
-  <article class="docTrait">
-    <h3>✂️ Kaprekar <span class="docPts">+8</span></h3>
-    <p>Son carré peut être coupé en deux morceaux qui, additionnés, le reforment. 45² = 2025, 20 + 25 = 45.</p>
-    <p class="docPreuve"><b>Exemple.</b> 9² = 81, et 8 + 1 = 9</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔁 Repdigit <span class="docPts">+4</span></h3>
-    <p>Le même chiffre, encore et encore. Hypnotique.</p>
-    <p class="docPreuve"><b>Exemple.</b> Le chiffre 1 répété 2 fois.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🔄 Palindrome <span class="docPts">+3</span></h3>
-    <p>Se lit pareil dans les deux sens.</p>
-    <p class="docPreuve"><b>Exemple.</b> 11 se lit 11 dans l'autre sens.</p>
-  </article>
-  <article class="docTrait">
-    <h3>〰️ Ondulant <span class="docPts">+3</span></h3>
-    <p>Deux chiffres qui alternent sans fin. 1717, 2020, 45454.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1 et 0 alternent sur 3 chiffres.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🕴️ Smith <span class="docPts">+3</span></h3>
-    <p>La somme de ses chiffres égale celle des chiffres de ses facteurs premiers.</p>
-    <p class="docPreuve"><b>Exemple.</b> 4 = 4 — et 4 = 2 × 2, dont les chiffres font 2 + 2 = 4</p>
-  </article>
-  <article class="docTrait">
-    <h3>✖️ Zuckerman <span class="docPts">+2</span></h3>
-    <p>Divisible par le produit de ses propres chiffres.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1 × 1 = 1, et 11 = 1 × 11</p>
-  </article>
-  <article class="docTrait">
-    <h3>😊 Heureux <span class="docPts">+2</span></h3>
-    <p>Additionnez le carré de ses chiffres, recommencez : vous finissez sur 1. Sinon vous bouclez à jamais sur 4.</p>
-    <p class="docPreuve"><b>Exemple.</b> 7 → 49 → 97 → 130 → 10 → 1 (somme des carrés des chiffres, jusqu'à tomber sur 1)</p>
-  </article>
-  <article class="docTrait">
-    <h3>🪞 Auto-nombre <span class="docPts">+2</span></h3>
-    <p>Aucun nombre, augmenté de la somme de ses chiffres, ne le produit. Il n'a pas de générateur : il ne descend de personne.</p>
-    <p class="docPreuve"><b>Exemple.</b> Aucun entier augmenté de la somme de ses chiffres ne donne 3 : il n'a pas de générateur.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🎁 Harshad <span class="docPts">+1</span></h3>
-    <p>Divisible par la somme de ses propres chiffres. « Joie » en sanskrit.</p>
-    <p class="docPreuve"><b>Exemple.</b> À un seul chiffre, la somme vaut le nombre lui-même : 2 se divise par 2. Tous les chiffres sont Harshad, c'est le seul cas gratuit.</p>
-  </article>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔂</span>
+      <span class="docNom">Candidat de Lychrel</span>
+      <span class="docCompte"><b>1</b>
+    <i>0,01 %</i></span>
+      <span class="docPts">+20</span>
+    </summary>
+    <div class="docCorps">
+      <p>Ajoutez-lui son miroir, recommencez : tout le monde finit palindrome, sauf lui. Plus d'un milliard d'itérations n'ont rien donné, et personne n'a su le démontrer.</p>
+      <p class="docPreuve"><b>Exemple.</b> 196 → 887 → 1675 → 7436 → 13783 → … : plus d'un milliard d'étapes, toujours pas de palindrome</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🎩</span>
+      <span class="docNom">Münchhausen</span>
+      <span class="docCompte"><b>2</b>
+    <i>0,02 %</i></span>
+      <span class="docPts">+18</span>
+    </summary>
+    <div class="docCorps">
+      <p>Égal à la somme de ses chiffres élevés à eux-mêmes. Comme le baron, il se soulève par ses propres bottes. Il n'en existe que deux.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3435 = 3³ + 4⁴ + 3³ + 5⁵</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧩</span>
+      <span class="docNom">Dudeney</span>
+      <span class="docCompte"><b>4</b>
+    <i>0,04 %</i></span>
+      <span class="docPts">+17</span>
+    </summary>
+    <div class="docCorps">
+      <p>Cube de la somme de ses propres chiffres. Six exemplaires connus, tous sous 20 000.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5 + 1 + 2 = 8, et 8³ = 512</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">💅</span>
+      <span class="docNom">Narcissique</span>
+      <span class="docCompte"><b>7</b>
+    <i>0,07 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Égal à la somme de ses chiffres élevés à la puissance de leur nombre. Il se suffit à lui-même.</p>
+      <p class="docPreuve"><b>Exemple.</b> 153 = 1³ + 5³ + 3³</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🪆</span>
+      <span class="docNom">Automorphe</span>
+      <span class="docCompte"><b>8</b>
+    <i>0,08 %</i></span>
+      <span class="docPts">+15</span>
+    </summary>
+    <div class="docCorps">
+      <p>Son carré se termine par lui-même. 76² = 5776.</p>
+      <p class="docPreuve"><b>Exemple.</b> 5² = 25, qui se termine par 5</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🪜</span>
+      <span class="docNom">Keith</span>
+      <span class="docCompte"><b>17</b>
+    <i>0,17 %</i></span>
+      <span class="docPts">+14</span>
+    </summary>
+    <div class="docCorps">
+      <p>Amorcez une suite de Fibonacci avec ses chiffres : elle retombe exactement sur lui.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1 → 4 → 5 → 9 → 14 — la suite part de ses chiffres et retombe sur 14</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">✂️</span>
+      <span class="docNom">Kaprekar</span>
+      <span class="docCompte"><b>17</b>
+    <i>0,17 %</i></span>
+      <span class="docPts">+14</span>
+    </summary>
+    <div class="docCorps">
+      <p>Son carré peut être coupé en deux morceaux qui, additionnés, le reforment. 45² = 2025, 20 + 25 = 45.</p>
+      <p class="docPreuve"><b>Exemple.</b> 9² = 81, et 8 + 1 = 9</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔁</span>
+      <span class="docNom">Repdigit</span>
+      <span class="docCompte"><b>27</b>
+    <i>0,27 %</i></span>
+      <span class="docPts">+13</span>
+    </summary>
+    <div class="docCorps">
+      <p>Le même chiffre, encore et encore. Hypnotique.</p>
+      <p class="docPreuve"><b>Exemple.</b> Le chiffre 1 répété 2 fois.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">✖️</span>
+      <span class="docNom">Zuckerman</span>
+      <span class="docCompte"><b>65</b>
+    <i>0,65 %</i></span>
+      <span class="docPts">+11</span>
+    </summary>
+    <div class="docCorps">
+      <p>Divisible par le produit de ses propres chiffres.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1 × 1 = 1, et 11 = 1 × 11</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🔄</span>
+      <span class="docNom">Palindrome</span>
+      <span class="docCompte"><b>189</b>
+    <i>1,9 %</i></span>
+      <span class="docPts">+9</span>
+    </summary>
+    <div class="docCorps">
+      <p>Se lit pareil dans les deux sens.</p>
+      <p class="docPreuve"><b>Exemple.</b> 11 se lit 11 dans l'autre sens.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">〰️</span>
+      <span class="docNom">Ondulant</span>
+      <span class="docCompte"><b>162</b>
+    <i>1,6 %</i></span>
+      <span class="docPts">+9</span>
+    </summary>
+    <div class="docCorps">
+      <p>Deux chiffres qui alternent sans fin. 1717, 2020, 45454.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1 et 0 alternent sur 3 chiffres.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🕴️</span>
+      <span class="docNom">Smith</span>
+      <span class="docCompte"><b>376</b>
+    <i>3,8 %</i></span>
+      <span class="docPts">+7</span>
+    </summary>
+    <div class="docCorps">
+      <p>La somme de ses chiffres égale celle des chiffres de ses facteurs premiers.</p>
+      <p class="docPreuve"><b>Exemple.</b> 4 = 4 — et 4 = 2 × 2, dont les chiffres font 2 + 2 = 4</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🪞</span>
+      <span class="docNom">Auto-nombre</span>
+      <span class="docCompte"><b>983</b>
+    <i>9,8 %</i></span>
+      <span class="docPts">+5</span>
+    </summary>
+    <div class="docCorps">
+      <p>Aucun nombre, augmenté de la somme de ses chiffres, ne le produit. Il n'a pas de générateur : il ne descend de personne.</p>
+      <p class="docPreuve"><b>Exemple.</b> Aucun entier augmenté de la somme de ses chiffres ne donne 3 : il n'a pas de générateur.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🎁</span>
+      <span class="docNom">Harshad</span>
+      <span class="docCompte"><b>1 537</b>
+    <i>15,4 %</i></span>
+      <span class="docPts">+4</span>
+    </summary>
+    <div class="docCorps">
+      <p>Divisible par la somme de ses propres chiffres. « Joie » en sanskrit.</p>
+      <p class="docPreuve"><b>Exemple.</b> À un seul chiffre, la somme vaut le nombre lui-même : 2 se divise par 2. Tous les chiffres sont Harshad, c'est le seul cas gratuit.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">😊</span>
+      <span class="docNom">Heureux</span>
+      <span class="docCompte"><b>1 441</b>
+    <i>14,4 %</i></span>
+      <span class="docPts">+4</span>
+    </summary>
+    <div class="docCorps">
+      <p>Additionnez le carré de ses chiffres, recommencez : vous finissez sur 1. Sinon vous bouclez à jamais sur 4.</p>
+      <p class="docPreuve"><b>Exemple.</b> 7 → 49 → 97 → 130 → 10 → 1 (somme des carrés des chiffres, jusqu'à tomber sur 1)</p>
+    </div>
+  </details>
 </div>
 
 <h2>Curiosités</h2>
 <p>Les cas isolés, ceux qui n'appartiennent à aucune famille et qu'on a nommés pour eux-mêmes.</p>
 <div class="docListe">
-  <article class="docTrait">
-    <h3>🚕 Taxicab <span class="docPts">+25</span></h3>
-    <p>Le plus petit nombre exprimable de deux façons comme somme de deux cubes. Ramanujan l'a sorti depuis un lit d'hôpital, en parlant d'un taxi.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1729 = 1³ + 12³ = 9³ + 10³</p>
-  </article>
-  <article class="docTrait">
-    <h3>🌀 Constante de Kaprekar <span class="docPts">+25</span></h3>
-    <p>Presque tout nombre à quatre chiffres finit ici si on le triture assez longtemps. Un trou noir arithmétique.</p>
-    <p class="docPreuve"><b>Exemple.</b> 7641 − 1467 = 6174 (chiffres triés en décroissant moins croissant : 6174 se redonne lui-même)</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧛 Vampire <span class="docPts">+13</span></h3>
-    <p>Produit de deux « crocs » formés de ses propres chiffres. 1260 = 21 × 60.</p>
-    <p class="docPreuve"><b>Exemple.</b> 1260 = 21 × 60 — les chiffres des deux facteurs sont exactement ceux de 1260</p>
-  </article>
-  <article class="docTrait">
-    <h3>🎭 Carmichael <span class="docPts">+12</span></h3>
-    <p>Composé, mais il réussit le test de primalité de Fermat pour toute base. Un menteur absolu — 1729 en fait partie.</p>
-    <p class="docPreuve"><b>Exemple.</b> 561 = 3 × 11 × 17 — composé, et pourtant a^561 ≡ a pour tout a. Un faux premier parfait.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🗝️ Idoine d'Euler <span class="docPts">+7</span></h3>
-    <p>Euler s'en servait pour repérer les grands premiers. Il en a trouvé 65 et personne n'en a jamais trouvé un 66ᵉ.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 fait partie des 65 nombres idoines d'Euler. Il n'y en a probablement pas d'autre, mais nul ne l'a démontré.</p>
-  </article>
-  <article class="docTrait">
-    <h3>🍀 Chanceux <span class="docPts">+3</span></h3>
-    <p>Survivant d'un crible qui raye un nombre sur deux, puis un sur trois, et ainsi de suite. Il en reste à peu près autant que de premiers.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 a survécu au crible : on raye un nombre sur deux, puis un sur trois parmi les restants, puis un sur sept, et ainsi de suite.</p>
-  </article>
-  <article class="docTrait">
-    <h3>⚖️ Pair <span class="docPts">—</span></h3>
-    <p>Divisible par 2. Sans histoires.</p>
-    <p class="docPreuve"><b>Exemple.</b> 2 = 2 × 1</p>
-  </article>
-  <article class="docTrait">
-    <h3>🧩 Impair <span class="docPts">—</span></h3>
-    <p>Non divisible par 2. Légèrement rebelle.</p>
-    <p class="docPreuve"><b>Exemple.</b> 3 = 2 × 1 + 1 — il reste toujours 1</p>
-  </article>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🚕</span>
+      <span class="docNom">Taxicab</span>
+      <span class="docCompte"><b>1</b>
+    <i>0,01 %</i></span>
+      <span class="docPts">+20</span>
+    </summary>
+    <div class="docCorps">
+      <p>Le plus petit nombre exprimable de deux façons comme somme de deux cubes. Ramanujan l'a sorti depuis un lit d'hôpital, en parlant d'un taxi.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1729 = 1³ + 12³ = 9³ + 10³</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🌀</span>
+      <span class="docNom">Constante de Kaprekar</span>
+      <span class="docCompte"><b>1</b>
+    <i>0,01 %</i></span>
+      <span class="docPts">+20</span>
+    </summary>
+    <div class="docCorps">
+      <p>Presque tout nombre à quatre chiffres finit ici si on le triture assez longtemps. Un trou noir arithmétique.</p>
+      <p class="docPreuve"><b>Exemple.</b> 7641 − 1467 = 6174 (chiffres triés en décroissant moins croissant : 6174 se redonne lui-même)</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧛</span>
+      <span class="docNom">Vampire</span>
+      <span class="docCompte"><b>7</b>
+    <i>0,07 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Produit de deux « crocs » formés de ses propres chiffres. 1260 = 21 × 60.</p>
+      <p class="docPreuve"><b>Exemple.</b> 1260 = 21 × 60 — les chiffres des deux facteurs sont exactement ceux de 1260</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🎭</span>
+      <span class="docNom">Carmichael</span>
+      <span class="docCompte"><b>7</b>
+    <i>0,07 %</i></span>
+      <span class="docPts">+16</span>
+    </summary>
+    <div class="docCorps">
+      <p>Composé, mais il réussit le test de primalité de Fermat pour toute base. Un menteur absolu — 1729 en fait partie.</p>
+      <p class="docPreuve"><b>Exemple.</b> 561 = 3 × 11 × 17 — composé, et pourtant a^561 ≡ a pour tout a. Un faux premier parfait.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🗝️</span>
+      <span class="docNom">Idoine d'Euler</span>
+      <span class="docCompte"><b>65</b>
+    <i>0,65 %</i></span>
+      <span class="docPts">+11</span>
+    </summary>
+    <div class="docCorps">
+      <p>Euler s'en servait pour repérer les grands premiers. Il en a trouvé 65 et personne n'en a jamais trouvé un 66ᵉ.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 fait partie des 65 nombres idoines d'Euler. Il n'y en a probablement pas d'autre, mais nul ne l'a démontré.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🍀</span>
+      <span class="docNom">Chanceux</span>
+      <span class="docCompte"><b>1 118</b>
+    <i>11,2 %</i></span>
+      <span class="docPts">+5</span>
+    </summary>
+    <div class="docCorps">
+      <p>Survivant d'un crible qui raye un nombre sur deux, puis un sur trois, et ainsi de suite. Il en reste à peu près autant que de premiers.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 a survécu au crible : on raye un nombre sur deux, puis un sur trois parmi les restants, puis un sur sept, et ainsi de suite.</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">⚖️</span>
+      <span class="docNom">Pair</span>
+      <span class="docCompte"><b>4 999</b>
+    <i>50,0 %</i></span>
+      <span class="docPts">—</span>
+    </summary>
+    <div class="docCorps">
+      <p>Divisible par 2. Sans histoires.</p>
+      <p class="docPreuve"><b>Exemple.</b> 2 = 2 × 1</p>
+    </div>
+  </details>
+  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">🧩</span>
+      <span class="docNom">Impair</span>
+      <span class="docCompte"><b>5 000</b>
+    <i>50,0 %</i></span>
+      <span class="docPts">—</span>
+    </summary>
+    <div class="docCorps">
+      <p>Non divisible par 2. Légèrement rebelle.</p>
+      <p class="docPreuve"><b>Exemple.</b> 3 = 2 × 1 + 1 — il reste toujours 1</p>
+    </div>
+  </details>
 </div>
 
 <p class="retour"><a href="index.html">← Retour au jeu</a></p>
@@ -404,10 +926,10 @@ accompagnée d'une démonstration calculée sur le plus petit nombre qui l'illus
   <a href="https://github.com/SignamarcheixH/GachaMath" rel="noopener" target="_blank">Code source</a>
 </footer>
 
-<script src="js/config.js?v=147"></script>
-<script src="js/pub.js?v=147"></script>
-<script src="js/doc.js?v=147"></script>
-<script src="js/retour.js?v=147"></script>
+<script src="js/config.js?v=230"></script>
+<script src="js/pub.js?v=230"></script>
+<script src="js/doc.js?v=230"></script>
+<script src="js/retour.js?v=230"></script>
 <script>if (typeof initPub === 'function') initPub();</script>
 </body>
 </html>

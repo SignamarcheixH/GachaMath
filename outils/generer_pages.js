@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RACINE = path.join(__dirname, '..');
-const V = 147;                                   // version des assets, cf. index.html
+const V = 230;                                   // version des assets, cf. index.html
 
 const source = ['js/numerology.js', 'js/data.js']
   .map(f => fs.readFileSync(path.join(RACINE, f), 'utf8'))
@@ -130,42 +130,90 @@ const FAMILLES = [
    ['taxicab','kaprekarC','vampire','carmichael','idoneal','chanceux','pair','impair']],
 ];
 
+/* ============================================================
+   COMBIEN DE NOMBRES PORTENT CHAQUE TRAIT
+
+   Le vivier fait 9 999 nombres et le jeu applique 65 tests à chacun : 650 000
+   évaluations, faites UNE fois au moment de générer les pages, jamais chez le
+   visiteur. Une page statique n'a pas à calculer ce qu'on peut lui écrire.
+
+   Le compte est la meilleure définition qui soit d'une rareté : dire qu'il
+   n'existe que quatre nombres parfaits sous dix mille en apprend davantage que
+   n'importe quelle phrase sur les nombres parfaits. */
+const EFFECTIFS = (() => {
+  const c = {};
+  M.TRAITS.forEach(t => c[t.id] = 0);
+  for (let n = 1; n <= 9999; n++) {
+    for (const t of M.evaluate(n).traits || []) {
+      if (c[t.id] !== undefined) c[t.id]++;
+    }
+  }
+  return c;
+})();
+
+/* Le gras porte le compte, l'italique la part — toujours, sans exception. Un
+   seuil qui basculait les petits effectifs sur « 4 sur 9 999 » donnait deux
+   voisins écrits différemment : Mersenne en pourcentage, Fermat en fraction.
+   Deux décimales suffisent : le plus petit effectif possible, 1 sur 9 999,
+   vaut encore 0,01 %. Virgule décimale, on écrit en français. */
+function effectifHTML(t) {
+  const n = EFFECTIFS[t.id] || 0;
+  const pc = 100 * n / 9999;
+  const part = (pc >= 1 ? pc.toFixed(1) : pc.toFixed(2)).replace('.', ',') + ' %';
+  return `<span class="docCompte"><b>${n.toLocaleString('fr-FR')}</b>
+    <i>${part}</i></span>`;
+}
+
 function pageCodex() {
   const vus = new Set();
   let corps = `<h1>Codex des traits</h1>
 <p class="chapo">Un nombre n'est pas rare parce qu'un serveur l'a décidé : il est rare
 parce qu'il <b>est</b> rare. Ces ${M.TRAITS.length} propriétés sont celles que le moteur
-du jeu sait reconnaître, et leur cumul détermine la valeur d'un nombre. Chacune est
-accompagnée d'une démonstration calculée sur le plus petit nombre qui l'illustre.</p>`;
+du jeu sait reconnaître, et leur cumul détermine la valeur d'un nombre. Chacune indique
+<b>combien de nombres la portent sous 10 000</b> — c'est la mesure la plus honnête de sa
+rareté. Dépliez une ligne pour la définition et une démonstration calculée sur le plus
+petit nombre qui l'illustre.</p>`;
 
   for (const [nom, intro, ids] of FAMILLES) {
     const traits = ids.map(id => M.TRAIT_BY_ID[id]).filter(Boolean);
     traits.forEach(t => vus.add(t.id));
     corps += `\n<h2>${ech(nom)}</h2>\n<p>${ech(intro)}</p>\n<div class="docListe">\n`;
-    for (const t of traits.sort((a, b) => b.pts - a.pts)) {
-      const p = preuve(t, t.example);
-      corps += `  <article class="docTrait">
-    <h3>${t.emoji} ${ech(t.label)} <span class="docPts">${t.pts > 0 ? '+' + t.pts : '—'}</span></h3>
-    <p>${ech(t.desc)}</p>
-    ${p ? `<p class="docPreuve"><b>Exemple.</b> ${ech(p)}</p>` : ''}
-  </article>\n`;
-    }
+    for (const t of traits.sort((a, b) => b.pts - a.pts)) corps += traitHTML(t);
     corps += `</div>\n`;
   }
 
   const restants = M.TRAITS.filter(t => !vus.has(t.id));
   if (restants.length) {
     corps += `\n<h2>Divers</h2>\n<div class="docListe">\n`;
-    for (const t of restants) {
-      const p = preuve(t, t.example);
-      corps += `  <article class="docTrait"><h3>${t.emoji} ${ech(t.label)} <span class="docPts">${t.pts > 0 ? '+' + t.pts : '—'}</span></h3>
-    <p>${ech(t.desc)}</p>${p ? `<p class="docPreuve"><b>Exemple.</b> ${ech(p)}</p>` : ''}</article>\n`;
-    }
+    for (const t of restants) corps += traitHTML(t);
     corps += `</div>\n`;
   }
   return page('codex.html', 'Codex des traits',
     `Les ${M.TRAITS.length} propriétés mathématiques qui déterminent la rareté d'un nombre : parfait, narcissique, vampire, taxicab, Carmichael… chacune définie et démontrée.`,
     corps);
+}
+
+/* Une ligne par trait, dépliable. `<details>` plutôt qu'un accordéon en
+   JavaScript : ça marche sans script, c'est accessible au clavier d'origine,
+   et la recherche du navigateur (Ctrl+F) trouve le texte replié — trois choses
+   qu'aucune réimplémentation ne rend gratuitement.
+
+   Ce qui reste VISIBLE replié est ce qu'on vient chercher : le nom, les points,
+   et combien de nombres portent le trait. La définition, elle, se déplie. */
+function traitHTML(t) {
+  const p = preuve(t, t.example);
+  return `  <details class="docTrait">
+    <summary>
+      <span class="docEmoji">${t.emoji}</span>
+      <span class="docNom">${ech(t.label)}</span>
+      ${effectifHTML(t)}
+      <span class="docPts">${t.pts > 0 ? '+' + t.pts : '—'}</span>
+    </summary>
+    <div class="docCorps">
+      <p>${ech(t.desc)}</p>
+      ${p ? `<p class="docPreuve"><b>Exemple.</b> ${ech(p)}</p>` : ''}
+    </div>
+  </details>\n`;
 }
 
 /* ============================================================
@@ -307,7 +355,9 @@ peut justifier son prix, démonstration à l'appui.</p>
   <li><b>Le tirage</b> — ${M.TRAITS.length} propriétés évaluées sur les 9 999 premiers entiers.</li>
   <li><b>La Forge</b> — un Compte est Bon dont les cibles vivent au-delà du mur des dix mille.</li>
   <li><b>La Révision</b> — deux exercices pour apprendre à reconnaître les traits sans l'aide de la fiche.</li>
-  <li><b>Le Codex et l'Oracle</b> — de quoi interroger n'importe quel entier jusqu'à 99 999.</li>
+  <li><b>Le Codex</b> — les 65 propriétés reconnues, définies et démontrées. La fiche d'un
+      nombre, elle, refait la démonstration sur ce nombre-là : le Codex dit ce qu'un trait
+      <i>est</i>, la fiche dit ce que <i>ce</i> nombre est.</li>
 </ul>
 
 <h2>Technique</h2>
