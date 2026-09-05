@@ -76,31 +76,31 @@ const HUB_BATIMENTS = {
    hub qui perdrait ces signaux rendrait le jeu moins lisible, pas plus.
    `x` et `y` sont en pourcentages du plan — le même repère que les routes. */
 const HUB_LIEUX = [
-  { id: 'forge', zone: 'rempart', x: 22, y: 16, xl: 35, yl: 26, image: 'images/forge.webp', nom: 'La Forge', vue: 'forge',
+  { id: 'forge', zone: 'rempart', x: 22, y: 16, xl: 56, yl: 22, image: 'images/forge.webp', nom: 'La Forge', vue: 'forge',
     desc: 'Fabriquer ce que le hasard ne donne pas.',
     jauge: () => state.commande && !state.commande.fini ? 'commande en cours' : 'aucune commande' },
 
-  { id: 'expedition', zone: 'rempart', x: 78, y: 16, xl: 65, yl: 26, image: 'images/expedition.webp', nom: "L'Expédition", vue: 'minijeux',
+  { id: 'expedition', zone: 'rempart', x: 78, y: 16, xl: 81.5, yl: 56.5, image: 'images/expedition.webp', nom: "L'Expédition", vue: 'minijeux',
     jeu: 'expedition', desc: 'Aller le chercher au loin.',
     jauge: () => {
       const r = state.stats.meilleureCouche || 0;
       return r ? `record : couche ${r}` : 'jamais partie';
     } },
 
-  { id: 'vivier', zone: 'ville', x: 22, y: 27, xl: 10, yl: 48, image: 'images/vivier.webp', nom: 'Le Vivier', vue: 'gacha',
+  { id: 'vivier', zone: 'ville', x: 22, y: 27, xl: 48.5, yl: 68, image: 'images/vivier.webp', nom: 'Le Vivier', vue: 'gacha',
     desc: 'De 1 à 9 999. On y pêche.',
     jauge: () => {
       const n = tiragesPossibles(state.paquet || 10);
       return `${fmt(n)} tirage${n > 1 ? 's' : ''}`;
     } },
 
-  { id: 'herbier', image: 'images/herbier.webp', zone: 'ville', x: 78, y: 27, xl: 70, yl: 48, nom: "L'Herbier", vue: 'collection',
+  { id: 'herbier', image: 'images/herbier.webp', zone: 'ville', x: 78, y: 27, xl: 35, yl: 35, nom: "L'Herbier", vue: 'collection',
     desc: 'Vos spécimens, étiquetés.',
     jauge: () => `${fmt(uniqueCount(state))} nombres` },
 
   /* L'Atelier est adossé au Vivier : ses machines ne tournent que sur ce qu'on
      y pêche. */
-  { id: 'atelier', zone: 'ville', x: 22, y: 38, xl: 30, yl: 48, nom: "L'Atelier", vue: 'atelier',
+  { id: 'atelier', zone: 'ville', x: 22, y: 38, xl: 64, yl: 22.5, nom: "L'Atelier", vue: 'atelier',
     desc: 'Dix machines à calculer.',
     jauge: () => {
       const p = typeof poussiereParMinute === 'function' ? Math.round(poussiereParMinute()) : 0;
@@ -110,7 +110,7 @@ const HUB_LIEUX = [
       return n ? "à l'arrêt" : 'aucune machine';
     } },
 
-  { id: 'academie', zone: 'ville', x: 78, y: 38, xl: 90, yl: 48, image: 'images/academie.webp', nom: "L'Académie", vue: 'minijeux',
+  { id: 'academie', zone: 'ville', x: 78, y: 38, xl: 48.5, yl: 18, image: 'images/academie.webp', nom: "L'Académie", vue: 'minijeux',
     desc: "« Que nul n'entre ici s'il n'est géomètre. »",
     jauge: () => {
       const n = (state.stats.examens || 0) + (state.stats.appariements || 0)
@@ -118,7 +118,7 @@ const HUB_LIEUX = [
       return n ? `${fmt(n)} partie${n > 1 ? 's' : ''}` : 'jamais fréquentée';
     } },
 
-  { id: 'bibliotheque', zone: 'ville', x: 22, y: 60, xl: 10, yl: 66, nom: 'La Bibliothèque', vue: 'bonus',
+  { id: 'bibliotheque', zone: 'ville', x: 22, y: 60, xl: 36.5, yl: 35.5, nom: 'La Bibliothèque', vue: 'bonus',
     desc: 'Les théorèmes démontrés.',
     jauge: () => {
       const du = pendingCollections().length + pendingDefis().length;
@@ -126,18 +126,18 @@ const HUB_LIEUX = [
                 : `${state.claimed.length} / ${COLLECTIONS.length} démontrés`;
     } },
 
-  { id: 'congres', zone: 'ville', x: 78, y: 82, xl: 30, yl: 84, nom: 'Le Congrès', vue: 'classement',
+  { id: 'congres', zone: 'ville', x: 78, y: 82, xl: 54.5, yl: 21, nom: 'Le Congrès', vue: 'classement',
     desc: 'Comparer ses travaux.',
     jauge: () => (typeof nuage !== 'undefined' && nuage.connecte)
       ? `sous « ${nuage.pseudo} »` : 'pseudo requis' },
 
-  { id: 'codex', zone: 'ville', x: 22, y: 93, xl: 10, yl: 84, nom: 'Le Codex', lien: 'codex.html',
+  { id: 'codex', zone: 'ville', x: 22, y: 93, xl: 50, yl: 29, nom: 'Le Codex', lien: 'codex.html',
     desc: 'Les 65 traits reconnus.',
     jauge: () => 'salle de référence' },
 
   /* La Place, au centre de la ville et au centre du propos : c'est le seul
      lieu ouvert dès l'acte 0, parce que c'est de là que part la visite. */
-  { id: 'place', zone: 'ville', x: 22, y: 49, xl: 50, yl: 48, nom: 'La Place', pnj: true,
+  { id: 'place', zone: 'ville', x: 22, y: 49, xl: 48.8, yl: 51.7, nom: 'La Place', pnj: true,
     desc: 'On y parle aux gens.',
     jauge: () => {
       const n = typeof pnjPresents === 'function' ? pnjPresents().length : 0;
@@ -148,7 +148,7 @@ const HUB_LIEUX = [
      reste `gare` — c'est celui que les quêtes, les actes et le vérificateur
      nomment, et le renommer partout n'apporterait rien qu'un risque. Seul ce
      qui se lit a changé. */
-  { id: 'gare', zone: 'ville', x: 78, y: 49, xl: 30, yl: 66, nom: 'Le Port', quetes: true,
+  { id: 'gare', zone: 'ville', x: 78, y: 49, xl: 18.5, yl: 83.5, nom: 'Le Port', quetes: true,
     desc: 'On y croise du monde.',
     jauge: () => {
       const n = typeof quetesOuvertes === 'function'
@@ -167,7 +167,7 @@ const HUB_LIEUX = [
      traits du jeu sont dans ce cas, soit près d'un tiers. Un comptoir de
      change — la même valeur, écrite autrement — est l'endroit exact pour
      l'apprendre. Ouvert à l'acte III, celui de la notation. */
-  { id: 'comptoir', zone: 'ville', x: 22, y: 71, xl: 50, yl: 66, nom: 'Le Comptoir', vue: 'comptoir',
+  { id: 'comptoir', zone: 'ville', x: 22, y: 71, xl: 80.5, yl: 12, nom: 'Le Comptoir', vue: 'comptoir',
     desc: 'La même valeur, écrite autrement.',
     jauge: () => {
       const n = typeof traitsDEcriturePossedes === 'function' ? traitsDEcriturePossedes() : 0;
@@ -181,7 +181,7 @@ const HUB_LIEUX = [
      rareté se démontre, et une salle qui distribuerait des tirages vendrait la
      thèse pour un décor. On y gagne de savoir ses chances. Acte V, celui de
      Pascal. */
-  { id: 'casino', zone: 'ville', x: 22, y: 82, xl: 50, yl: 84, nom: 'Le Casino', vue: 'casino',
+  { id: 'casino', zone: 'ville', x: 22, y: 82, xl: 31.5, yl: 60.5, nom: 'Le Casino', vue: 'casino',
     desc: 'Le hasard, mis en chiffres.',
     jauge: () => 'vos chances, calculées' },
 
@@ -189,7 +189,7 @@ const HUB_LIEUX = [
      Le Casino dit ce qui va arriver ; l'Observatoire dit ce qui est arrivé.
      On y mesure son propre herbier contre la vérité du vivier : ce qu'on a,
      ce qui manque, et ce que ça coûtera encore. Acte IV, celui du calcul. */
-  { id: 'observatoire', zone: 'ville', x: 78, y: 71, xl: 70, yl: 66, nom: "L'Observatoire", vue: 'observatoire',
+  { id: 'observatoire', zone: 'ville', x: 78, y: 71, xl: 24, yl: 9, nom: "L'Observatoire", vue: 'observatoire',
     desc: "Ce qu'on a, et ce qui manque.",
     jauge: () => {
       const n = uniqueCount(state);
@@ -287,22 +287,17 @@ function porteHTML() {
    coordonnées — voir le mode placement plus bas.
    ============================================================ */
 const HUB_QUARTIERS = [
-  /* LE GRAND HERBIER. Ce n'est pas un regroupement de commodité : le jeu dit
-     déjà, dans la scène du Seuil et dans la justification de l'acte 0, que les
-     théorèmes « sont les pages démontrées de l'Herbier ». La Bibliothèque est
-     donc une partie de l'Herbier, pas sa voisine — et sûrement pas une annexe
-     de l'Académie, où l'on s'exerce.
-
-     Le critère, pour les prochains : deux lieux vont ensemble quand ils
-     répondent à la MÊME QUESTION. « Qu'est-ce que j'ai ? » et « qu'est-ce que
-     j'ai fini de prouver ? » sont la même question à deux étapes. « Comment je
-     m'entraîne ? » est ailleurs.
-
-     Les autres entrées viennent du mode placement, par outils/poser_carte.js.
-     Forme : { id, nom, desc, x, y, xl, yl, membres: ['forge', 'atelier'] } */
-  { id: 'q_grandherbier', nom: 'Le Grand Herbier',
-    desc: "Le registre de ce que la Cité a démontré.",
-    x: 78, y: 27, xl: 70, yl: 48,
+  { id: 'q_quartierindustriel', nom: "Quartier industriel",
+    x: 22, y: 16, xl: 69.5, yl: 33.5,
+    membres: ['forge', 'atelier'] },
+  { id: 'q_lacademie', nom: "L'Académie",
+    x: 78, y: 38, xl: 49.5, yl: 24,
+    membres: ['academie', 'codex', 'congres'] },
+  { id: 'q_incoming', nom: "Incoming",
+    x: 22, y: 71, xl: 93, yl: 9.5,
+    membres: ['comptoir'] },
+  { id: 'q_grandherbier', nom: "Grand Herbier",
+    x: 78, y: 27, xl: 29.5, yl: 34,
     membres: ['herbier', 'bibliotheque'] },
 ];
 

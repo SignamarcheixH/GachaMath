@@ -96,7 +96,11 @@ function lireQuartiers() {
 function lireLieux() {
   const src = fs.readFileSync(path.join(RACINE, 'js', 'hub.js'), 'utf8');
   const bloc = src.slice(src.indexOf('const HUB_LIEUX'), src.indexOf("/* ---------- ce qui a été retiré"));
-  const re = /id: '([a-z]+)',[\s\S]{0,260}?x: (-?\d+), y: (-?\d+), xl: (-?\d+), yl: (-?\d+)/g;
+  /* LES COORDONNÉES PEUVENT ÊTRE DÉCIMALES. Le mode placement pose au demi
+     pour-cent, et au dixième en tenant Maj : un motif qui n'accepte que des
+     entiers ne reconnaît plus la moitié des lieux. Il ne se plaignait pas —
+     il en lisait cinq sur quatorze et contrôlait un plan imaginaire. */
+  const re = /id: '([a-z_0-9]+)',[\s\S]{0,260}?x: (-?[\d.]+), y: (-?[\d.]+), xl: (-?[\d.]+), yl: (-?[\d.]+)/g;
   const out = [];
   let m;
   while ((m = re.exec(bloc))) {
@@ -106,6 +110,19 @@ function lireLieux() {
       x: +m[2], y: +m[3], xl: +m[4], yl: +m[5],
       vue: /image:\s*'/.test(avant),
     });
+  }
+
+  /* ET ON VÉRIFIE QU'ON A TOUT LU. C'est la leçon de la panne ci-dessus : un
+     analyseur qui rate des entrées rend un contrôle vert sur un plan qu'il
+     n'a pas vu. On compte les identifiants déclarés et on refuse d'avancer
+     s'il en manque un. */
+  const declares = [...bloc.matchAll(/\{ id: '([a-z_0-9]+)'/g)].map(x => x[1]);
+  const lus = new Set(out.map(o => o.id));
+  const rates = declares.filter(id => !lus.has(id));
+  if (rates.length) {
+    console.error('Lieux déclarés mais non analysés : ' + rates.join(', ')
+      + '\n   Le contrôle serait faux. Vérifiez le motif de lecture.');
+    process.exit(1);
   }
   return out;
 }
